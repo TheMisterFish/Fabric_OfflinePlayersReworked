@@ -18,6 +18,7 @@ public class NPCModel {
         public int count;
         public int itemid;
         public String nbttag;
+        public int damage;
     }
 
     @Id

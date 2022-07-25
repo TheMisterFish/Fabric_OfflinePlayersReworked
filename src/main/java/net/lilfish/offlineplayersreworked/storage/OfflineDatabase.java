@@ -9,7 +9,6 @@ import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
-import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.StringNbtReader;
 import net.minecraft.text.Text;
 import net.lilfish.offlineplayersreworked.storage.models.NPCModel;
@@ -134,10 +133,9 @@ public class OfflineDatabase {
     private ItemStack getItemStack(NPCModel.NPCItem npcItem){
         try {
             var itemStack = new ItemStack(Registry.ITEM.get(npcItem.itemid), npcItem.count);
-            if(npcItem.nbttag != null){
-                NbtCompound tags = StringNbtReader.parse(npcItem.nbttag);
-                itemStack.setNbt(tags);
-            }
+            if(npcItem.nbttag != null)
+                itemStack.setNbt(StringNbtReader.parse(npcItem.nbttag));
+            itemStack.setDamage(npcItem.damage);
             return itemStack;
         } catch (Exception ignore) {}
         return new ItemStack(Items.AIR, 1);
@@ -149,6 +147,7 @@ public class OfflineDatabase {
         newItem.count = itemStack.getCount();
         if (itemStack.hasNbt() && itemStack.getNbt() != null)
             newItem.nbttag = itemStack.getNbt().asString();
+        newItem.damage = itemStack.getDamage();
         return newItem;
     }
 }

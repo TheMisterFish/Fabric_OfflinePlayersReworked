@@ -11,13 +11,20 @@ import net.lilfish.offlineplayersreworked.npc.EntityPlayerActionPack;
 import net.lilfish.offlineplayersreworked.npc.NPCClass;
 import net.lilfish.offlineplayersreworked.storage.models.NPCModel;
 import net.lilfish.offlineplayersreworked.storage.OfflineDatabase;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.effect.StatusEffectInstance;
+import net.minecraft.entity.mob.Angerable;
+import net.minecraft.entity.mob.PathAwareEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.network.MessageType;
+import net.minecraft.predicate.entity.EntityPredicates;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Text;
+import net.minecraft.util.TypeFilter;
+import net.minecraft.util.math.Box;
 import net.minecraft.util.math.PositionImpl;
 import net.minecraft.world.GameMode;
 import org.slf4j.Logger;
@@ -118,7 +125,10 @@ public class OfflinePlayers implements DedicatedServerModInitializer {
             manipulate(npc, ap -> ap.start(finalType, finalActionInterval));
         }
 
-        PositionImpl playerPosition = new PositionImpl(player.getX(), player.getY(),player.getZ());
+        PositionImpl playerPosition = new PositionImpl(player.getX(), player.getY(), player.getZ());
+//      Aggro update
+        aggroUpdate(player, npc);
+//      Disconnect player
         player.networkHandler.disconnect(Text.of("Offline player generated"));
 
         npc.refreshPositionAfterTeleport(playerPosition.getX(), playerPosition.getY(), playerPosition.getZ());
@@ -173,6 +183,8 @@ public class OfflinePlayers implements DedicatedServerModInitializer {
             player.getHungerManager().setSaturationLevel(npcPlayer.getHungerManager().getSaturationLevel());
 //          Kill NPC
             npcPlayer.kill();
+//          Aggro update
+            aggroUpdate(npcPlayer, player);
         }
         return true;
     }
@@ -187,7 +199,7 @@ public class OfflinePlayers implements DedicatedServerModInitializer {
         player.setExperiencePoints(npc.getXPpoints());
         player.setExperienceLevel(npc.getXPlevel());
 //      Kill player
-        if(player.interactionManager.getGameMode() == GameMode.DEFAULT){
+        if (player.interactionManager.getGameMode() == GameMode.DEFAULT) {
             player.getInventory().dropAll();
             player.setHealth(0);
             player.server.getPlayerManager().broadcast(Text.of(player.getDisplayName().asString() + " died: " + npc.getDeathMessage()), MessageType.CHAT, player.getUuid());
@@ -214,5 +226,24 @@ public class OfflinePlayers implements DedicatedServerModInitializer {
     public static void onServerLoaded(MinecraftServer mcServer) {
         // we need to set the server so we can access it from the ping mixin
         server = mcServer;
+    }
+
+    private static void aggroUpdate(Entity firstEntity, Entity secondEntity) {
+        var world = firstEntity.getWorld();
+        var pathAwareEntities = world.getEntitiesByType(
+                TypeFilter.instanceOf(PathAwareEntity.class),
+                Box.of(firstEntity.getPos(), firstEntity.getX() + 128, firstEntity.getY() + 128, firstEntity.getZ() + 128),
+                EntityPredicates.VALID_ENTITY);
+
+        pathAwareEntities.stream()
+                .filter(entity -> entity instanceof Angerable)
+                .filter(entity -> ((Angerable) entity).getAngryAt() == firstEntity.getUuid())
+                .forEach(angryEntity -> {
+                    try {
+                        angryEntity.setTarget((LivingEntity) secondEntity);
+                        ((Angerable) angryEntity).setAngryAt(secondEntity.getUuid());
+                    } catch (Exception ignored) {
+                    }
+                });
     }
 }
