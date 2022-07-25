@@ -31,7 +31,6 @@ import org.slf4j.LoggerFactory;
 
 import static net.lilfish.offlineplayersreworked.OfflinePlayers.MOD_ID;
 
-
 @SuppressWarnings("EntityConstructor")
 public class NPCClass extends ServerPlayerEntity implements ImplementedInventory {
 
@@ -173,8 +172,6 @@ public class NPCClass extends ServerPlayerEntity implements ImplementedInventory
             // happens with that paper port thingy - not sure what that would fix, but hey
             // the game not gonna crash violently.
         }
-
-
     }
 
     private void shakeOff() {
