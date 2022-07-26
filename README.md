@@ -9,6 +9,7 @@ For setup instructions please see the [fabric wiki page](https://fabricmc.net/wi
 - [ ] Achievements sync
 - [ ] Stats sync
 - [ ] Fix NPC Class clutterness (add helper classes)
+- [ ] Clone sleep time attributes for Phantom spawning mechenics
 
 
 ## License
