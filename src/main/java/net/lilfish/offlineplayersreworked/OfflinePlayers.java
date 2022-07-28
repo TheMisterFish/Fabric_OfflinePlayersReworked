@@ -8,8 +8,8 @@ import net.fabricmc.api.DedicatedServerModInitializer;
 import net.fabricmc.fabric.api.command.v1.CommandRegistrationCallback;
 import net.lilfish.offlineplayersreworked.interfaces.ServerPlayerEntityInterface;
 import net.lilfish.offlineplayersreworked.npc.Npc;
-import net.lilfish.offlineplayersreworked.storage.models.NpcModel;
 import net.lilfish.offlineplayersreworked.storage.OfflineDatabase;
+import net.lilfish.offlineplayersreworked.storage.models.NpcModel;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.effect.StatusEffectInstance;
@@ -139,14 +139,14 @@ public class OfflinePlayers implements DedicatedServerModInitializer {
     }
 
     public static void playerJoined(ServerPlayerEntity player) {
-        NpcModel npc = STORAGE.findNPCByPlayer(player.getUuid());
-        if (npc != null) {
+        NpcModel npcModel = STORAGE.findNPCByPlayer(player.getUuid());
+        if (npcModel != null) {
             boolean correct;
-            if (npc.isDead()) {
-                correct = handleDeadNPC(player, npc);
+            if (npcModel.isDead()) {
+                correct = handleDeadNPC(player, npcModel);
                 LOGGER.info("Handling dead NPC for player" + player.getName());
             } else {
-                correct = handleAliveNPC(player, npc);
+                correct = handleAliveNPC(player, npcModel);
                 LOGGER.info("Handling alive NPC for player" + player.getName());
             }
             // Remove NPC from DataBase
