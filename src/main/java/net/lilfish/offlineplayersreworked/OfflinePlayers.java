@@ -7,9 +7,8 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.fabricmc.api.DedicatedServerModInitializer;
 import net.fabricmc.fabric.api.command.v1.CommandRegistrationCallback;
 import net.lilfish.offlineplayersreworked.interfaces.ServerPlayerEntityInterface;
-import net.lilfish.offlineplayersreworked.npc.EntityPlayerActionPack;
-import net.lilfish.offlineplayersreworked.npc.NPCClass;
-import net.lilfish.offlineplayersreworked.storage.models.NPCModel;
+import net.lilfish.offlineplayersreworked.npc.Npc;
+import net.lilfish.offlineplayersreworked.storage.models.NpcModel;
 import net.lilfish.offlineplayersreworked.storage.OfflineDatabase;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
@@ -105,7 +104,7 @@ public class OfflinePlayers implements DedicatedServerModInitializer {
         }
 
 //      Create player
-        NPCClass npc = NPCClass.createFake(player, GameMode.SURVIVAL, false);
+        Npc npc = Npc.createNpc(player);
 
 //      Check if NPC should have action, if so, add it.
         if (!Objects.equals(thisAction, "none")) {
@@ -140,7 +139,7 @@ public class OfflinePlayers implements DedicatedServerModInitializer {
     }
 
     public static void playerJoined(ServerPlayerEntity player) {
-        NPCModel npc = STORAGE.findNPCByPlayer(player.getUuid());
+        NpcModel npc = STORAGE.findNPCByPlayer(player.getUuid());
         if (npc != null) {
             boolean correct;
             if (npc.isDead()) {
@@ -159,7 +158,7 @@ public class OfflinePlayers implements DedicatedServerModInitializer {
 
     }
 
-    private static boolean handleAliveNPC(ServerPlayerEntity player, NPCModel npc) {
+    private static boolean handleAliveNPC(ServerPlayerEntity player, NpcModel npc) {
         ServerPlayerEntity npcPlayer = player.server.getPlayerManager().getPlayer(npc.getNpc_id());
         if (npcPlayer != null) {
 //          Set pos
@@ -189,7 +188,7 @@ public class OfflinePlayers implements DedicatedServerModInitializer {
         return true;
     }
 
-    private static boolean handleDeadNPC(ServerPlayerEntity player, NPCModel npc) {
+    private static boolean handleDeadNPC(ServerPlayerEntity player, NpcModel npc) {
 //      Set pos
         player.refreshPositionAfterTeleport(npc.getX(), npc.getY(), npc.getZ());
 //      Copy inv.
@@ -224,7 +223,7 @@ public class OfflinePlayers implements DedicatedServerModInitializer {
     }
 
     public static void onServerLoaded(MinecraftServer mcServer) {
-        // we need to set the server so we can access it from the ping mixin
+        // we need to set the server, so we can access it from the ping mixin
         server = mcServer;
     }
 

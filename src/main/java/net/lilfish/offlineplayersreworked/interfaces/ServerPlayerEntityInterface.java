@@ -1,6 +1,6 @@
 package net.lilfish.offlineplayersreworked.interfaces;
 
-import net.lilfish.offlineplayersreworked.npc.EntityPlayerActionPack;
+import net.lilfish.offlineplayersreworked.EntityPlayerActionPack;
 
 public interface ServerPlayerEntityInterface
 {

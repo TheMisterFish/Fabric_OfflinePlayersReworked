@@ -2,7 +2,7 @@ package net.lilfish.offlineplayersreworked.mixin;
 
 import com.mojang.authlib.GameProfile;
 import net.lilfish.offlineplayersreworked.interfaces.ServerPlayerEntityInterface;
-import net.lilfish.offlineplayersreworked.npc.EntityPlayerActionPack;
+import net.lilfish.offlineplayersreworked.EntityPlayerActionPack;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
