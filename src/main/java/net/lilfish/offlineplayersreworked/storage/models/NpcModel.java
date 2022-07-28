@@ -19,7 +19,6 @@ public class NpcModel {
         public String nbttag;
         public int damage;
     }
-
     @Id
     private UUID id;
     private UUID npc_id;
