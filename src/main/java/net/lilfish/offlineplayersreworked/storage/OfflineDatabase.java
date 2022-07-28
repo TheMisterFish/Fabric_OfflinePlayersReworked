@@ -3,7 +3,7 @@ package net.lilfish.offlineplayersreworked.storage;
 import io.jsondb.InvalidJsonDbApiUsageException;
 import io.jsondb.JsonDBTemplate;
 import io.jsondb.query.Update;
-import net.lilfish.offlineplayersreworked.npc.NPCClass;
+import net.lilfish.offlineplayersreworked.npc.Npc;
 import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.Item;
@@ -11,7 +11,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.nbt.StringNbtReader;
 import net.minecraft.text.Text;
-import net.lilfish.offlineplayersreworked.storage.models.NPCModel;
+import net.lilfish.offlineplayersreworked.storage.models.NpcModel;
 import net.minecraft.util.registry.Registry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,9 +38,9 @@ public class OfflineDatabase {
     JsonDBTemplate jsonDBTemplate = new JsonDBTemplate(dbFilesLocation, baseScanPackage);
     public void init() {
         try {
-            if(!jsonDBTemplate.collectionExists(NPCModel.class)) {
+            if(!jsonDBTemplate.collectionExists(NpcModel.class)) {
                 LOGGER.info("Initializing Json DB.");
-                jsonDBTemplate.createCollection(NPCModel.class);
+                jsonDBTemplate.createCollection(NpcModel.class);
             } else {
                 LOGGER.info("Json DB already exists, reusing DB.");
 
@@ -50,57 +50,54 @@ public class OfflineDatabase {
         }
     }
 
-    public List<NPCModel> getAllNPC() {
-        return jsonDBTemplate.findAll(NPCModel.class);
+    public List<NpcModel> getAllNPC() {
+        return jsonDBTemplate.findAll(NpcModel.class);
     }
 
     public void addNPC(UUID player_id, UUID npc_id) {
-        if (jsonDBTemplate.findById(player_id, NPCModel.class) != null) {
+        if (jsonDBTemplate.findById(player_id, NpcModel.class) != null) {
             this.removeNPC(player_id);
         }
-        NPCModel instance = new NPCModel();
-        instance.setId(player_id);
-        instance.setNpc_id(npc_id);
-        instance.setDead(false);
-        jsonDBTemplate.insert(instance);
+        NpcModel npcModel = new NpcModel();
+        npcModel.setId(player_id);
+        npcModel.setNpc_id(npc_id);
+        npcModel.setDead(false);
+        jsonDBTemplate.insert(npcModel);
     }
 
     public void removeNPC(UUID uuid) {
-        NPCModel instance = new NPCModel();
-        instance.setId(uuid);
-        jsonDBTemplate.remove(instance, NPCModel.class);
+        NpcModel npcModel = new NpcModel();
+        npcModel.setId(uuid);
+        jsonDBTemplate.remove(npcModel, NpcModel.class);
     }
 
-    public NPCModel findNPCByPlayer(UUID uuid){
+    public NpcModel findNPCByPlayer(UUID uuid){
         String jxQuery = String.format("/.[id='%s']", uuid);
-        return jsonDBTemplate.findOne(jxQuery, NPCModel.class);
+        return jsonDBTemplate.findOne(jxQuery, NpcModel.class);
     }
 
-    public NPCModel findNPCByNPC(UUID uuid){
+    public NpcModel findNPCByNPC(UUID uuid){
         String jxQuery = String.format("/.[npc_id='%s']", uuid);
-        return jsonDBTemplate.findOne(jxQuery, NPCModel.class);
+        return jsonDBTemplate.findOne(jxQuery, NpcModel.class);
     }
-    public void saveDeathNPC(NPCClass npc, Text deathMessage) {
-//      Seat Dead
-        Collection<NPCModel.NPCItem> inventoryItemCollection = new ArrayList<NPCModel.NPCItem>();
-//      Set inventory
+    public void saveDeathNPC(Npc npc, Text deathMessage) {
+        Collection<NpcModel.NPCItem> inventoryItemCollection = new ArrayList<NpcModel.NPCItem>();
+
         Update update = Update.update("dead", true);
         for(ItemStack npcItem : npc.getInventory().main){
             inventoryItemCollection.add(getNPCItem(npcItem));
         }
         update.set("inventory", inventoryItemCollection);
 
-//      Set Armor and offhand
         update.set("armor_CHEST", getNPCItem(npc.getEquippedStack(EquipmentSlot.CHEST)));
         update.set("armor_LEGS", getNPCItem(npc.getEquippedStack(EquipmentSlot.LEGS)));
         update.set("armor_HEAD", getNPCItem(npc.getEquippedStack(EquipmentSlot.HEAD)));
         update.set("armor_FEET", getNPCItem(npc.getEquippedStack(EquipmentSlot.FEET)));
         update.set("offhand", getNPCItem(npc.getEquippedStack(EquipmentSlot.OFFHAND)));
 
-//      Set XP
         update.set("XPlevel", npc.experienceLevel);
         update.set("XPpoints", npc.getNextLevelExperience() * npc.experienceProgress);
-//      Set XYZ
+
         update.set("x", npc.getX());
         update.set("y", npc.getY());
         update.set("z", npc.getZ());
@@ -111,26 +108,25 @@ public class OfflineDatabase {
     }
 
 
-    public PlayerInventory getNPCInventory(NPCModel npc)
+    public PlayerInventory getNPCInventory(NpcModel npc)
     {
-
-        PlayerInventory inv = new PlayerInventory(null);
-        ArrayList<NPCModel.NPCItem> inventory = npc.getInventory();
-        for (int i = 0; i < inv.main.size(); i++) {
-            NPCModel.NPCItem npcItem = inventory.get(i);
-            inv.main.set(i, this.getItemStack(npcItem));
+        PlayerInventory playerInventory = new PlayerInventory(null);
+        ArrayList<NpcModel.NPCItem> inventory = npc.getInventory();
+        for (int i = 0; i < playerInventory.main.size(); i++) {
+            NpcModel.NPCItem npcItem = inventory.get(i);
+            playerInventory.main.set(i, this.getItemStack(npcItem));
         }
-        //set offhand
-        inv.offHand.set(0, this.getItemStack(npc.getOffhand()));
-        //set armor
-        inv.armor.set(0, this.getItemStack(npc.getArmor_FEET()));
-        inv.armor.set(1, this.getItemStack(npc.getArmor_LEGS()));
-        inv.armor.set(2, this.getItemStack(npc.getArmor_CHEST()));
-        inv.armor.set(3, this.getItemStack(npc.getArmor_HEAD()));
-        return inv;
+
+        playerInventory.offHand.set(0, this.getItemStack(npc.getOffhand()));
+
+        playerInventory.armor.set(0, this.getItemStack(npc.getArmor_FEET()));
+        playerInventory.armor.set(1, this.getItemStack(npc.getArmor_LEGS()));
+        playerInventory.armor.set(2, this.getItemStack(npc.getArmor_CHEST()));
+        playerInventory.armor.set(3, this.getItemStack(npc.getArmor_HEAD()));
+        return playerInventory;
     }
 
-    private ItemStack getItemStack(NPCModel.NPCItem npcItem){
+    private ItemStack getItemStack(NpcModel.NPCItem npcItem){
         try {
             var itemStack = new ItemStack(Registry.ITEM.get(npcItem.itemid), npcItem.count);
             if(npcItem.nbttag != null)
@@ -141,8 +137,8 @@ public class OfflineDatabase {
         return new ItemStack(Items.AIR, 1);
     }
 
-    private NPCModel.NPCItem getNPCItem(ItemStack itemStack){
-        NPCModel.NPCItem newItem = new NPCModel.NPCItem();
+    private NpcModel.NPCItem getNPCItem(ItemStack itemStack){
+        NpcModel.NPCItem newItem = new NpcModel.NPCItem();
         newItem.itemid = Item.getRawId(itemStack.getItem());
         newItem.count = itemStack.getCount();
         if (itemStack.hasNbt() && itemStack.getNbt() != null)

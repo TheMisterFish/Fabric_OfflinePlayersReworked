@@ -1,23 +1,17 @@
-package net.lilfish.offlineplayersreworked.npc;
+package net.lilfish.offlineplayersreworked;
 
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
 import net.lilfish.offlineplayersreworked.interfaces.ServerPlayerEntityInterface;
+import net.lilfish.offlineplayersreworked.npc.Tracer;
 import net.minecraft.block.BlockState;
-import net.minecraft.command.argument.EntityAnchorArgumentType;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.decoration.ItemFrameEntity;
-import net.minecraft.entity.passive.HorseBaseEntity;
-import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.entity.vehicle.BoatEntity;
-import net.minecraft.entity.vehicle.MinecartEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.network.packet.c2s.play.PlayerActionC2SPacket;
-import net.minecraft.network.packet.s2c.play.UpdateSelectedSlotS2CPacket;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.ActionResult;
@@ -35,7 +29,6 @@ public class EntityPlayerActionPack
 
     private BlockPos currentBlock;
     private int blockHitDelay;
-    private boolean isHittingBlock;
     private float curBlockDamageMP;
 
     private boolean sneaking;
@@ -48,21 +41,6 @@ public class EntityPlayerActionPack
     {
         player = playerIn;
         stopAll();
-    }
-    public void copyFrom(EntityPlayerActionPack other)
-    {
-        actions.putAll(other.actions);
-        currentBlock = other.currentBlock;
-        blockHitDelay = other.blockHitDelay;
-        isHittingBlock = other.isHittingBlock;
-        curBlockDamageMP = other.curBlockDamageMP;
-
-        sneaking = other.sneaking;
-        sprinting = other.sprinting;
-        forward = other.forward;
-        strafing = other.strafing;
-
-        itemUseCooldown = other.itemUseCooldown;
     }
 
     public EntityPlayerActionPack start(ActionType type, Action action)
@@ -94,58 +72,6 @@ public class EntityPlayerActionPack
         return this;
     }
 
-    public EntityPlayerActionPack setForward(float value)
-    {
-        forward = value;
-        return this;
-    }
-    public EntityPlayerActionPack setStrafing(float value)
-    {
-        strafing = value;
-        return this;
-    }
-    public EntityPlayerActionPack look(Direction direction)
-    {
-        switch (direction)
-        {
-            case NORTH: return look(180, 0);
-            case SOUTH: return look(0, 0);
-            case EAST: return look(-90, 0);
-            case WEST: return look(90, 0);
-            case UP: return look(player.getYaw(), -90);
-            case DOWN: return look(player.getYaw(), 90);
-        }
-        return this;
-    }
-    public EntityPlayerActionPack look(Vec2f rotation)
-    {
-        return look(rotation.x, rotation.y);
-    }
-
-    public EntityPlayerActionPack look(float yaw, float pitch)
-    {
-        player.setYaw(yaw % 360); //setYaw
-        player.setPitch(MathHelper.clamp(pitch, -90, 90)); // setPitch
-        // maybe player.setPositionAndAngles(player.x, player.y, player.z, yaw, MathHelper.clamp(pitch,-90.0F, 90.0F));
-        return this;
-    }
-
-    public EntityPlayerActionPack lookAt(Vec3d position)
-    {
-        player.lookAt(EntityAnchorArgumentType.EntityAnchor.EYES, position);
-        return this;
-    }
-
-    public EntityPlayerActionPack turn(float yaw, float pitch)
-    {
-        return look(player.getYaw() + yaw, player.getPitch() + pitch);
-    }
-
-    public EntityPlayerActionPack turn(Vec2f rotation)
-    {
-        return turn(rotation.x, rotation.y);
-    }
-
     public EntityPlayerActionPack stopMovement()
     {
         setSneaking(false);
@@ -161,48 +87,6 @@ public class EntityPlayerActionPack
         for (ActionType type : actions.keySet()) type.stop(player, actions.get(type));
         actions.clear();
         return stopMovement();
-    }
-
-    public EntityPlayerActionPack mount(boolean onlyRideables)
-    {
-        //test what happens
-        List<Entity> entities;
-        if (onlyRideables)
-        {
-            entities = player.world.getOtherEntities(player, player.getBoundingBox().expand(3.0D, 1.0D, 3.0D),
-                    e -> e instanceof MinecartEntity || e instanceof BoatEntity || e instanceof HorseBaseEntity);
-        }
-        else
-        {
-            entities = player.world.getOtherEntities(player, player.getBoundingBox().expand(3.0D, 1.0D, 3.0D));
-        }
-        if (entities.size()==0)
-            return this;
-        Entity closest = null;
-        double distance = Double.POSITIVE_INFINITY;
-        Entity currentVehicle = player.getVehicle();
-        for (Entity e: entities)
-        {
-            if (e == player || (currentVehicle == e))
-                continue;
-            double dd = player.squaredDistanceTo(e);
-            if (dd<distance)
-            {
-                distance = dd;
-                closest = e;
-            }
-        }
-        if (closest == null) return this;
-        if (closest instanceof HorseBaseEntity && onlyRideables)
-            ((HorseBaseEntity) closest).interactMob(player, Hand.MAIN_HAND);
-        else
-            player.startRiding(closest,true);
-        return this;
-    }
-    public EntityPlayerActionPack dismount()
-    {
-        player.stopRiding();
-        return this;
     }
 
     public void onUpdate()
@@ -228,7 +112,7 @@ public class EntityPlayerActionPack
                 Action using = actions.get(ActionType.USE);
                 if (using != null) // this is always true - we know use worked, but just in case
                 {
-                    using.retry(this, ActionType.USE);
+                    using.retry(this);
                 }
             }
         }
@@ -246,37 +130,6 @@ public class EntityPlayerActionPack
     {
         double reach = player.interactionManager.isCreative() ? 5 : 4.5f;
         return Tracer.rayTrace(player, 1, reach, false);
-    }
-
-    private void dropItemFromSlot(int slot, boolean dropAll)
-    {
-        PlayerInventory inv = player.getInventory(); // getInventory;
-        if (!inv.getStack(slot).isEmpty())
-            player.dropItem(inv.removeStack(slot,
-                    dropAll ? inv.getStack(slot).getCount() : 1
-            ), false, true); // scatter, keep owner
-    }
-
-    public void drop(int selectedSlot, boolean dropAll)
-    {
-        PlayerInventory inv = player.getInventory(); // getInventory;
-        if (selectedSlot == -2) // all
-        {
-            for (int i = inv.size(); i >= 0; i--)
-                dropItemFromSlot(i, dropAll);
-        }
-        else // one slot
-        {
-            if (selectedSlot == -1)
-                selectedSlot = inv.selectedSlot;
-            dropItemFromSlot(selectedSlot, dropAll);
-        }
-    }
-
-    public void setSlot(int slot)
-    {
-        player.getInventory().selectedSlot = slot-1;
-        player.networkHandler.sendPacket(new UpdateSelectedSlotS2CPacket(slot-1));
     }
 
     public enum ActionType
@@ -484,28 +337,6 @@ public class EntityPlayerActionPack
                         player.dropSelectedItem(false); // dropSelectedItem
                         return false;
                     }
-                },
-        DROP_STACK(true)
-                {
-                    @Override
-                    boolean execute(ServerPlayerEntity player, Action action)
-                    {
-                        player.updateLastActionTime();
-                        player.dropSelectedItem(true); // dropSelectedItem
-                        return false;
-                    }
-                },
-        SWAP_HANDS(true)
-                {
-                    @Override
-                    boolean execute(ServerPlayerEntity player, Action action)
-                    {
-                        player.updateLastActionTime();
-                        ItemStack itemStack_1 = player.getStackInHand(Hand.OFF_HAND);
-                        player.setStackInHand(Hand.OFF_HAND, player.getStackInHand(Hand.MAIN_HAND));
-                        player.setStackInHand(Hand.MAIN_HAND, itemStack_1);
-                        return false;
-                    }
                 };
 
         public final boolean preventSpectator;
@@ -541,11 +372,6 @@ public class EntityPlayerActionPack
             this.offset = offset;
             next = interval + offset;
             isContinuous = continuous;
-        }
-
-        public static Action once()
-        {
-            return new Action(1, 1, 0, false);
         }
 
         public static Action continuous()
@@ -602,17 +428,17 @@ public class EntityPlayerActionPack
             return cancel;
         }
 
-        void retry(EntityPlayerActionPack actionPack, ActionType type)
+        void retry(EntityPlayerActionPack actionPack)
         {
             //assuming action run but was unsuccesful that tick, but opportunity emerged to retry it, lets retry it.
-            if (!type.preventSpectator || !actionPack.player.isSpectator())
+            if (!ActionType.USE.preventSpectator || !actionPack.player.isSpectator())
             {
-                type.execute(actionPack.player, this);
+                ActionType.USE.execute(actionPack.player, this);
             }
             count++;
             if (count == limit)
             {
-                type.stop(actionPack.player, null);
+                ActionType.USE.stop(actionPack.player, null);
                 done = true;
             }
         }

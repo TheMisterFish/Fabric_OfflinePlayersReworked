@@ -2,7 +2,7 @@ package net.lilfish.offlineplayersreworked.mixin;
 
 
 import net.lilfish.offlineplayersreworked.OfflinePlayers;
-import net.lilfish.offlineplayersreworked.npc.NPCClass;
+import net.lilfish.offlineplayersreworked.npc.Npc;
 import net.minecraft.server.ServerMetadata;
 import net.minecraft.server.network.ServerPlayerEntity;
 import org.spongepowered.asm.mixin.Mixin;
@@ -22,7 +22,7 @@ public abstract class ServerMetaPingMixin {
         if(OfflinePlayers.server != null){
             List<ServerPlayerEntity> serverPlayers = OfflinePlayers.server.getPlayerManager().getPlayerList();
             for (ServerPlayerEntity serverPlayer : serverPlayers){
-                if (serverPlayer instanceof NPCClass) {
+                if (serverPlayer instanceof Npc) {
                     npcPlayers += 1;
                 }
             }

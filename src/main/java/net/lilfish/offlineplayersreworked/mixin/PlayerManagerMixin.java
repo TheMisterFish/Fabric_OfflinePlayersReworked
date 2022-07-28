@@ -2,7 +2,7 @@ package net.lilfish.offlineplayersreworked.mixin;
 
 import net.lilfish.offlineplayersreworked.OfflineNetHandlerPlayServer;
 import net.lilfish.offlineplayersreworked.OfflinePlayers;
-import net.lilfish.offlineplayersreworked.npc.NPCClass;
+import net.lilfish.offlineplayersreworked.npc.Npc;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.network.ClientConnection;
 import net.minecraft.server.MinecraftServer;
@@ -26,14 +26,14 @@ public abstract class PlayerManagerMixin {
 
     @Inject(method = "loadPlayerData", at = @At(value = "RETURN", shift = At.Shift.BEFORE))
     private void fixOfflineStartingPos(ServerPlayerEntity serverPlayer, CallbackInfoReturnable<NbtCompound> cir) {
-        if (serverPlayer instanceof NPCClass) {
-            ((NPCClass) serverPlayer).fixStartingPosition.run();
+        if (serverPlayer instanceof Npc) {
+            ((Npc) serverPlayer).fixStartingPosition.run();
         }
     }
 
     @Redirect(method = "onPlayerConnect", at = @At(value = "NEW", target = "net/minecraft/server/network/ServerPlayNetworkHandler"))
     private ServerPlayNetworkHandler replaceOfflineNetworkHandler(MinecraftServer server, ClientConnection clientConnection, ServerPlayerEntity playerIn) {
-        boolean isNPC = playerIn instanceof NPCClass;
+        boolean isNPC = playerIn instanceof Npc;
         if (isNPC) {
             return new OfflineNetHandlerPlayServer(this.server, clientConnection, playerIn);
         } else {
@@ -43,7 +43,7 @@ public abstract class PlayerManagerMixin {
 
     @Inject(method = "onPlayerConnect", at = @At("RETURN"))
     private void initOfflinePlayerConnect(ClientConnection connection, ServerPlayerEntity player, CallbackInfo ci) {
-        boolean isNPC = player instanceof NPCClass;
+        boolean isNPC = player instanceof Npc;
         if (!isNPC) {
             OfflinePlayers.playerJoined(player);
         }
