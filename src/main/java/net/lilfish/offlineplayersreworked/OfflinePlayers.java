@@ -12,7 +12,9 @@ import net.lilfish.offlineplayersreworked.storage.OfflineDatabase;
 import net.lilfish.offlineplayersreworked.storage.models.NpcModel;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.effect.StatusEffect;
 import net.minecraft.entity.effect.StatusEffectInstance;
+import net.minecraft.entity.effect.StatusEffects;
 import net.minecraft.entity.mob.Angerable;
 import net.minecraft.entity.mob.PathAwareEntity;
 import net.minecraft.entity.player.PlayerInventory;
@@ -29,6 +31,7 @@ import net.minecraft.world.GameMode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
 
@@ -41,6 +44,8 @@ public class OfflinePlayers implements DedicatedServerModInitializer {
     public static OfflineDatabase STORAGE = new OfflineDatabase();
     public static MinecraftServer server;
     public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
+
+    private static List<StatusEffect> statusEffectIgnoreList = List.of(StatusEffects.SPEED, StatusEffects.HASTE, StatusEffects.RESISTANCE, StatusEffects.JUMP_BOOST, StatusEffects.STRENGTH);
 
     @Override
     public void onInitializeServer() {
@@ -172,8 +177,10 @@ public class OfflinePlayers implements DedicatedServerModInitializer {
             player.setExperiencePoints(points);
 //          Set status effects
             for (StatusEffectInstance statusEffect : npcPlayer.getStatusEffects()) {
-                player.addStatusEffect(statusEffect);
-                npcPlayer.removeStatusEffect(statusEffect.getEffectType());
+                if (!statusEffectIgnoreList.contains(statusEffect)) {
+                    player.addStatusEffect(statusEffect);
+                    npcPlayer.removeStatusEffect(statusEffect.getEffectType());
+                }
             }
             player.setHealth(npcPlayer.getHealth());
 //          Set hunger
