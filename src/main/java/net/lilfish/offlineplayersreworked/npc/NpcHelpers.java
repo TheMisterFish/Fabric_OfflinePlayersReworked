@@ -1,6 +1,5 @@
 package net.lilfish.offlineplayersreworked.npc;
 
-import com.mojang.datafixers.DataFixer;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.server.MinecraftServer;
