@@ -35,6 +35,11 @@ public class NpcModel {
     private double y;
     private double z;
     private String deathMessage;
+    private String action;
+    private int interval;
+    private int offset;
+
+    private String world;
 
     public ArrayList<NPCItem> getInventory() {
         return inventory;
@@ -154,5 +159,35 @@ public class NpcModel {
         this.z = z;
     }
 
+    public String getAction() {
+        return action;
+    }
 
+    public void setAction(String action) {
+        this.action = action;
+    }
+
+    public int getInterval() {
+        return interval;
+    }
+
+    public void setInterval(int interval) {
+        this.interval = interval;
+    }
+
+    public int getOffset() {
+        return offset;
+    }
+
+    public void setOffset(int offset) {
+        this.offset = offset;
+    }
+
+    public String getWorld() {
+        return world;
+    }
+
+    public void setWorld(String world) {
+        this.world = world;
+    }
 }

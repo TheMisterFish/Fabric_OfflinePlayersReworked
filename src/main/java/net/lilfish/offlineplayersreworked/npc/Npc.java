@@ -17,12 +17,16 @@ import net.minecraft.server.ServerTask;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.text.Text;
+import net.minecraft.util.Identifier;
 import net.minecraft.util.UserCache;
 import net.minecraft.util.collection.DefaultedList;
+import net.minecraft.util.registry.Registry;
 import net.minecraft.util.registry.RegistryKey;
 import net.minecraft.world.World;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.UUID;
 
 import static net.lilfish.offlineplayersreworked.OfflinePlayers.MOD_ID;
 
@@ -33,7 +37,7 @@ public class Npc extends ServerPlayerEntity implements ImplementedInventory {
     public Runnable fixStartingPosition = () -> {
     };
 
-    public static Npc createNpc(ServerPlayerEntity player) {
+    public static Npc createNpc(ServerPlayerEntity player, String action, int interval, int offset) {
         World entityWorld = player.getEntityWorld();
         MinecraftServer minecraftServer = player.getServer();
         if (minecraftServer == null) {
@@ -75,10 +79,26 @@ public class Npc extends ServerPlayerEntity implements ImplementedInventory {
         minecraftServer.getPlayerManager().onPlayerConnect(new OfflineNetworkManager(NetworkSide.SERVERBOUND), npc);
         npc.teleport(worldIn, player.getX(), player.getY(), player.getZ(), player.getYaw(), player.getPitch());
 
+        var worldString = player.getWorld().getRegistryKey().getValue().toString();
+
 //      Save the npc & player data in storage
-        OfflinePlayers.STORAGE.addNPC(player.getUuid(), npc.getUuid());
+        OfflinePlayers.STORAGE.addNPC(player.getUuid(), npc.getUuid(), action, interval, offset, worldString);
 //      Return the npc
         return npc;
+    }
+
+    public static Npc respawnNpc(UUID npcUUID, String npcWorld) {
+
+        MinecraftServer minecraftServer = OfflinePlayers.server;
+        PlayerEntity player = minecraftServer.getPlayerManager().getPlayer(npcUUID);
+
+        assert player != null;
+        var gameprofile = player.getGameProfile();
+
+        RegistryKey<World> worldRegistryKey = RegistryKey.of(Registry.WORLD_KEY, new Identifier(npcWorld));
+        var serverWorld = minecraftServer.getWorld(worldRegistryKey);
+
+        return new Npc(minecraftServer, serverWorld, gameprofile);
     }
 
     private Npc(MinecraftServer server, ServerWorld worldIn, GameProfile profile) {

@@ -7,20 +7,16 @@ import net.minecraft.server.network.ServerPlayNetworkHandler;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Text;
 
-public class OfflineNetHandlerPlayServer extends ServerPlayNetworkHandler
-{
-    public OfflineNetHandlerPlayServer(MinecraftServer server, ClientConnection cc, ServerPlayerEntity playerIn)
-    {
+public class OfflineNetHandlerPlayServer extends ServerPlayNetworkHandler {
+    public OfflineNetHandlerPlayServer(MinecraftServer server, ClientConnection cc, ServerPlayerEntity playerIn) {
         super(server, cc, playerIn);
     }
 
     @Override
-    public void sendPacket(final Packet<?> packetIn)
-    {
+    public void sendPacket(final Packet<?> packetIn) {
     }
 
     @Override
-    public void disconnect(Text message)
-    {
+    public void disconnect(Text message) {
     }
 }
