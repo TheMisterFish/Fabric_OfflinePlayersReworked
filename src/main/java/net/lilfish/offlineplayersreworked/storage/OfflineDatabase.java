@@ -54,7 +54,7 @@ public class OfflineDatabase {
         return jsonDBTemplate.findAll(NpcModel.class);
     }
 
-    public void addNPC(UUID player_id, UUID npc_id, String action, int interval, int offset, String world) {
+    public void addNPC(UUID player_id, UUID npc_id, String username, String action, int interval, int offset, String world) {
         if (jsonDBTemplate.findById(player_id, NpcModel.class) != null) {
             this.removeNPC(player_id);
         }
@@ -66,6 +66,7 @@ public class OfflineDatabase {
         npcModel.setInterval(interval);
         npcModel.setOffset(offset);
         npcModel.setWorld(world);
+        npcModel.setNpc_name(username);
         jsonDBTemplate.insert(npcModel);
     }
 

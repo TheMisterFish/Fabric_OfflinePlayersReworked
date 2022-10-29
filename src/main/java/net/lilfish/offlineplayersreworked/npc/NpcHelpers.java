@@ -2,12 +2,14 @@ package net.lilfish.offlineplayersreworked.npc;
 
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EquipmentSlot;
+import net.minecraft.entity.effect.StatusEffectInstance;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.WhitelistEntry;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Text;
 
 public class NpcHelpers {
+
     private final Npc npc;
     private final ServerPlayerEntity serverPlayerEntity;
     private final MinecraftServer minecraftServer;
@@ -59,11 +61,20 @@ public class NpcHelpers {
     }
 
     public void removeStatusEffects() {
-        npc.getStatusEffects().forEach(statusEffectInstance -> npc.removeStatusEffect(statusEffectInstance.getEffectType()));
+        try {
+            npc.getStatusEffects().forEach(statusEffectInstance -> npc.removeStatusEffect(statusEffectInstance.getEffectType()));
+        } catch (Exception ignored) {
+        }
+
     }
 
     public void setStatusEffect() {
-        serverPlayerEntity.getStatusEffects().forEach(npc::addStatusEffect);
+        try {
+            for (StatusEffectInstance statusEffect : serverPlayerEntity.getStatusEffects()) {
+                npc.addStatusEffect(statusEffect);
+            }
+        } catch (Exception ignored) {
+        }
     }
 
     /*********************************************
