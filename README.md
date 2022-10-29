@@ -6,11 +6,11 @@ For setup instructions please see the [fabric wiki page](https://fabricmc.net/wi
 ### Planned features/updates:
 
 - [x] Aggro mobs (so that aggrasive mobs target NPC or Player after going offline or online)
-- [ ] Achievements sync
-- [ ] Stats sync
-- [ ] Fix NPC Class clutterness (add helper classes)
+- [x] ~~Achievements sync~~ <sub>decided to not do this as NPC's are allowed to have their own advancements</sub> 
+- [x] ~~Stats sync~~ <sub>decided to not do this as NPC's are allowed to have their own stats</sub>
+- [x] Fix NPC Class clutterness (add helper classes)
 - [ ] Clone sleep time attributes for Phantom spawning mechenics
-
+- [x] Auto respawn on server restart
 
 ## License
 
