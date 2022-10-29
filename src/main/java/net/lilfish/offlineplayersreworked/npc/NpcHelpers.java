@@ -109,7 +109,7 @@ public class NpcHelpers {
         }
     }
 
-    public void stats(){
+    public void stats() {
         serverPlayerEntity.getSleepTimer();
     }
 
