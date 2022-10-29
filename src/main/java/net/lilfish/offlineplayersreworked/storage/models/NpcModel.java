@@ -22,6 +22,7 @@ public class NpcModel {
     @Id
     private UUID id;
     private UUID npc_id;
+    private String npc_name;
     private boolean dead;
     private ArrayList<NPCItem> inventory;
     private NPCItem offhand;
@@ -189,5 +190,13 @@ public class NpcModel {
 
     public void setWorld(String world) {
         this.world = world;
+    }
+
+    public String getNpc_name() {
+        return npc_name;
+    }
+
+    public void setNpc_name(String npc_name) {
+        this.npc_name = npc_name;
     }
 }

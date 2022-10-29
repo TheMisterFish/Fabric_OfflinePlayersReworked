@@ -12,6 +12,12 @@ public abstract class MinecraftServerCoreMixin {
     @Inject(method = "loadWorld", at = @At("HEAD"))
     private void serverLoaded(CallbackInfo ci)
     {
-        OfflinePlayers.onServerLoaded((MinecraftServer) (Object) this);
+        OfflinePlayers.onWorldLoad((MinecraftServer) (Object) this);
+    }
+
+    @Inject(method = "loadWorld", at = @At("RETURN"))
+    private void serverLoadedReady(CallbackInfo ci)
+    {
+        OfflinePlayers.afterWorldLoad();
     }
 }

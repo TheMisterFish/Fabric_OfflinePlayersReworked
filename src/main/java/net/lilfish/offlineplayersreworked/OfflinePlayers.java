@@ -4,6 +4,7 @@ import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import it.unimi.dsi.fastutil.Pair;
 import net.fabricmc.api.DedicatedServerModInitializer;
 import net.fabricmc.fabric.api.command.v1.CommandRegistrationCallback;
 import net.lilfish.offlineplayersreworked.interfaces.ServerPlayerEntityInterface;
@@ -12,9 +13,7 @@ import net.lilfish.offlineplayersreworked.storage.OfflineDatabase;
 import net.lilfish.offlineplayersreworked.storage.models.NpcModel;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.effect.StatusEffect;
 import net.minecraft.entity.effect.StatusEffectInstance;
-import net.minecraft.entity.effect.StatusEffects;
 import net.minecraft.entity.mob.Angerable;
 import net.minecraft.entity.mob.PathAwareEntity;
 import net.minecraft.entity.player.PlayerInventory;
@@ -31,7 +30,6 @@ import net.minecraft.world.GameMode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
 
@@ -44,15 +42,12 @@ public class OfflinePlayers implements DedicatedServerModInitializer {
     public static OfflineDatabase STORAGE = new OfflineDatabase();
     public static MinecraftServer server;
     public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
-    private static final List<StatusEffect> statusEffectIgnoreList = List.of(StatusEffects.SPEED, StatusEffects.HASTE, StatusEffects.RESISTANCE, StatusEffects.JUMP_BOOST, StatusEffects.STRENGTH);
 
     @Override
     public void onInitializeServer() {
         LOGGER.info("Hello Fabric world!");
         // init DB
         STORAGE.init();
-        // respawn players
-        respawnActiveNpcs();
         // init command
         CommandRegistrationCallback.EVENT.register((dispatcher, dedicated) -> {
             if (dedicated) {
@@ -73,49 +68,6 @@ public class OfflinePlayers implements DedicatedServerModInitializer {
         });
     }
 
-    public static void respawnActiveNpcs() {
-        var activeNpcs = STORAGE.getAllNPC().stream()
-                .filter(npcModel -> !npcModel.isDead())
-                .toList();
-
-        activeNpcs.forEach(npcModel -> {
-            Npc npc = Npc.respawnNpc(npcModel.getNpc_id(), npcModel.getWorld());
-
-            String thisAction;
-            int thisInterval = 20;
-            int thisOffset;
-
-            EntityPlayerActionPack.Action action_interval;
-            EntityPlayerActionPack.ActionType action_type = EntityPlayerActionPack.ActionType.ATTACK;
-            thisAction = npcModel.getAction();
-
-            thisInterval = npcModel.getInterval();
-            action_interval = EntityPlayerActionPack.Action.interval(thisInterval * 20);
-
-            thisOffset = npcModel.getOffset();
-            if (thisOffset != -1)
-                action_interval = EntityPlayerActionPack.Action.interval(thisInterval * 20, thisOffset);
-
-            if (!Objects.equals(thisAction, "none")) {
-                switch (thisAction) {
-                    case "attack" -> action_type = EntityPlayerActionPack.ActionType.ATTACK;
-                    case "holdAttack" -> {
-                        action_type = EntityPlayerActionPack.ActionType.ATTACK;
-                        action_interval = EntityPlayerActionPack.Action.continuous();
-                    }
-                    case "place" -> action_type = EntityPlayerActionPack.ActionType.USE;
-                    case "jump" -> action_type = EntityPlayerActionPack.ActionType.JUMP;
-                    case "dropItem" -> action_type = EntityPlayerActionPack.ActionType.DROP_ITEM;
-                }
-                EntityPlayerActionPack.ActionType finalType = action_type;
-                EntityPlayerActionPack.Action finalActionInterval = action_interval;
-
-                manipulate(npc, ap -> ap.start(finalType, finalActionInterval));
-            }
-        });
-
-    }
-
     private static int spawn(CommandContext<ServerCommandSource> context) {
         LOGGER.info("Adding new offline player");
         ServerCommandSource source = context.getSource();
@@ -132,7 +84,7 @@ public class OfflinePlayers implements DedicatedServerModInitializer {
         int thisInterval = 20;
         int thisOffset = -1;
 
-        EntityPlayerActionPack.Action action_interval = EntityPlayerActionPack.Action.interval(thisInterval);
+        EntityPlayerActionPack.Action actionInterval = EntityPlayerActionPack.Action.interval(thisInterval);
         EntityPlayerActionPack.ActionType action_type = EntityPlayerActionPack.ActionType.ATTACK;
 
 //      Try and get arguments
@@ -142,13 +94,13 @@ public class OfflinePlayers implements DedicatedServerModInitializer {
         }
         try {
             thisInterval = IntegerArgumentType.getInteger(context, "interval");
-            action_interval = EntityPlayerActionPack.Action.interval(thisInterval * 20);
+            actionInterval = EntityPlayerActionPack.Action.interval(thisInterval * 20);
         } catch (IllegalArgumentException ignored) {
         }
         try {
             thisOffset = IntegerArgumentType.getInteger(context, "offset");
             if (thisOffset != -1)
-                action_interval = EntityPlayerActionPack.Action.interval(thisInterval * 20, thisOffset);
+                actionInterval = EntityPlayerActionPack.Action.interval(thisInterval * 20, thisOffset);
         } catch (IllegalArgumentException ignored) {
         }
 
@@ -157,19 +109,9 @@ public class OfflinePlayers implements DedicatedServerModInitializer {
 
 //      Check if NPC should have action, if so, add it.
         if (!Objects.equals(thisAction, "none")) {
-            switch (thisAction) {
-                case "attack" -> action_type = EntityPlayerActionPack.ActionType.ATTACK;
-                case "holdAttack" -> {
-                    action_type = EntityPlayerActionPack.ActionType.ATTACK;
-                    action_interval = EntityPlayerActionPack.Action.continuous();
-                }
-                case "place" -> action_type = EntityPlayerActionPack.ActionType.USE;
-                case "jump" -> action_type = EntityPlayerActionPack.ActionType.JUMP;
-                case "dropItem" -> action_type = EntityPlayerActionPack.ActionType.DROP_ITEM;
-            }
-            EntityPlayerActionPack.ActionType finalType = action_type;
-            EntityPlayerActionPack.Action finalActionInterval = action_interval;
-
+            Pair<EntityPlayerActionPack.ActionType, EntityPlayerActionPack.Action> actionPair = getActionPair(thisAction, actionInterval);
+            EntityPlayerActionPack.ActionType finalType = actionPair.first();
+            EntityPlayerActionPack.Action finalActionInterval = actionPair.second();
             manipulate(npc, ap -> ap.start(finalType, finalActionInterval));
         }
 
@@ -181,6 +123,51 @@ public class OfflinePlayers implements DedicatedServerModInitializer {
 
         npc.refreshPositionAfterTeleport(playerPosition.getX(), playerPosition.getY(), playerPosition.getZ());
         return 1;
+    }
+
+    public static void respawnActiveNpcs() {
+        STORAGE.getAllNPC().stream()
+                .filter(npcModel -> !npcModel.isDead())
+                .toList().forEach(npcModel -> {
+                    Npc npc = Npc.respawnNpc(npcModel.getWorld(), npcModel.getNpc_name());
+
+                    String npcActionString = npcModel.getAction();
+                    int npcIntervalInTicks = npcModel.getInterval();
+                    int npcOffset = npcModel.getOffset();
+
+                    EntityPlayerActionPack.Action npcActionInterval;
+                    EntityPlayerActionPack.ActionType action_type = EntityPlayerActionPack.ActionType.ATTACK;
+
+                    npcActionInterval = EntityPlayerActionPack.Action.interval(npcIntervalInTicks * 20);
+
+                    if (npcOffset != -1)
+                        npcActionInterval = EntityPlayerActionPack.Action.interval(npcIntervalInTicks * 20, npcOffset);
+
+                    if (!Objects.equals(npcActionString, "none")) {
+                        Pair<EntityPlayerActionPack.ActionType, EntityPlayerActionPack.Action> actionPair = getActionPair(npcActionString, npcActionInterval);
+
+                        EntityPlayerActionPack.ActionType finalType = actionPair.first();
+                        EntityPlayerActionPack.Action finalActionInterval = actionPair.second();
+
+                        manipulate(npc, ap -> ap.start(finalType, finalActionInterval));
+                    }
+                });
+    }
+
+    private static Pair<EntityPlayerActionPack.ActionType, EntityPlayerActionPack.Action> getActionPair(String actionString, EntityPlayerActionPack.Action action_interval) {
+        EntityPlayerActionPack.Action action = action_interval;
+        EntityPlayerActionPack.ActionType actionType = EntityPlayerActionPack.ActionType.ATTACK;
+        switch (actionString) {
+            case "attack" -> actionType = EntityPlayerActionPack.ActionType.ATTACK;
+            case "holdAttack" -> {
+                actionType = EntityPlayerActionPack.ActionType.ATTACK;
+                action = EntityPlayerActionPack.Action.continuous();
+            }
+            case "place" -> actionType = EntityPlayerActionPack.ActionType.USE;
+            case "jump" -> actionType = EntityPlayerActionPack.ActionType.JUMP;
+            case "dropItem" -> actionType = EntityPlayerActionPack.ActionType.DROP_ITEM;
+        }
+        return Pair.of(actionType, action);
     }
 
     private static void manipulate(ServerPlayerEntity player, Consumer<EntityPlayerActionPack> action) {
@@ -220,11 +207,12 @@ public class OfflinePlayers implements DedicatedServerModInitializer {
             player.setExperienceLevel(npcPlayer.experienceLevel);
             player.setExperiencePoints(points);
 //          Set status effects
-            for (StatusEffectInstance statusEffect : npcPlayer.getStatusEffects()) {
-                if (!statusEffectIgnoreList.contains(statusEffect.getEffectType())) {
+            try {
+                for (StatusEffectInstance statusEffect : npcPlayer.getStatusEffects()) {
                     player.addStatusEffect(statusEffect);
                     npcPlayer.removeStatusEffect(statusEffect.getEffectType());
                 }
+            } catch (Exception ignored) {
             }
             player.setHealth(npcPlayer.getHealth());
 //          Set hunger
@@ -273,9 +261,14 @@ public class OfflinePlayers implements DedicatedServerModInitializer {
         }
     }
 
-    public static void onServerLoaded(MinecraftServer mcServer) {
+    public static void onWorldLoad(MinecraftServer mcServer) {
         // we need to set the server, so we can access it from the ping mixin
         server = mcServer;
+    }
+
+    public static void afterWorldLoad() {
+        // respawn players
+        respawnActiveNpcs();
     }
 
     private static void aggroUpdate(Entity firstEntity, Entity secondEntity) {
