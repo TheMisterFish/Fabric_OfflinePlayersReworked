@@ -49,15 +49,16 @@ public class OfflinePlayersReworked implements DedicatedServerModInitializer {
                                     context
                                             .getSource()
                                             .sendSystemMessage(Component.empty()
-                                                    .append(Component.literal("offline players provides the following action types: \n\n"))
+                                                    .append(Component.literal("offline players provides the following action types: \n"))
                                                     .append(Component.literal("  - attack \n").withStyle(ChatFormatting.AQUA))
                                                     .append(Component.literal("  - place \n").withStyle(ChatFormatting.AQUA))
+                                                    .append(Component.literal("  - use \n").withStyle(ChatFormatting.AQUA))
                                                     .append(Component.literal("  - crouch \n").withStyle(ChatFormatting.AQUA))
                                                     .append(Component.literal("  - jump \n").withStyle(ChatFormatting.AQUA))
                                                     .append(Component.literal("  - eat \n").withStyle(ChatFormatting.AQUA))
                                                     .append(Component.literal("  - drop_item \n").withStyle(ChatFormatting.AQUA))
                                                     .append(Component.literal("  - drop_stack \n").withStyle(ChatFormatting.AQUA))
-                                                    .append(Component.literal("  - move_forward, move_backward \n").withStyle(ChatFormatting.AQUA))
+                                                    .append(Component.literal("  - move_forward, move_backward").withStyle(ChatFormatting.AQUA))
                                             );
 
                                     return 1;
@@ -163,7 +164,7 @@ public class OfflinePlayersReworked implements DedicatedServerModInitializer {
         EntityPlayerActionPack.ActionType actionType = null;
         switch (actionString) {
             case "attack" -> actionType = EntityPlayerActionPack.ActionType.ATTACK;
-            case "place" -> actionType = EntityPlayerActionPack.ActionType.USE;
+            case "place", "use" -> actionType = EntityPlayerActionPack.ActionType.USE;
             case "crouch" -> actionType = EntityPlayerActionPack.ActionType.CROUCH;
             case "jump" -> actionType = EntityPlayerActionPack.ActionType.JUMP;
             case "eat" -> actionType = EntityPlayerActionPack.ActionType.EAT;

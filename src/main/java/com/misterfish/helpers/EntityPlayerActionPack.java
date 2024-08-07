@@ -15,6 +15,7 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.entity.animal.horse.AbstractHorse;
 import net.minecraft.world.entity.decoration.ItemFrame;
 import net.minecraft.world.entity.player.Inventory;
@@ -24,13 +25,20 @@ import net.minecraft.world.food.FoodProperties;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static com.misterfish.OfflinePlayersReworked.MOD_ID;
+
 public class EntityPlayerActionPack {
+
+    public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
+
     private final ServerPlayer player;
 
     private final Map<ActionType, Action> actions = new EnumMap<>(ActionType.class);
@@ -47,7 +55,7 @@ public class EntityPlayerActionPack {
 
     private int itemUseCooldown;
 
-    private static final Vec3 UP = new Vec3(0, 1, 0); // Define upward vector
+    private static final double MOVE_DISTANCE = 1.0;
 
     public EntityPlayerActionPack(ServerPlayer playerIn) {
         player = playerIn;
@@ -215,6 +223,23 @@ public class EntityPlayerActionPack {
                 }
             }
         }
+
+        Vec3 movement = Vec3.ZERO;
+        if (actions.containsKey(ActionType.MOVE_FORWARD)) {
+            movement = movement.add(player.getLookAngle().normalize());
+        }
+        if (actions.containsKey(ActionType.MOVE_BACKWARDS)) {
+            movement = movement.subtract(player.getLookAngle().normalize());
+        }
+
+        if (!movement.equals(Vec3.ZERO)) {
+            double walkingSpeed = 0.175;
+            movement = movement.normalize().scale(walkingSpeed);
+
+            player.move(MoverType.PLAYER, movement);
+        }
+
+
         float vel = sneaking ? 0.3F : 1.0F;
         // The != 0.0F checks are needed given else real players can't control minecarts, however it works with fakes and else they don't stop immediately
         if (forward != 0.0F || player instanceof EntityPlayerMPFake) {
@@ -407,11 +432,9 @@ public class EntityPlayerActionPack {
         JUMP(true) {
             @Override
             boolean execute(ServerPlayer player, Action action) {
-                if (action.limit == 1) {
-                    if (player.onGround()) player.jumpFromGround(); // onGround
-                } else {
-                    player.setJumping(true);
-                }
+                player.jumpFromGround(); // onGround
+                player.setJumping(true);
+
                 return false;
             }
 
@@ -468,16 +491,12 @@ public class EntityPlayerActionPack {
         MOVE_FORWARD(true) {
             @Override
             boolean execute(ServerPlayer player, Action action) {
-                Vec3 forward = player.getForward();
-                movePlayer(player, 1.0, forward);
                 return false;
             }
         },
         MOVE_BACKWARDS(true) {
             @Override
             boolean execute(ServerPlayer player, Action action) {
-                Vec3 forward = player.getForward();
-                movePlayer(player, -1.0, forward);
                 return false;
             }
         },
@@ -510,12 +529,6 @@ public class EntityPlayerActionPack {
             inactiveTick(player, action);
         }
 
-        private static void movePlayer(ServerPlayer player, double distance, Vec3 direction) {
-            Vec3 currentPos = player.getPosition(1.0F);
-            Vec3 newPos = currentPos.add(direction.multiply(distance, distance, distance));
-
-            player.lerpMotion(newPos.x, newPos.y, newPos.z);
-        }
     }
 
     public static class Action {

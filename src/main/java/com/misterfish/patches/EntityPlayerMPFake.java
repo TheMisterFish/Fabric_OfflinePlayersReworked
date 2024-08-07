@@ -30,6 +30,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Objects;
 import java.util.UUID;
 
 import static com.misterfish.OfflinePlayersReworked.MOD_ID;
@@ -54,14 +55,15 @@ public class EntityPlayerMPFake extends ServerPlayer {
             server.getPlayerList().placeNewPlayer(new FakeClientConnection(PacketFlow.SERVERBOUND), offlinePlayer, new CommonListenerCookie(gameprofile, 0, player.clientInformation(), true));
 
             // Rights
+            var playerList = Objects.requireNonNull(player.getServer()).getPlayerList();
 
-//            if (player.getServer().get.getPlayerManager().isWhitelistEnabled() && !minecraftServer.getPlayerManager().isWhitelisted(npc.getGameProfile())) {
-//                UserWhiteListEntry whitelistEntry = new UserWhiteListEntry(offlinePlayer.getGameProfile());
-//                minecraftServer.getPlayerManager().getWhitelist().add(whitelistEntry);
-//            }
-//            if (serverPlayerEntity.hasPermissionLevel(minecraftServer.getOpPermissionLevel())) {
-//                minecraftServer.getPlayerManager().addToOperators(npc.getGameProfile());
-//            }
+            if (playerList.isUsingWhitelist() && !playerList.isWhiteListed(offlinePlayer.getGameProfile())) {
+                UserWhiteListEntry whitelistEntry = new UserWhiteListEntry(offlinePlayer.getGameProfile());
+                playerList.getWhiteList().add(whitelistEntry);
+            }
+            if (playerList.isOp(player.getGameProfile())) {
+                playerList.op(offlinePlayer.getGameProfile());
+            }
 
             // Health
             offlinePlayer.setHealth(player.getHealth());
