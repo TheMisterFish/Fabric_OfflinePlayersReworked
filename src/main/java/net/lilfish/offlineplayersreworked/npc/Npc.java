@@ -11,7 +11,10 @@ import net.minecraft.entity.player.HungerManager;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
+import net.minecraft.network.DisconnectionInfo;
 import net.minecraft.network.NetworkSide;
+import net.minecraft.registry.Registry;
+import net.minecraft.registry.RegistryKey;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.ServerTask;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -20,8 +23,6 @@ import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.UserCache;
 import net.minecraft.util.collection.DefaultedList;
-import net.minecraft.util.registry.Registry;
-import net.minecraft.util.registry.RegistryKey;
 import net.minecraft.world.World;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,9 +54,9 @@ public class Npc extends ServerPlayerEntity implements ImplementedInventory {
         } finally {
             UserCache.setUseRemote(minecraftServer.isDedicated() && minecraftServer.isOnlineMode());
         }
-        if (gameprofile == null) {
-            gameprofile = new GameProfile(PlayerEntity.getOfflinePlayerUuid(username), username);
-        }
+//        if (gameprofile == null) {
+//            gameprofile = new GameProfile(PlayerEntity.getOfflinePlayerUuid(username), username);
+//        }
 
         Npc npc = new Npc(minecraftServer, worldIn, gameprofile);
         NpcHelpers npcHelpers = new NpcHelpers(npc, player, minecraftServer);
@@ -74,7 +75,7 @@ public class Npc extends ServerPlayerEntity implements ImplementedInventory {
 
 //        Connect and teleport
         npc.fixStartingPosition = () -> npc.refreshPositionAndAngles(player.getX(), player.getY(), player.getZ(), player.getYaw(), player.getPitch());
-        minecraftServer.getPlayerManager().onPlayerConnect(new OfflineNetworkManager(NetworkSide.SERVERBOUND), npc);
+        minecraftServer.getPlayerManager().onPlayerConnect(new OfflineNetworkManager(NetworkSide.SERVERBOUND), npc, null);
         npc.teleport(worldIn, player.getX(), player.getY(), player.getZ(), player.getYaw(), player.getPitch());
 
         var worldString = player.getWorld().getRegistryKey().getValue().toString();
@@ -96,34 +97,33 @@ public class Npc extends ServerPlayerEntity implements ImplementedInventory {
         } finally {
             UserCache.setUseRemote(minecraftServer.isDedicated() && minecraftServer.isOnlineMode());
         }
-        if (gameprofile == null) {
-            gameprofile = new GameProfile(PlayerEntity.getOfflinePlayerUuid(username), username);
-        }
+//        if (gameprofile == null) {
+//            gameprofile = new GameProfile(PlayerEntity.getOfflinePlayerUuid(username), username);
+//        }
 
-        RegistryKey<World> worldRegistryKey = RegistryKey.of(Registry.WORLD_KEY, new Identifier(new Identifier(npcWorld).getPath()));
-        var serverWorld = minecraftServer.getWorld(worldRegistryKey);
+        var serverWorld = minecraftServer.getWorld(World.OVERWORLD);
 
         Npc npc = new Npc(minecraftServer, serverWorld, gameprofile);
-        minecraftServer.getPlayerManager().onPlayerConnect(new OfflineNetworkManager(NetworkSide.SERVERBOUND), npc);
+        minecraftServer.getPlayerManager().onPlayerConnect(new OfflineNetworkManager(NetworkSide.SERVERBOUND), npc, null);
 
         return npc;
     }
 
     private Npc(MinecraftServer server, ServerWorld worldIn, GameProfile profile) {
-        super(server, worldIn, profile);
+        super(server, worldIn, profile, null);
     }
 
-    @Override
-    protected void onEquipStack(ItemStack stack) {
-        if (!isUsingItem()) super.onEquipStack(stack);
-    }
+//    @Override
+//    protected void onEquipStack(ItemStack stack) {
+//        if (!isUsingItem()) super.onEquipStack(stack);
+//    }
 
     @Override
     public void kill() {
-        kill(Text.of("Killed"));
+        kill(new DisconnectionInfo(Text.of("Killed")));
     }
 
-    public void kill(Text reason) {
+    public void kill(DisconnectionInfo reason) {
         shakeOff();
         this.server.send(new ServerTask(this.server.getTicks(), () -> this.networkHandler.onDisconnected(reason)));
     }
@@ -132,7 +132,7 @@ public class Npc extends ServerPlayerEntity implements ImplementedInventory {
     public void tick() {
         if (this.getServer() != null && this.getServer().getTicks() % 10 == 0) {
             this.networkHandler.syncWithPlayerPosition();
-            this.getWorld().getChunkManager().updatePosition(this);
+//            this.getWorld().getChunkManager().updatePosition(this);
             onTeleportationDone();
         }
         try {
@@ -162,7 +162,7 @@ public class Npc extends ServerPlayerEntity implements ImplementedInventory {
         super.onDeath(cause);
         setHealth(20);
         this.hungerManager = new HungerManager();
-        kill(this.getDamageTracker().getDeathMessage());
+        kill(new DisconnectionInfo(this.getDamageTracker().getDeathMessage()));
     }
 
     @Override

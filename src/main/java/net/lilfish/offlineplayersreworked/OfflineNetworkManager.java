@@ -9,10 +9,6 @@ public class OfflineNetworkManager extends ClientConnection {
     }
 
     @Override
-    public void disableAutoRead() {
-    }
-
-    @Override
     public void handleDisconnection() {
     }
 }

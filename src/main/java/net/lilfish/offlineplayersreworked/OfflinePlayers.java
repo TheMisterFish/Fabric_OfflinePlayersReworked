@@ -3,7 +3,6 @@ package net.lilfish.offlineplayersreworked;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
-import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import it.unimi.dsi.fastutil.Pair;
 import net.fabricmc.api.DedicatedServerModInitializer;
 import net.fabricmc.fabric.api.command.v1.CommandRegistrationCallback;
@@ -17,7 +16,6 @@ import net.minecraft.entity.effect.StatusEffectInstance;
 import net.minecraft.entity.mob.Angerable;
 import net.minecraft.entity.mob.PathAwareEntity;
 import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.network.MessageType;
 import net.minecraft.predicate.entity.EntityPredicates;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.ServerCommandSource;
@@ -25,7 +23,6 @@ import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Text;
 import net.minecraft.util.TypeFilter;
 import net.minecraft.util.math.Box;
-import net.minecraft.util.math.PositionImpl;
 import net.minecraft.world.GameMode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -72,12 +69,7 @@ public class OfflinePlayers implements DedicatedServerModInitializer {
         LOGGER.info("Adding new offline player");
         ServerCommandSource source = context.getSource();
         ServerPlayerEntity player;
-        try {
-            player = source.getPlayer();
-        } catch (CommandSyntaxException e) {
-            LOGGER.error("Couldn't get player, not spawning offline player");
-            return 0;
-        }
+        player = source.getPlayer();
 
 //      Arguments
         String thisAction = "none";
@@ -115,13 +107,12 @@ public class OfflinePlayers implements DedicatedServerModInitializer {
             manipulate(npc, ap -> ap.start(finalType, finalActionInterval));
         }
 
-        PositionImpl playerPosition = new PositionImpl(player.getX(), player.getY(), player.getZ());
 //      Aggro update
         aggroUpdate(player, npc);
 //      Disconnect player
         player.networkHandler.disconnect(Text.of("Offline player generated"));
 
-        npc.refreshPositionAfterTeleport(playerPosition.getX(), playerPosition.getY(), playerPosition.getZ());
+        npc.refreshPositionAfterTeleport(player.getX(), player.getY(), player.getZ());
         return 1;
     }
 
@@ -240,7 +231,7 @@ public class OfflinePlayers implements DedicatedServerModInitializer {
         if (player.interactionManager.getGameMode() == GameMode.DEFAULT) {
             player.getInventory().dropAll();
             player.setHealth(0);
-            player.server.getPlayerManager().broadcast(Text.of(player.getDisplayName().asString() + " died: " + npc.getDeathMessage()), MessageType.CHAT, player.getUuid());
+            player.server.getPlayerManager().broadcast(Text.of(player.getDisplayName() + " died: " + npc.getDeathMessage()), false);
         }
 
         return true;

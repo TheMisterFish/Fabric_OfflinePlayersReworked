@@ -7,6 +7,7 @@ import net.minecraft.nbt.NbtCompound;
 import net.minecraft.network.ClientConnection;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.PlayerManager;
+import net.minecraft.server.network.ConnectedClientData;
 import net.minecraft.server.network.ServerPlayNetworkHandler;
 import net.minecraft.server.network.ServerPlayerEntity;
 import org.spongepowered.asm.mixin.Final;
@@ -32,12 +33,12 @@ public abstract class PlayerManagerMixin {
     }
 
     @Redirect(method = "onPlayerConnect", at = @At(value = "NEW", target = "net/minecraft/server/network/ServerPlayNetworkHandler"))
-    private ServerPlayNetworkHandler replaceOfflineNetworkHandler(MinecraftServer server, ClientConnection clientConnection, ServerPlayerEntity playerIn) {
+    private ServerPlayNetworkHandler replaceOfflineNetworkHandler(MinecraftServer server, ClientConnection clientConnection, ServerPlayerEntity playerIn, ConnectedClientData clientData) {
         boolean isNPC = playerIn instanceof Npc;
         if (isNPC) {
-            return new OfflineNetHandlerPlayServer(this.server, clientConnection, playerIn);
+            return new OfflineNetHandlerPlayServer(this.server, clientConnection, playerIn, clientData);
         } else {
-            return new ServerPlayNetworkHandler(this.server, clientConnection, playerIn);
+            return new ServerPlayNetworkHandler(this.server, clientConnection, playerIn, clientData);
         }
     }
 
