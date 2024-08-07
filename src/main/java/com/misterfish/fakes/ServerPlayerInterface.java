@@ -5,6 +5,4 @@ import com.misterfish.helpers.EntityPlayerActionPack;
 public interface ServerPlayerInterface
 {
     EntityPlayerActionPack getActionPack();
-    void invalidateEntityObjectReference();
-    boolean isInvalidEntityObject();
 }

@@ -1,13 +1,14 @@
 package com.misterfish.patches;
 
 import com.misterfish.fakes.ClientConnectionInterface;
+import io.netty.channel.Channel;
 import io.netty.channel.embedded.EmbeddedChannel;
 import net.minecraft.network.Connection;
 import net.minecraft.network.PacketListener;
 import net.minecraft.network.ProtocolInfo;
 import net.minecraft.network.protocol.PacketFlow;
 
-public class FakeClientConnection extends Connection
+public class FakeClientConnection extends Connection implements ClientConnectionInterface
 {
     public FakeClientConnection(PacketFlow p)
     {
@@ -35,5 +36,9 @@ public class FakeClientConnection extends Connection
     @Override
     public <T extends PacketListener> void setupInboundProtocol(ProtocolInfo<T> protocolInfo, T packetListener)
     {
+    }
+
+    @Override
+    public void setChannel(Channel channel) {
     }
 }

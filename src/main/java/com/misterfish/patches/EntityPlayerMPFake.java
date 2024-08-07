@@ -3,23 +3,20 @@ package com.misterfish.patches;
 import com.misterfish.fakes.ServerPlayerInterface;
 import com.mojang.authlib.GameProfile;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.UUIDUtil;
 import net.minecraft.network.DisconnectionDetails;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.contents.TranslatableContents;
 import net.minecraft.network.protocol.PacketFlow;
 import net.minecraft.network.protocol.game.ClientboundPlayerInfoUpdatePacket;
 import net.minecraft.network.protocol.game.ClientboundRotateHeadPacket;
-import net.minecraft.network.protocol.game.ClientboundTeleportEntityPacket;
 import net.minecraft.network.protocol.game.ServerboundClientCommandPacket;
-import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.TickTask;
 import net.minecraft.server.level.ClientInformation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.CommonListenerCookie;
-import net.minecraft.server.players.GameProfileCache;
+import net.minecraft.server.players.UserWhiteListEntry;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
@@ -27,118 +24,106 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.food.FoodData;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.GameType;
-import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.entity.SkullBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.portal.DimensionTransition;
-import net.minecraft.world.phys.Vec3;
+import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
+import java.util.UUID;
 
-public class EntityPlayerMPFake extends ServerPlayer
-{
-    public Runnable fixStartingPosition = () -> {};
-    public boolean isAShadow;
+import static com.misterfish.OfflinePlayersReworked.MOD_ID;
 
+public class EntityPlayerMPFake extends ServerPlayer {
+    public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
+    public Runnable fixStartingPosition = () -> {
+    };
     // Returns true if it was successful, false if couldn't spawn due to the player not existing in Mojang servers
-    public static boolean createFake(String username, MinecraftServer server, Vec3 pos, double yaw, double pitch, ResourceKey<Level> dimensionId, GameType gamemode, boolean flying)
-    {
-        //prolly half of that crap is not necessary, but it works
-        ServerLevel worldIn = server.getLevel(dimensionId);
-        GameProfileCache.setUsesAuthentication(false);
-        GameProfile gameprofile;
+    public static EntityPlayerMPFake createFakePlayer(MinecraftServer server, ServerPlayer player) {
         try {
-            gameprofile = server.getProfileCache().get(username).orElse(null); //findByName  .orElse(null)
-        }
-        finally {
-            GameProfileCache.setUsesAuthentication(server.isDedicatedServer() && server.usesAuthentication());
-        }
-        if (gameprofile == null)
-        {
-            // TODO: Add check to see if is permited? If not permited, should return false here;
-            gameprofile = new GameProfile(UUIDUtil.createOfflinePlayerUUID(username), username);
-        }
-        GameProfile finalGP = gameprofile;
-        fetchGameProfile(gameprofile.getName()).thenAcceptAsync(p -> {
-            GameProfile current = finalGP;
-            if (p.isPresent())
-            {
-                current = p.get();
+
+            ServerLevel worldIn = player.serverLevel();//.getWorld(player.dimension);
+            var gameProfileUUID = UUID.fromString(StringUtils.reverse(player.getUUID().toString()));
+            var gameProfileName = "[OFF]" + StringUtils.truncate(player.getName().getString(), 0, 11);
+
+            GameProfile gameprofile = new GameProfile(gameProfileUUID, gameProfileName);
+            EntityPlayerMPFake offlinePlayer = new EntityPlayerMPFake(server, worldIn, gameprofile, player.clientInformation());
+
+            offlinePlayer.setCustomNameVisible(true);
+            offlinePlayer.setChatSession(player.getChatSession());
+            server.getPlayerList().placeNewPlayer(new FakeClientConnection(PacketFlow.SERVERBOUND), offlinePlayer, new CommonListenerCookie(gameprofile, 0, player.clientInformation(), true));
+
+            // Rights
+
+//            if (player.getServer().get.getPlayerManager().isWhitelistEnabled() && !minecraftServer.getPlayerManager().isWhitelisted(npc.getGameProfile())) {
+//                UserWhiteListEntry whitelistEntry = new UserWhiteListEntry(offlinePlayer.getGameProfile());
+//                minecraftServer.getPlayerManager().getWhitelist().add(whitelistEntry);
+//            }
+//            if (serverPlayerEntity.hasPermissionLevel(minecraftServer.getOpPermissionLevel())) {
+//                minecraftServer.getPlayerManager().addToOperators(npc.getGameProfile());
+//            }
+
+            // Health
+            offlinePlayer.setHealth(player.getHealth());
+
+            // Hunger
+            offlinePlayer.getFoodData().setFoodLevel(player.getFoodData().getFoodLevel());
+            offlinePlayer.getFoodData().setExhaustion(player.getFoodData().getExhaustionLevel());
+            offlinePlayer.getFoodData().setExhaustion(player.getFoodData().getSaturationLevel());
+
+            // Exp
+            offlinePlayer.experienceProgress = player.experienceProgress;
+            offlinePlayer.experienceLevel = player.experienceLevel;
+
+            // Effects
+            player.getActiveEffects().forEach(offlinePlayer::addEffect);
+
+            // Inv
+            for (int i = 0; i < player.getInventory().getContainerSize(); i++) {
+                offlinePlayer.getInventory().setItem(i, player.getInventory().getItem(i));
             }
-            EntityPlayerMPFake instance = new EntityPlayerMPFake(server, worldIn, current, ClientInformation.createDefault(), false);
-            instance.fixStartingPosition = () -> instance.moveTo(pos.x, pos.y, pos.z, (float) yaw, (float) pitch);
-            server.getPlayerList().placeNewPlayer(new FakeClientConnection(PacketFlow.SERVERBOUND), instance, new CommonListenerCookie(current, 0, instance.clientInformation(), false));
-            instance.teleportTo(worldIn, pos.x, pos.y, pos.z, (float) yaw, (float) pitch);
-            instance.setHealth(20.0F);
-            instance.unsetRemoved();
-            instance.getAttribute(Attributes.STEP_HEIGHT).setBaseValue(0.6F);
-            instance.gameMode.changeGameModeForPlayer(gamemode);
-            server.getPlayerList().broadcastAll(new ClientboundRotateHeadPacket(instance, (byte) (instance.yHeadRot * 256 / 360)), dimensionId);//instance.dimension);
-            server.getPlayerList().broadcastAll(new ClientboundTeleportEntityPacket(instance), dimensionId);//instance.dimension);
-            //instance.world.getChunkManager(). updatePosition(instance);
-            instance.entityData.set(DATA_PLAYER_MODE_CUSTOMISATION, (byte) 0x7f); // show all model layers (incl. capes)
-            instance.getAbilities().flying = flying;
-        }, server);
-        return true;
+
+            offlinePlayer.getInventory().selected = player.getInventory().selected;
+
+            offlinePlayer.connection.teleport(player.getX(), player.getY(), player.getZ(), player.getYRot(), player.getXRot());
+            offlinePlayer.gameMode.changeGameModeForPlayer(player.gameMode.getGameModeForPlayer());
+            ((ServerPlayerInterface) offlinePlayer).getActionPack().copyFrom(((ServerPlayerInterface) player).getActionPack());
+            // this might create problems if a player logs back in...
+            offlinePlayer.getAttribute(Attributes.STEP_HEIGHT).setBaseValue(0.6F);
+            offlinePlayer.entityData.set(DATA_PLAYER_MODE_CUSTOMISATION, player.getEntityData().get(DATA_PLAYER_MODE_CUSTOMISATION));
+
+            server.getPlayerList().broadcastAll(new ClientboundRotateHeadPacket(offlinePlayer, (byte) (player.yHeadRot * 256 / 360)), offlinePlayer.level().dimension());
+            server.getPlayerList().broadcastAll(new ClientboundPlayerInfoUpdatePacket(ClientboundPlayerInfoUpdatePacket.Action.ADD_PLAYER, offlinePlayer));
+            //player.world.getChunkManager().updatePosition(offlinePlayer);
+            offlinePlayer.getAbilities().flying = player.getAbilities().flying;
+
+            return offlinePlayer;
+
+        } catch (Exception e) {
+            LOGGER.error(e.getMessage(), e);
+        }
+        return null;
     }
 
-    private static CompletableFuture<Optional<GameProfile>> fetchGameProfile(final String name) {
-        return SkullBlockEntity.fetchGameProfile(name);
+    public static EntityPlayerMPFake respawnFake(MinecraftServer server, ServerLevel level, GameProfile profile, ClientInformation cli) {
+        return new EntityPlayerMPFake(server, level, profile, cli);
     }
 
-    public static EntityPlayerMPFake createShadow(MinecraftServer server, ServerPlayer player)
-    {
-        player.getServer().getPlayerList().remove(player);
-        player.connection.disconnect(Component.translatable("multiplayer.disconnect.duplicate_login"));
-        ServerLevel worldIn = player.serverLevel();//.getWorld(player.dimension);
-        GameProfile gameprofile = player.getGameProfile();
-        EntityPlayerMPFake playerShadow = new EntityPlayerMPFake(server, worldIn, gameprofile, player.clientInformation(), true);
-        playerShadow.setChatSession(player.getChatSession());
-        server.getPlayerList().placeNewPlayer(new FakeClientConnection(PacketFlow.SERVERBOUND), playerShadow, new CommonListenerCookie(gameprofile, 0, player.clientInformation(), true));
-
-        playerShadow.setHealth(player.getHealth());
-        playerShadow.connection.teleport(player.getX(), player.getY(), player.getZ(), player.getYRot(), player.getXRot());
-        playerShadow.gameMode.changeGameModeForPlayer(player.gameMode.getGameModeForPlayer());
-        ((ServerPlayerInterface) playerShadow).getActionPack().copyFrom(((ServerPlayerInterface) player).getActionPack());
-        // this might create problems if a player logs back in...
-        playerShadow.getAttribute(Attributes.STEP_HEIGHT).setBaseValue(0.6F);
-        playerShadow.entityData.set(DATA_PLAYER_MODE_CUSTOMISATION, player.getEntityData().get(DATA_PLAYER_MODE_CUSTOMISATION));
-
-
-        server.getPlayerList().broadcastAll(new ClientboundRotateHeadPacket(playerShadow, (byte) (player.yHeadRot * 256 / 360)), playerShadow.level().dimension());
-        server.getPlayerList().broadcastAll(new ClientboundPlayerInfoUpdatePacket(ClientboundPlayerInfoUpdatePacket.Action.ADD_PLAYER, playerShadow));
-        //player.world.getChunkManager().updatePosition(playerShadow);
-        playerShadow.getAbilities().flying = player.getAbilities().flying;
-        return playerShadow;
-    }
-
-    public static EntityPlayerMPFake respawnFake(MinecraftServer server, ServerLevel level, GameProfile profile, ClientInformation cli)
-    {
-        return new EntityPlayerMPFake(server, level, profile, cli, false);
-    }
-
-    private EntityPlayerMPFake(MinecraftServer server, ServerLevel worldIn, GameProfile profile, ClientInformation cli, boolean shadow)
-    {
+    private EntityPlayerMPFake(MinecraftServer server, ServerLevel worldIn, GameProfile profile, ClientInformation cli) {
         super(server, worldIn, profile, cli);
-        isAShadow = shadow;
     }
 
     @Override
-    public void onEquipItem(final EquipmentSlot slot, final ItemStack previous, final ItemStack stack)
-    {
+    public void onEquipItem(final EquipmentSlot slot, final ItemStack previous, final ItemStack stack) {
         if (!isUsingItem()) super.onEquipItem(slot, previous, stack);
     }
 
     @Override
-    public void kill()
-    {
+    public void kill() {
         kill(Component.literal("Killed"));
     }
 
-    public void kill(Component reason)
-    {
+    public void kill(Component reason) {
         shakeOff();
 
         if (reason.getContents() instanceof TranslatableContents text && text.getKey().equals("multiplayer.disconnect.duplicate_login")) {
@@ -151,20 +136,15 @@ public class EntityPlayerMPFake extends ServerPlayer
     }
 
     @Override
-    public void tick()
-    {
-        if (this.getServer().getTickCount() % 10 == 0)
-        {
+    public void tick() {
+        if (this.getServer().getTickCount() % 10 == 0) {
             this.connection.resetPosition();
             this.serverLevel().getChunkSource().move(this);
         }
-        try
-        {
+        try {
             super.tick();
             this.doTick();
-        }
-        catch (NullPointerException ignored)
-        {
+        } catch (NullPointerException ignored) {
             // happens with that paper port thingy - not sure what that would fix, but hey
             // the game not gonna crash violently.
         }
@@ -172,18 +152,15 @@ public class EntityPlayerMPFake extends ServerPlayer
 
     }
 
-    private void shakeOff()
-    {
+    private void shakeOff() {
         if (getVehicle() instanceof Player) stopRiding();
-        for (Entity passenger : getIndirectPassengers())
-        {
+        for (Entity passenger : getIndirectPassengers()) {
             if (passenger instanceof Player) passenger.stopRiding();
         }
     }
 
     @Override
-    public void die(DamageSource cause)
-    {
+    public void die(DamageSource cause) {
         shakeOff();
         super.die(cause);
         setHealth(20);
@@ -192,8 +169,7 @@ public class EntityPlayerMPFake extends ServerPlayer
     }
 
     @Override
-    public String getIpAddress()
-    {
+    public String getIpAddress() {
         return "127.0.0.1";
     }
 
@@ -208,8 +184,7 @@ public class EntityPlayerMPFake extends ServerPlayer
     }
 
     @Override
-    public Entity changeDimension(DimensionTransition serverLevel)
-    {
+    public Entity changeDimension(DimensionTransition serverLevel) {
         super.changeDimension(serverLevel);
         if (wonGame) {
             ServerboundClientCommandPacket p = new ServerboundClientCommandPacket(ServerboundClientCommandPacket.Action.PERFORM_RESPAWN);
