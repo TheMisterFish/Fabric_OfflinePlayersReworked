@@ -27,7 +27,7 @@ public class Tracer {
         Vec3d pos = source.getCameraPosVec(partialTicks);
         Vec3d rotation = source.getRotationVec(partialTicks);
         Vec3d reachEnd = pos.add(rotation.x * reach, rotation.y * reach, rotation.z * reach);
-        return source.world.raycast(new RaycastContext(pos, reachEnd, RaycastContext.ShapeType.OUTLINE, fluids ?
+        return source.getWorld().raycast(new RaycastContext(pos, reachEnd, RaycastContext.ShapeType.OUTLINE, fluids ?
                 RaycastContext.FluidHandling.ANY : RaycastContext.FluidHandling.NONE, source));
     }
 
@@ -35,11 +35,11 @@ public class Tracer {
         Vec3d pos = source.getCameraPosVec(partialTicks);
         Vec3d reachVec = source.getRotationVec(partialTicks).multiply(reach);
         Box box = source.getBoundingBox().stretch(reachVec).expand(1);
-        return rayTraceEntities(source, pos, pos.add(reachVec), box, e -> !e.isSpectator() && e.collides(), maxSqDist);
+        return rayTraceEntities(source, pos, pos.add(reachVec), box, e -> !e.isSpectator() && e.isPushable(), maxSqDist);
     }
 
     public static EntityHitResult rayTraceEntities(Entity source, Vec3d start, Vec3d end, Box box, Predicate<Entity> predicate, double maxSqDistance) {
-        World world = source.world;
+        World world = source.getWorld();
         double targetDistance = maxSqDistance;
         Entity target = null;
         Vec3d targetHitPos = null;

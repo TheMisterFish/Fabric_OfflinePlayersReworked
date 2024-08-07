@@ -12,7 +12,6 @@ import net.minecraft.item.Items;
 import net.minecraft.nbt.StringNbtReader;
 import net.minecraft.text.Text;
 import net.lilfish.offlineplayersreworked.storage.models.NpcModel;
-import net.minecraft.util.registry.Registry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -132,23 +131,23 @@ public class OfflineDatabase {
     }
 
     private ItemStack getItemStack(NpcModel.NPCItem npcItem){
-        try {
-            var itemStack = new ItemStack(Registry.ITEM.get(npcItem.itemid), npcItem.count);
-            if(npcItem.nbttag != null)
-                itemStack.setNbt(StringNbtReader.parse(npcItem.nbttag));
-            itemStack.setDamage(npcItem.damage);
-            return itemStack;
-        } catch (Exception ignore) {}
+//        try {
+//            var itemStack = new ItemStack(Registry.ITEM.get(npcItem.itemid), npcItem.count);
+//            if(npcItem.nbttag != null)
+//                itemStack.setNbt(StringNbtReader.parse(npcItem.nbttag));
+//            itemStack.setDamage(npcItem.damage);
+//            return itemStack;
+//        } catch (Exception ignore) {}
         return new ItemStack(Items.AIR, 1);
     }
 
     private NpcModel.NPCItem getNPCItem(ItemStack itemStack){
-        NpcModel.NPCItem newItem = new NpcModel.NPCItem();
-        newItem.itemid = Item.getRawId(itemStack.getItem());
-        newItem.count = itemStack.getCount();
-        if (itemStack.hasNbt() && itemStack.getNbt() != null)
-            newItem.nbttag = itemStack.getNbt().asString();
-        newItem.damage = itemStack.getDamage();
-        return newItem;
+//        NpcModel.NPCItem newItem = new NpcModel.NPCItem();
+//        newItem.itemid = Item.getRawId(itemStack.getItem());
+//        newItem.count = itemStack.getCount();
+//        if (itemStack.hasNbt() && itemStack.getNbt() != null)
+//            newItem.nbttag = itemStack.getNbt().asString();
+//        newItem.damage = itemStack.getDamage();
+        return null;
     }
 }

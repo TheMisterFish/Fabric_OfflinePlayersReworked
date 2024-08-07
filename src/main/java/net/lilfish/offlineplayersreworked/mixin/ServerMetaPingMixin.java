@@ -27,6 +27,6 @@ public abstract class ServerMetaPingMixin {
                 }
             }
         }
-        this.players = new ServerMetadata.Players(players.getPlayerLimit(), players.getOnlinePlayerCount() - npcPlayers);
+        this.players = new ServerMetadata.Players(players.max(), (players.online() - npcPlayers), null);
     }
 }
