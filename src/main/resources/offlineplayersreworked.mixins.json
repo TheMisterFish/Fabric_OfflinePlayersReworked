@@ -4,7 +4,8 @@
 	"compatibilityLevel": "JAVA_21",
 	"mixins": [
 		"Player_fakePlayersMixin",
-		"PlayerList_fakePlayersMixin"
+		"PlayerList_fakePlayersMixin",
+		"ServerPlayer_actionPackMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

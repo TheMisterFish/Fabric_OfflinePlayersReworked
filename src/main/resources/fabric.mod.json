@@ -15,7 +15,7 @@
 	"icon": "assets/offlineplayersreworked/icon.png",
 	"environment": "*",
 	"entrypoints": {
-		"main": [
+		"server": [
 			"com.misterfish.OfflinePlayersReworked"
 		]
 	},
