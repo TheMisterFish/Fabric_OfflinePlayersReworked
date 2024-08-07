@@ -1,17 +1,12 @@
 {
-  "required": true,
-  "minVersion": "0.8",
-  "package": "net.lilfish.offlineplayersreworked.mixin",
-  "compatibilityLevel": "JAVA_21",
-  "mixins": [
-    "ServerPlayerEntityMixin",
-    "PlayerManagerMixin",
-    "MinecraftServerCoreMixin",
-    "ServerMetaPingMixin"
-  ],
-  "client": [
-  ],
-  "injectors": {
-    "defaultRequire": 1
-  }
+	"required": true,
+	"package": "com.misterfish.mixin",
+	"compatibilityLevel": "JAVA_21",
+	"mixins": [
+		"Player_fakePlayersMixin",
+		"PlayerList_fakePlayersMixin"
+	],
+	"injectors": {
+		"defaultRequire": 1
+	}
 }
