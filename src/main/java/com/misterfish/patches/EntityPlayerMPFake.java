@@ -87,6 +87,8 @@ public class EntityPlayerMPFake extends ServerPlayer {
 
             offlinePlayer.getInventory().selected = player.getInventory().selected;
 
+            offlinePlayer.teleportTo(player.position().x, player.position().y, player.position().z);
+
             offlinePlayer.connection.teleport(player.getX(), player.getY(), player.getZ(), player.getYRot(), player.getXRot());
             offlinePlayer.gameMode.changeGameModeForPlayer(player.gameMode.getGameModeForPlayer());
             ((ServerPlayerInterface) offlinePlayer).getActionPack().copyFrom(((ServerPlayerInterface) player).getActionPack());
