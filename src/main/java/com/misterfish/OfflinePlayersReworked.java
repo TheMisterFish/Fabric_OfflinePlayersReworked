@@ -11,6 +11,7 @@ import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,6 +26,7 @@ import static net.minecraft.commands.Commands.argument;
 import static net.minecraft.commands.Commands.literal;
 
 public class OfflinePlayersReworked implements DedicatedServerModInitializer {
+    public static MinecraftServer server;
     public static final String MOD_ID = "OfflinePlayersReworked";
 
 
@@ -32,6 +34,16 @@ public class OfflinePlayersReworked implements DedicatedServerModInitializer {
     // It is considered best practice to use your mod id as the logger's name.
     // That way, it's clear which mod wrote info, warnings, and errors.
     public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
+
+    public static void onWorldLoad(MinecraftServer server) {
+        // we need to set the server, so we can access it from the ping mixin
+        OfflinePlayersReworked.server = server;
+    }
+
+    public static void afterWorldLoad() {
+        // respawn players
+//        respawnActiveOfflinePlayers();
+    }
 
     @Override
     public void onInitializeServer() {
@@ -179,5 +191,9 @@ public class OfflinePlayersReworked implements DedicatedServerModInitializer {
 
     private static void manipulate(ServerPlayer player, Consumer<EntityPlayerActionPack> action) {
         action.accept(((ServerPlayerInterface) player).getActionPack());
+    }
+
+    public static void playerJoined(ServerPlayer player) {
+        LOGGER.info("HIU!");
     }
 }
