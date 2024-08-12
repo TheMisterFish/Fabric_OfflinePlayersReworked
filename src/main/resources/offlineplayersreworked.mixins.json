@@ -3,11 +3,11 @@
   "package": "com.misterfish.mixin",
   "compatibilityLevel": "JAVA_21",
   "mixins": [
-    "MinecraftServer_CoreMixin",
+    "MinecraftServer_coreMixin",
     "Player_fakePlayersMixin",
     "PlayerList_fakePlayersMixin",
     "ServerPlayer_actionPackMixin",
-    "ServerStatus_MetaPingMixin"
+    "ServerStatus_metaPingMixin"
   ],
   "injectors": {
     "defaultRequire": 1
