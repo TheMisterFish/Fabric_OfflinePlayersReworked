@@ -1,4 +1,4 @@
-package com.misterfish.patches;
+package com.misterfish.patch;
 
 import com.misterfish.fakes.ClientConnectionInterface;
 import io.netty.channel.Channel;
@@ -7,6 +7,7 @@ import net.minecraft.network.Connection;
 import net.minecraft.network.PacketListener;
 import net.minecraft.network.ProtocolInfo;
 import net.minecraft.network.protocol.PacketFlow;
+import org.jetbrains.annotations.NotNull;
 
 public class FakeClientConnection extends Connection implements ClientConnectionInterface
 {
@@ -29,12 +30,12 @@ public class FakeClientConnection extends Connection implements ClientConnection
     }
 
     @Override
-    public void setListenerForServerboundHandshake(PacketListener packetListener)
+    public void setListenerForServerboundHandshake(@NotNull PacketListener packetListener)
     {
     }
 
     @Override
-    public <T extends PacketListener> void setupInboundProtocol(ProtocolInfo<T> protocolInfo, T packetListener)
+    public <T extends PacketListener> void setupInboundProtocol(@NotNull ProtocolInfo<T> protocolInfo, @NotNull T packetListener)
     {
     }
 

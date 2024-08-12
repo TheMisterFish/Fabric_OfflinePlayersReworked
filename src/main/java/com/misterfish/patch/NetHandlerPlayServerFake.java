@@ -1,4 +1,4 @@
-package com.misterfish.patches;
+package com.misterfish.patch;
 
 import net.minecraft.network.Connection;
 import net.minecraft.network.chat.Component;
@@ -9,6 +9,8 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.CommonListenerCookie;
 import net.minecraft.server.network.ServerGamePacketListenerImpl;
 import net.minecraft.world.entity.RelativeMovement;
+import org.jetbrains.annotations.NotNull;
+
 import java.util.Set;
 
 public class NetHandlerPlayServerFake extends ServerGamePacketListenerImpl
@@ -19,7 +21,7 @@ public class NetHandlerPlayServerFake extends ServerGamePacketListenerImpl
     }
 
     @Override
-    public void send(final Packet<?> packetIn)
+    public void send(final @NotNull Packet<?> packetIn)
     {
     }
 
@@ -28,12 +30,12 @@ public class NetHandlerPlayServerFake extends ServerGamePacketListenerImpl
     {
         if (message.getContents() instanceof TranslatableContents text && (text.getKey().equals("multiplayer.disconnect.idling") || text.getKey().equals("multiplayer.disconnect.duplicate_login")))
         {
-            ((EntityPlayerMPFake) player).kill(message);
+            ((OfflinePlayer) player).kill(message);
         }
     }
 
     @Override
-    public void teleport(double d, double e, double f, float g, float h, Set<RelativeMovement> set)
+    public void teleport(double d, double e, double f, float g, float h, @NotNull Set<RelativeMovement> set)
     {
         super.teleport(d, e, f, g, h, set);
         if (player.serverLevel().getPlayerByUUID(player.getUUID()) != null) {

@@ -8,8 +8,8 @@
 		"MisterFish"
 	],
 	"contact": {
-		"homepage": "https://fabricmc.net/",
-		"sources": "https://github.com/FabricMC/fabric-example-mod"
+		"homepage": "https://github.com/lilfish",
+		"sources": "https://github.com/lilfish/Fabric_OfflinePlayersReworked"
 	},
 	"license": "CC0-1.0",
 	"icon": "assets/offlineplayersreworked/icon.png",

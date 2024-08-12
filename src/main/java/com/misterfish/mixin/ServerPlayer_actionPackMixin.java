@@ -1,7 +1,7 @@
 package com.misterfish.mixin;
 
 import com.misterfish.fakes.ServerPlayerInterface;
-import com.misterfish.helpers.EntityPlayerActionPack;
+import com.misterfish.helper.EntityPlayerActionPack;
 import com.mojang.authlib.GameProfile;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ClientInformation;

@@ -1,7 +1,7 @@
 package com.misterfish.mixin;
 
 import com.misterfish.OfflinePlayersReworked;
-import com.misterfish.patches.EntityPlayerMPFake;
+import com.misterfish.patch.OfflinePlayer;
 import net.minecraft.network.protocol.status.ServerStatus;
 import net.minecraft.server.level.ServerPlayer;
 import org.spongepowered.asm.mixin.Mixin;
@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Mixin(ServerStatus.class)
-public class ServerStatus_MetaPingMixin {
+public class ServerStatus_metaPingMixin {
 
     @Inject(method = "players", at = @At("RETURN"), cancellable = true)
     private void modifyPlayers(CallbackInfoReturnable<Optional<ServerStatus.Players>> cir) {
@@ -25,7 +25,7 @@ public class ServerStatus_MetaPingMixin {
 
             List<ServerPlayer> serverPlayers = OfflinePlayersReworked.server.getPlayerList().getPlayers();
             for (ServerPlayer serverPlayer : serverPlayers) {
-                if (serverPlayer instanceof EntityPlayerMPFake) {
+                if (serverPlayer instanceof OfflinePlayer) {
                     onlinePlayers -= 1;
                 }
             }

@@ -1,8 +1,9 @@
-package com.misterfish.helpers;
+package com.misterfish.helper;
 
 import com.misterfish.fakes.ServerPlayerInterface;
-import com.misterfish.patches.EntityPlayerMPFake;
+import com.misterfish.patch.OfflinePlayer;
 import com.misterfish.utils.Tracer;
+import it.unimi.dsi.fastutil.Pair;
 import net.minecraft.commands.arguments.EntityAnchorArgument;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -25,37 +26,24 @@ import net.minecraft.world.food.FoodProperties;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static com.misterfish.OfflinePlayersReworked.MOD_ID;
-
 public class EntityPlayerActionPack {
-
-    public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
-
     private final ServerPlayer player;
-
     private final Map<ActionType, Action> actions = new EnumMap<>(ActionType.class);
-
     private BlockPos currentBlock;
     private int blockHitDelay;
     private boolean isHittingBlock;
     private float curBlockDamageMP;
-
     private boolean sneaking;
     private boolean sprinting;
     private float forward;
     private float strafing;
-
     private int itemUseCooldown;
-
-    private static final double MOVE_DISTANCE = 1.0;
 
     public EntityPlayerActionPack(ServerPlayer playerIn) {
         player = playerIn;
@@ -242,10 +230,10 @@ public class EntityPlayerActionPack {
 
         float vel = sneaking ? 0.3F : 1.0F;
         // The != 0.0F checks are needed given else real players can't control minecarts, however it works with fakes and else they don't stop immediately
-        if (forward != 0.0F || player instanceof EntityPlayerMPFake) {
+        if (forward != 0.0F || player instanceof OfflinePlayer) {
             player.zza = forward * vel;
         }
-        if (strafing != 0.0F || player instanceof EntityPlayerMPFake) {
+        if (strafing != 0.0F || player instanceof OfflinePlayer) {
             player.xxa = strafing * vel;
         }
     }
@@ -297,7 +285,7 @@ public class EntityPlayerActionPack {
                 HitResult hit = getTarget(player);
                 for (InteractionHand hand : InteractionHand.values()) {
                     switch (hit.getType()) {
-                        case BLOCK: {
+                        case BLOCK -> {
                             player.resetLastActionTime();
                             ServerLevel world = player.serverLevel();
                             BlockHitResult blockHit = (BlockHitResult) hit;
@@ -313,7 +301,7 @@ public class EntityPlayerActionPack {
                             }
                             break;
                         }
-                        case ENTITY: {
+                        case ENTITY -> {
                             player.resetLastActionTime();
                             EntityHitResult entityHit = (EntityHitResult) hit;
                             Entity entity = entityHit.getEntity();
@@ -353,7 +341,7 @@ public class EntityPlayerActionPack {
             boolean execute(ServerPlayer player, Action action) {
                 HitResult hit = getTarget(player);
                 switch (hit.getType()) {
-                    case ENTITY: {
+                    case ENTITY -> {
                         EntityHitResult entityHit = (EntityHitResult) hit;
                         if (!action.isContinuous) {
                             player.attack(entityHit.getEntity());
@@ -363,7 +351,7 @@ public class EntityPlayerActionPack {
                         player.resetLastActionTime();
                         return true;
                     }
-                    case BLOCK: {
+                    case BLOCK -> {
                         EntityPlayerActionPack ap = ((ServerPlayerInterface) player).getActionPack();
                         if (ap.blockHitDelay > 0) {
                             ap.blockHitDelay--;
@@ -605,5 +593,34 @@ public class EntityPlayerActionPack {
                 done = true;
             }
         }
+    }
+
+    public static Pair<ActionType, Action> getActionPair(String actionString, int intervalInteger, int offsetInteger) {
+        EntityPlayerActionPack.Action actionInterval = EntityPlayerActionPack.Action.once();
+
+        if (intervalInteger > 0) {
+            if (offsetInteger > 0) {
+                actionInterval = EntityPlayerActionPack.Action.interval(intervalInteger, offsetInteger);
+            } else {
+                actionInterval = EntityPlayerActionPack.Action.interval(intervalInteger);
+            }
+        } else if (intervalInteger == 0) {
+            actionInterval = EntityPlayerActionPack.Action.continuous();
+        }
+
+        EntityPlayerActionPack.ActionType actionType = null;
+        switch (actionString) {
+            case "attack" -> actionType = EntityPlayerActionPack.ActionType.ATTACK;
+            case "place", "use" -> actionType = EntityPlayerActionPack.ActionType.USE;
+            case "crouch" -> actionType = EntityPlayerActionPack.ActionType.CROUCH;
+            case "jump" -> actionType = EntityPlayerActionPack.ActionType.JUMP;
+            case "eat" -> actionType = EntityPlayerActionPack.ActionType.EAT;
+            case "drop_item" -> actionType = EntityPlayerActionPack.ActionType.DROP_ITEM;
+            case "drop_stack" -> actionType = EntityPlayerActionPack.ActionType.DROP_STACK;
+            case "move_forward" -> actionType = EntityPlayerActionPack.ActionType.MOVE_FORWARD;
+            case "move_backward" -> actionType = EntityPlayerActionPack.ActionType.MOVE_BACKWARDS;
+        }
+
+        return Pair.of(actionType, actionInterval);
     }
 }

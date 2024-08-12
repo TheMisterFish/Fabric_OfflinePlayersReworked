@@ -1,6 +1,6 @@
 package com.misterfish.fakes;
 
-import com.misterfish.helpers.EntityPlayerActionPack;
+import com.misterfish.helper.EntityPlayerActionPack;
 
 public interface ServerPlayerInterface
 {

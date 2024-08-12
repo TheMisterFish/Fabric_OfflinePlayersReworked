@@ -8,7 +8,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(MinecraftServer.class)
-public class MinecraftServer_CoreMixin {
+public class MinecraftServer_coreMixin {
     @Inject(method = "loadLevel", at = @At("HEAD"))
     private void serverLoaded(CallbackInfo ci) {
         OfflinePlayersReworked.onWorldLoad((MinecraftServer) (Object) this);
