@@ -98,6 +98,8 @@ For setup instructions please see the [fabric wiki page](https://fabricmc.net/wi
 ### Fair Warning
 
 A lot of classes were copied from carpet as I didn't want to re-inventing the wheel.
+For this reason the mod is also not compatible with carpet.
+
 
 ## License
 
