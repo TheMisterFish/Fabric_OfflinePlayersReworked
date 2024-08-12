@@ -21,7 +21,7 @@ public abstract class Player_fakePlayersMixin
                     ordinal = 0
             )
     )
-    private boolean velocityModifiedAndNotCarpetFakePlayer(Entity target)
+    private boolean velocityModifiedAndNotOfflinePlayer(Entity target)
     {
         return target.hurtMarked && !(target instanceof OfflinePlayer);
     }
