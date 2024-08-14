@@ -3,6 +3,8 @@
 ## Installing
 
 Download/Build the .jar file and place it in the `/mods/` folder of your minecraft fabric server. If already running, restart the minecraft server.
+
+> Note: This is a **Server sided mod** only.
 ## Goal
 
 The goal of this mod is to allow all players to go afk on a server without the need to leave their computer on.
