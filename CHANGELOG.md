@@ -1,4 +1,4 @@
-# OfflinePlayers-Reworked 1.0.0 (MC 1.21) (unreleased)
+# OfflinePlayers-Reworked 1.0.0 (MC 1.21)
 
 Full rework of the mod. Updated to minecraft version 1.21.
 
