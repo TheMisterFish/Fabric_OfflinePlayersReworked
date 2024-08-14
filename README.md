@@ -113,7 +113,18 @@ If you encounter any bugs or have suggestions for improvements, please create an
 
 ## Screenshots
 
-Screenshots and GIFs demonstrating the mod's functionality will be added soon.
+### Offline Player
+Able to spawn a offline player with the prefix [OFF]
+![OfflinePlayersScreenshot](https://github.com/user-attachments/assets/827503c6-101b-40ff-bfc9-f511f7a2160e)
+
+### Updated death message
+When the offline player dies because of, for example, a creeper; the original player will have a updated death message
+![OfflinePlayersScreenshot_Dead](https://github.com/user-attachments/assets/4a244c99-8714-4092-8bf0-16f9ec261ca2)
+
+### Player list
+Player list will show 0/20 online when only offline players are online but will still show them in the small preview list.
+![OfflinePlayersScreenshot_PlayerList](https://github.com/user-attachments/assets/baf13a2a-9f8b-49fb-bb5e-c77c1a16ffa5)
+
 
 ## Setup
 
