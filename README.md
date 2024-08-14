@@ -1,78 +1,87 @@
-# Fabric Offline Players mod - Reworked
+# Fabric Offline Players Mod - Reworked
 
 ## Installing
 
-Download/Build the .jar file and place it in the `/mods/` folder of your minecraft fabric server. If already running, restart the minecraft server.
+Download/Build the .jar file and place it in the `/mods/` folder of your Minecraft Fabric server. If the server is already running, restart it.
 
-> Note: This is a **Server sided mod** only.
+> Note: This is a **Server-side mod** only.
+
+## Dependencies and Compatibility
+
+This mod is built for Minecraft version 1.21 and requires the following:
+
+- Fabric Loader 0.15.11 or higher
+- Fabric API 0.101.2+1.21 or higher
+
+Other dependencies:
+- MidnightLib 1.5.7-fabric
+- JsonDB 1.0.106
+- ModelMapper 3.2.1
+- Commons Logging 1.3.3
+
+## Versions
+
+- **Current Version (1.21)**: [Download v1.0.0-mc.1.21](https://github.com/lilfish/Fabric_OfflinePlayersReworked/releases/tag/v1.0.0-mc.1.21)
+    - This version will be available on Modrinth soon.
+- **Legacy Version (1.18.2)**: [Download v0.1.6-mc.1.18.2](https://github.com/lilfish/Fabric_OfflinePlayersReworked/releases/tag/v0.1.6-mc.1.18.2)
+    - This version is deprecated and will not be available on Modrinth.
+
+## Download
+
+Currently, the mod is only available through GitHub Releases. We plan to add it to Modrinth in the near future.
+
 ## Goal
 
-The goal of this mod is to allow all players to go afk on a server without the need to leave their computer on.
-You can simply write /offline and an exact copy of your player will be spawned in the server, called an offline player.
-Depending on configuration you'll be kicked after the offline player has spawned.
+This mod allows players to go AFK on a server without leaving their computers on. Simply use the `/offline` command to spawn an exact copy of your player, called an offline player. Depending on the configuration, you'll be kicked after the offline player has spawned.
 
-If the offline player gets killed for some reason, the offline player will not drop its loot, but instead it will just be kicked from the server.
-After the offline player has died and you as a player re-join the server, the inventory and xp levels are copied over from the offline player to you, and you'll get killed.
-This way you have ample time to still retrieve your items.
+If the offline player is killed, it won't drop loot but will be kicked from the server. When you rejoin, the inventory and XP levels from the offline player are copied to you, and you'll be killed. This gives you time to retrieve your items.
 
-If the offline player survives all the way until you re-join, 
-the inventory as well as the experience the offline player gained will be transferred to you.
+If the offline player survives until you rejoin, its inventory and gained experience will be transferred to you.
 
-## How to use
+## How to Use
 
-Write `/offline` to spawn in an offline player.
+Type `/offline` to spawn an offline player.
 
 ### Actions
 
-You can also add actions to your offline player. Down below you see a table of actions available in the offline players mod:
+You can add actions to your offline player. Available actions include:
 
 | Name          | Description                                              |
 |---------------|----------------------------------------------------------|
 | attack        | Player left click                                        |
-| place / use   | Player right click                                       
+| place / use   | Player right click                                       |
 | crouch        | Player crouching                                         |
 | jump          | Player jumping                                           |
 | eat           | Player eating (only if hungry & having food in one hand) |
 | drop_item     | Drops an item from the active slot                       |
 | drop_stack    | Drops all items from the active slot                     |
-| move_foward   | Moves the player forward                                 |
+| move_forward  | Moves the player forward                                 |
 | move_backward | Moves the player backwards                               |
 
-To use an action you can do `/offline attack`.
+To use an action, type `/offline [action]`, e.g., `/offline attack`.
 
-### Interval/offset
+### Interval/Offset
 
-It is also possible to execute an action with a set interval or offset.
+You can execute actions with set intervals or offsets:
 
-To create an interval do the following: 
-
-`/offline attack:20`
-
-This will create a 20 tick, or 1 second interval between each attack.
-
-To add an offset to the action, you can use the following example:
-
-`/offline attack:20:10`
-
-This will add an interval of 10 ticks to the action.
+- Interval: `/offline attack:20` (20 tick or 1 second interval between attacks)
+- Offset: `/offline attack:20:10` (10 tick offset added to the action)
 
 ### Chaining
 
-It is also possible to chain actions. You can for example run the following examples:
+You can chain actions, for example:
 
-`/offline attack move_forward`
+- `/offline attack move_forward`
+- `/offline attack:100 jump eat:20:10`
+- `/offline jump:20 attack eat move_backward`
 
-`/offline attack:100 jump eat:20:10`
-
-`/offline jump:20 attack eat move_backward`
-
-But keep in mind that the first action will be run first, then the second, third, etc.
+Actions are executed in the order specified.
 
 ## Config
 
-If the mod has initialized, the configuration can be found under `config/OfflinePlayersReworked.json` in the root of your minecraft server folder.
+After initialization, the configuration file is located at `config/OfflinePlayersReworked.json` in your Minecraft server's root folder.
 
-The configuration looks as follow:
+The configuration looks as follows:
 ```json
 {
   "opRequired": false,
@@ -84,26 +93,36 @@ The configuration looks as follow:
   "databaseLocation": "./offlineplayersreworked/"
 }
 ```
+- `opRequired`: If true, only OPs can use `/offline`.
+- `autoOp`: If true, offline players of OPs are automatically made OPs.
+- `autoWhitelist`: If true and whitelist is enabled, offline players are auto-whitelisted.
+- `autoDisconnect`: If true, players automatically disconnect after using `/offline`. (Use false at your own risk)
+- `killOnDeath`: If true, players automatically die upon reconnecting if their offline player died.
+- `copySkin`: If true, offline players copy the original player's skin.
+- `databaseLocation`: Folder location for the database. Default is `./offlinePlayersReworked/`.
 
-- `opRequired`: If op required  to use `/offline`.
-- `autoOp`: If the player is OP, automatically upgrade the offline player to OP.
-- `autoWhitelist`: If the player is whitelisted, and whitelist is enabled, auto whitelist the offline player.
-- `autoDisconnect`: If `true`, the player will automatically disconnect after using `/offline`. (Set to false on your own risk)
-- `killOnDeath`: If `true`, the player will automatically die upon reconnecting **if** the offline player died.
-- `copySkin`: If `true`, the offline player copies the original player's skin.
-- `databaseLocation`: Folder location for the database. Default is `./offlinePlayersReworked/` which can be found after the mod initialized for the first time.
+## Reporting Issues
+
+If you encounter any bugs or have suggestions for improvements, please create an issue on our GitHub repository. To create an issue:
+
+1. Go to the [Issues](https://github.com/lilfish/Fabric_OfflinePlayersReworked/issues) tab of this repository.
+2. Click on "New Issue".
+3. Choose between "Bug report" or "Feature request" template.
+4. Fill out the template with as much detail as possible.
+5. Submit the issue.
+
+## Screenshots
+
+Screenshots and GIFs demonstrating the mod's functionality will be added soon.
 
 ## Setup
 
-For setup instructions please see the [fabric wiki page](https://fabricmc.net/wiki/tutorial:setup) that relates to the IDE that you are using.
+For setup instructions, please see the [Fabric wiki page](https://fabricmc.net/wiki/tutorial:setup) relevant to your IDE.
 
-### Fair Warning
+## Credits
 
-A lot of classes were copied from carpet as I didn't want to re-inventing the wheel.
-For this reason the mod is also not compatible with carpet.
-
+This mod incorporates classes from the Carpet mod, which served as a valuable reference for implementation. We extend our gratitude to the Carpet mod developers for their work.
 
 ## License
 
-This template is available under the CC0 license. Feel free to learn from it and incorporate it in your own projects.
-
+This template is available under the CC0 license. Feel free to learn from it and incorporate it into your own projects.
