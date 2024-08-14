@@ -19,6 +19,9 @@ Other dependencies:
 - ModelMapper 3.2.1
 - Commons Logging 1.3.3
 
+Not compatible:
+- Carpet mod (server sided)
+
 ## Versions
 
 - **Current Version (1.21)**: [Download v1.0.0-mc.1.21](https://github.com/lilfish/Fabric_OfflinePlayersReworked/releases/tag/v1.0.0-mc.1.21)
