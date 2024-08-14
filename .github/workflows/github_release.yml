@@ -3,10 +3,10 @@ name: Publish on GitHub
 on: [ pull_request, workflow_dispatch ]           
 
 env:                                              
-  MINECRAFT_VERSION: 1.21                       
-  JAVA_VERSION: 21      
-  VERSION: v1.0.0-mc.1.21
-  RELEASE_NAME: OfflinePlayers-Reworked 1.0.0 for Minecraft 1.21
+  MINECRAFT_VERSION: 1.18.2                       
+  JAVA_VERSION: 17      
+  VERSION: v0.1.6-mc.1.18.2
+  RELEASE_NAME: OfflinePlayers-Reworked 0.1.6 for Minecraft 1.18.2
   GITHUB_TOKEN: ${{ secrets.PUBLISH_GITHUB_TOKEN }}           
 
 permissions:
@@ -28,7 +28,7 @@ jobs:
         uses: actions/setup-java@v2
         with:
           distribution: "temurin"
-          java-version: 21
+          java-version: 17
 
       - name: Make Gradle Wrapper Executable
         if: ${{ runner.os != 'Windows' }}
