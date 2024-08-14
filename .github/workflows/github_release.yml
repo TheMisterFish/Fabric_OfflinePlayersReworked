@@ -5,8 +5,8 @@ on: [ pull_request, workflow_dispatch ]
 env:                                              
   MINECRAFT_VERSION: 1.21                       
   JAVA_VERSION: 21      
-  VERSION: 2.0.0+1.21  
-  RELEASE_NAME: OfflinePlayers-Reworked 2.0.0 for Minecraft 1.21
+  VERSION: 1.0.0+1.21  
+  RELEASE_NAME: OfflinePlayers-Reworked 1.0.0 for Minecraft 1.21
   GITHUB_TOKEN: ${{ secrets.PUBLISH_GITHUB_TOKEN }}           
 
 permissions:
