@@ -1,6 +1,4 @@
-# Changelog
-
-## OfflinePlayers-Reworked 0.1.6 (MC 1.18.2)
+# OfflinePlayers-Reworked 0.1.6 (MC 1.18.2)
 
 Working offlinePlayers-Reworked for minecraft version 1.18.2.
 
