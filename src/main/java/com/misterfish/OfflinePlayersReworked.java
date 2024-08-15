@@ -1,5 +1,7 @@
 package com.misterfish;
 
+import com.misterfish.Exception.InvalidActionException;
+import com.misterfish.Exception.UnavailableActionException;
 import com.misterfish.config.Config;
 import com.misterfish.fakes.ServerPlayerInterface;
 import com.misterfish.helper.EntityPlayerActionPack;
@@ -159,16 +161,22 @@ public class OfflinePlayersReworked implements DedicatedServerModInitializer {
         CommandSourceStack source = context.getSource();
 
         String[] pairs = options.split(" ");
-        var actionList = getActionPackList(pairs, source);
+        ArrayList<Pair<EntityPlayerActionPack.ActionType, EntityPlayerActionPack.Action>> actionList;
+
+        try {
+            actionList = getActionPackList(pairs, source);
+        } catch (Exception e) {
+            return 0;
+        }
 
         spawn(context, actionList);
-
-        return 1; // Success
+        return 1;
     }
 
     public static void respawnActiveOfflinePlayers() {
         STORAGE.findAll().stream()
                 .filter(offlinePlayerModel -> !offlinePlayerModel.getDied())
+                .filter(offlinePlayerModel -> Config.respawnKickedPlayers || !offlinePlayerModel.isKicked())
                 .toList()
                 .forEach(
                         offlinePlayerModel -> {
@@ -202,7 +210,7 @@ public class OfflinePlayersReworked implements DedicatedServerModInitializer {
                 applyPlayerData(player, loadPlayerData(offlinePlayerModel.getId()));
                 player.teleportTo(offlinePlayerModel.getX(), offlinePlayerModel.getY(), offlinePlayerModel.getZ());
 
-                if (offlinePlayerModel.getDied() && killModes.contains(player.gameMode.getGameModeForPlayer())) {
+                if (offlinePlayerModel.getDied() && killModes.contains(player.gameMode.getGameModeForPlayer()) && Config.killOnDeath) {
                     try {
                         DamageSource originalDamageSource = DamageSourceSerializer.deserializeDamageSource(offlinePlayerModel.getDeathMessage(), player.serverLevel());
 
@@ -233,7 +241,13 @@ public class OfflinePlayersReworked implements DedicatedServerModInitializer {
                     }
                 } else {
                     // Do not kill player by copying the health of an offline player.
-                    player.setHealth(originalPlayerHealth);
+                    if (offlinePlayerModel.getDied()) {
+                        player.setHealth(originalPlayerHealth);
+                    }
+                }
+
+                if (Config.informAboutKickedPlayer) {
+                    player.sendSystemMessage(Component.literal("Your offline player was kicked."));
                 }
             }
             removeOfflinePlayer(offlinePlayerModel.getId());
@@ -286,20 +300,24 @@ public class OfflinePlayersReworked implements DedicatedServerModInitializer {
         }
     }
 
-    private static ArrayList<Pair<EntityPlayerActionPack.ActionType, EntityPlayerActionPack.Action>> getActionPackList(String[] pairs, @Nullable CommandSourceStack source){
+    private static ArrayList<Pair<EntityPlayerActionPack.ActionType, EntityPlayerActionPack.Action>> getActionPackList(String[] pairs, @Nullable CommandSourceStack source) {
         ArrayList<Pair<EntityPlayerActionPack.ActionType, EntityPlayerActionPack.Action>> actionList = new ArrayList<>();
 
         IntStream.range(0, pairs.length).forEach(index -> {
             String pair = pairs[index];
             String[] actionInterval = pair.split(":");
             if (actionInterval.length != 1 && actionInterval.length != 2 && actionInterval.length != 3) {
-                if(source != null) {
+                if (source != null) {
                     source.sendFailure(Component.literal("Invalid format. Use action, action:interval or action:interval:offset."));
+                    throw new InvalidActionException();
                 }
-                return;
             }
 
             String action = actionInterval[0];
+            if (!Config.availableOptions.contains(action) && source != null) {
+                source.sendFailure(Component.literal("Invalid action. " + action + " Is not a valid action."));
+                throw new UnavailableActionException();
+            }
 
             int interval = 20;
             if (actionInterval.length > 1) {
