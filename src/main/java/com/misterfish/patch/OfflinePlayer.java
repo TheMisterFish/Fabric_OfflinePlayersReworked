@@ -86,7 +86,10 @@ public class OfflinePlayer extends ServerPlayer {
             server.getPlayerList().broadcastAll(new ClientboundPlayerInfoUpdatePacket(ClientboundPlayerInfoUpdatePacket.Action.ADD_PLAYER, offlinePlayer));
             offlinePlayer.getAbilities().flying = player.getAbilities().flying;
 
-            offlinePlayer.setGameMode(player.gameMode.getGameModeForPlayer());
+            offlinePlayer.setInvulnerable(false);
+            offlinePlayer.invulnerableTime = 0;
+            offlinePlayer.getAbilities().invulnerable = false;
+            offlinePlayer.onUpdateAbilities();
 
             return offlinePlayer;
 
