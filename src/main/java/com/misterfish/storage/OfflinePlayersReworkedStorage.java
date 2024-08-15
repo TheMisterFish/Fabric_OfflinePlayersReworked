@@ -47,7 +47,10 @@ public class OfflinePlayersReworkedStorage {
     }
 
     public void remove(UUID uuid) {
-        jsonDBTemplate.remove(new OfflinePlayerModel(uuid), OfflinePlayerModel.class);
+        OfflinePlayerModel modelToRemove = new OfflinePlayerModel(uuid);
+        if (jsonDBTemplate.findById(uuid.toString(), OfflinePlayerModel.class) != null) {
+            jsonDBTemplate.remove(modelToRemove, OfflinePlayerModel.class);
+        }
     }
 
     public OfflinePlayerModel findByPlayerUUID(UUID uuid) {
