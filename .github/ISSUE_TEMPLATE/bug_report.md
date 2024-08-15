@@ -25,7 +25,7 @@ _If applicable, add screenshots to help explain your problem._
 **Versions (please complete the following information):**
 - Minecraft: [e.g. 1.21]
 - Fabric Loader: [e.g. 0.14.21]
-- Mod Version: [e.g. 1.0.0]
+- Mod Version: [e.g. 1.0.1]
 
 **Additional context**
 _Add any other context about the problem here._
