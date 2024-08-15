@@ -4,8 +4,7 @@
   "compatibilityLevel": "JAVA_21",
   "mixins": [
     "MinecraftServer_coreMixin",
-    "Player_fakePlayersMixin",
-    "PlayerList_fakePlayersMixin",
+    "PlayerList_offlinePlayersMixin",
     "ServerPlayer_actionPackMixin",
     "ServerStatus_metaPingMixin"
   ],
