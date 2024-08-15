@@ -18,6 +18,7 @@ public class OfflinePlayerModel {
     private UUID id;
     private UUID player;
     private String[] actions;
+    private boolean kicked = false;
     private boolean died = false;
     private String deathMessage;
 
@@ -29,12 +30,15 @@ public class OfflinePlayerModel {
         this.id = id;
     }
 
-    public OfflinePlayerModel(UUID id, UUID player, String[] actions) {
+    public OfflinePlayerModel(UUID id, UUID player, String[] actions, double x, double y, double z) {
         this.id = id;
         this.player = player;
         this.actions = actions;
         this.died = false;
         this.deathMessage = "";
+        this.x = x;
+        this.y = y;
+        this.z = z;
     }
 
     public UUID getId() {
@@ -67,6 +71,14 @@ public class OfflinePlayerModel {
 
     public void setDeathMessage(String deathMessage) {
         this.deathMessage = deathMessage;
+    }
+
+    public boolean isKicked() {
+        return kicked;
+    }
+
+    public void setKicked(boolean kicked) {
+        this.kicked = kicked;
     }
 
     public boolean getDied() {
