@@ -6,7 +6,10 @@ import com.misterfish.utils.ServerPlayerMapper;
 import com.mojang.authlib.GameProfile;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtAccounter;
+import net.minecraft.nbt.NbtIo;
 import net.minecraft.network.DisconnectionDetails;
 import net.minecraft.network.PacketSendListener;
 import net.minecraft.network.chat.CommonComponents;
@@ -18,6 +21,8 @@ import net.minecraft.network.protocol.game.ClientboundPlayerCombatKillPacket;
 import net.minecraft.network.protocol.game.ClientboundPlayerInfoUpdatePacket;
 import net.minecraft.network.protocol.game.ClientboundRotateHeadPacket;
 import net.minecraft.network.protocol.game.ServerboundClientCommandPacket;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.TickTask;
 import net.minecraft.server.level.ClientInformation;
@@ -27,18 +32,24 @@ import net.minecraft.server.network.CommonListenerCookie;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.HumanoidArm;
 import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.player.ChatVisiblity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.GameRules;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.portal.DimensionTransition;
+import net.minecraft.world.level.storage.LevelResource;
 import net.minecraft.world.scores.Team;
 import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.nio.file.Path;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -55,14 +66,14 @@ public class OfflinePlayer extends ServerPlayer {
         super(server, worldIn, profile, cli);
     }
 
-    public static OfflinePlayer createFakePlayer(MinecraftServer server, ServerPlayer player) {
+    public static OfflinePlayer createAndSpawnNewOfflinePlayer(MinecraftServer server, ServerPlayer player) {
         try {
             ServerLevel worldIn = player.serverLevel();
             var gameProfileUUID = UUID.fromString(StringUtils.reverse(player.getUUID().toString()));
             var gameProfileName = "[OFF]" + StringUtils.truncate(player.getName().getString(), 0, 11);
             GameProfile gameprofile = new GameProfile(gameProfileUUID, gameProfileName);
 
-            ServerPlayerMapper.copyPlayerSkin(player, gameprofile);
+            ServerPlayerMapper.copyPlayerSkin(player.getGameProfile(), gameprofile);
 
             OfflinePlayer offlinePlayer = new OfflinePlayer(server, worldIn, gameprofile, player.clientInformation());
 
@@ -73,11 +84,11 @@ public class OfflinePlayer extends ServerPlayer {
             ServerPlayerMapper.copyPlayerRights(player, offlinePlayer);
             ServerPlayerMapper.copyPlayerData(player, offlinePlayer);
 
-            offlinePlayer.connection.teleport(player.getX(), player.getY(), player.getZ(), player.getYRot(), player.getXRot());
+            offlinePlayer.teleportTo(player.serverLevel(), player.getX(), player.getY(), player.getZ(), player.getYRot(), player.getXRot());
+
             //noinspection ConstantConditions
             ((ServerPlayerInterface) offlinePlayer).getActionPack().copyFrom(((ServerPlayerInterface) player).getActionPack());
             offlinePlayer.getAttribute(Attributes.STEP_HEIGHT).setBaseValue(0.6F);
-
 
             server.getPlayerList().broadcastAll(new ClientboundRotateHeadPacket(offlinePlayer, (byte) (player.yHeadRot * 256 / 360)), offlinePlayer.level().dimension());
             server.getPlayerList().broadcastAll(new ClientboundPlayerInfoUpdatePacket(ClientboundPlayerInfoUpdatePacket.Action.ADD_PLAYER, offlinePlayer));
@@ -91,6 +102,91 @@ public class OfflinePlayer extends ServerPlayer {
             LOGGER.error(e.getMessage(), e);
         }
         return null;
+    }
+
+    public static OfflinePlayer recreateOfflinePlayer(MinecraftServer server, UUID offlinePlayerUUID, @Nullable UUID playerUUID) {
+        GameProfile gameProfile = Objects.requireNonNull(server.getProfileCache()).get(offlinePlayerUUID).orElse(null);
+        if (gameProfile == null) {
+            LOGGER.error("Failed to respawn offline player: GameProfile not found for UUID {}", offlinePlayerUUID);
+            return null;
+        }
+
+        Path playerDataDir = server.getWorldPath(LevelResource.PLAYER_DATA_DIR);
+        Path playerDataFile = playerDataDir.resolve(offlinePlayerUUID + ".dat");
+        CompoundTag playerData;
+
+        try {
+            playerData = NbtIo.readCompressed(playerDataFile, NbtAccounter.unlimitedHeap());
+        } catch (Exception e) {
+            LOGGER.error("Failed to load player data for {}", gameProfile.getName(), e);
+            return null;
+        }
+
+        if (playerData == null) {
+            LOGGER.error("No player data found for {}", gameProfile.getName());
+            return null;
+        }
+
+        ResourceKey<Level> dimensionKey;
+
+        if (playerData.contains("Dimension")) {
+            ResourceLocation dimLocation = ResourceLocation.tryParse(playerData.getString("Dimension"));
+            if (dimLocation != null) {
+                dimensionKey = ResourceKey.create(Registries.DIMENSION, dimLocation);
+            } else {
+                LOGGER.error("Invalid dimension string in player data for {}", gameProfile.getName());
+                return null;
+            }
+        } else {
+            LOGGER.error("No Dimension key found in player data for {}", gameProfile.getName());
+            return null;
+        }
+
+        ServerLevel world = server.getLevel(dimensionKey);
+        if (world == null) {
+            LOGGER.error("Dimension {} not found for {} ", dimensionKey, gameProfile.getName());
+            return null;
+        }
+
+        if(playerUUID != null) {
+            ServerPlayerMapper.copyPlayerSkin(new GameProfile(playerUUID, ""), gameProfile);
+        }
+
+        OfflinePlayer offlinePlayer = new OfflinePlayer(server, world, gameProfile, ClientInformation.createDefault());
+
+        if (playerData.contains("Pos")) {
+            net.minecraft.nbt.ListTag posList = playerData.getList("Pos", 6);
+            double x = posList.getDouble(0);
+            double y = posList.getDouble(1);
+            double z = posList.getDouble(2);
+            float yaw = playerData.getList("Rotation", 5).getFloat(0);
+            float pitch = playerData.getList("Rotation", 5).getFloat(1);
+            offlinePlayer.moveTo(x, y, z, yaw, pitch);
+        } else {
+            LOGGER.error("Could not find Pos for offline player with UUID " + offlinePlayerUUID);
+            return null;
+        }
+
+        return offlinePlayer;
+    }
+
+    public static OfflinePlayer respawnOfflinePlayer(MinecraftServer server, UUID offlinePlayerUUID, UUID playerUUID) {
+        OfflinePlayer offlinePlayer = recreateOfflinePlayer(server, offlinePlayerUUID, playerUUID);
+
+        if (offlinePlayer != null) {
+            var clientInformation = new ClientInformation("", 0, ChatVisiblity.FULL, true, 0, HumanoidArm.RIGHT, false, false);
+            server.getPlayerList().placeNewPlayer(new FakeClientConnection(PacketFlow.SERVERBOUND), offlinePlayer, new CommonListenerCookie(offlinePlayer.getGameProfile(), 0, clientInformation, true));
+
+            // Run any additional setup logic
+            offlinePlayer.fixStartingPosition.run();
+
+            LOGGER.info("Respawned offline player: {}", offlinePlayer.getGameProfile().getName());
+
+        } else {
+            LOGGER.error("Could not respawn offline player with UUID '{}'", offlinePlayerUUID);
+        }
+
+        return offlinePlayer;
     }
 
     @Override
@@ -116,9 +212,12 @@ public class OfflinePlayer extends ServerPlayer {
         } else {
             this.server.tell(new TickTask(this.server.getTickCount(), () -> this.connection.onDisconnect(new DisconnectionDetails(reason))));
         }
+
+        STORAGE.remove(this.uuid);
     }
 
-    public void disconnect(Component reason) {
+    public void kickOfflinePlayer(Component reason) {
+        STORAGE.kicked(this.uuid);
         this.connection.onDisconnect(new DisconnectionDetails(reason));
     }
 

@@ -1,5 +1,7 @@
 package com.misterfish;
 
+import com.misterfish.Exception.InvalidActionException;
+import com.misterfish.Exception.UnavailableActionException;
 import com.misterfish.config.Config;
 import com.misterfish.fakes.ServerPlayerInterface;
 import com.misterfish.helper.EntityPlayerActionPack;
@@ -29,6 +31,7 @@ import net.minecraft.world.level.storage.LevelResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nullable;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -53,10 +56,6 @@ public class OfflinePlayersReworked implements DedicatedServerModInitializer {
     public static void onWorldLoad(MinecraftServer server) {
         // we need to set the server, so we can access it from the ping mixin
         OfflinePlayersReworked.server = server;
-    }
-
-    public static void afterWorldLoad() {
-//        respawnActiveOfflinePlayers();
     }
 
     @Override
@@ -132,7 +131,7 @@ public class OfflinePlayersReworked implements DedicatedServerModInitializer {
 
         LOGGER.debug("Adding new offline player");
 
-        var offlinePlayer = OfflinePlayer.createFakePlayer(player.getServer(), player);
+        var offlinePlayer = OfflinePlayer.createAndSpawnNewOfflinePlayer(player.getServer(), player);
 
         if (offlinePlayer == null) {
             source.sendFailure(Component.literal("Offline player could not be created."));
@@ -143,7 +142,7 @@ public class OfflinePlayersReworked implements DedicatedServerModInitializer {
         if (actionList.size() > 0) {
             arguments = getString(context, "arguments").split(" ");
         }
-        STORAGE.create(offlinePlayer.getUUID(), player.getUUID(), arguments);
+        STORAGE.create(offlinePlayer.getUUID(), player.getUUID(), arguments, player.getX(), player.getY(), player.getZ());
 
         actionList.forEach(actionTypeActionPair -> manipulate(offlinePlayer, ap -> ap.start(
                 actionTypeActionPair.first(),
@@ -159,41 +158,38 @@ public class OfflinePlayersReworked implements DedicatedServerModInitializer {
 
     private int spawnWithArguments(CommandContext<CommandSourceStack> context) {
         String options = getString(context, "arguments");
-        var source = context.getSource();
+        CommandSourceStack source = context.getSource();
 
         String[] pairs = options.split(" ");
-        ArrayList<Pair<EntityPlayerActionPack.ActionType, EntityPlayerActionPack.Action>> actionList = new ArrayList<>();
+        ArrayList<Pair<EntityPlayerActionPack.ActionType, EntityPlayerActionPack.Action>> actionList;
 
-        IntStream.range(0, pairs.length).forEach(index -> {
-            String pair = pairs[index];
-            String[] actionInterval = pair.split(":");
-            if (actionInterval.length != 1 && actionInterval.length != 2 && actionInterval.length != 3) {
-                source.sendFailure(Component.literal("Invalid format. Use action, action:interval or action:interval:offset."));
-                return;
-            }
+        try {
+            actionList = getActionPackList(pairs, source);
+        } catch (Exception e) {
+            return 0;
+        }
 
-            String action = actionInterval[0];
-
-            int interval = 20;
-            if (actionInterval.length > 1) {
-                interval = Integer.parseInt(actionInterval[1]);
-            }
-
-            Pair<EntityPlayerActionPack.ActionType, EntityPlayerActionPack.Action> actionPair;
-
-            if (actionInterval.length > 2) {
-                int offset = Integer.parseInt(actionInterval[2]);
-                actionPair = EntityPlayerActionPack.getActionPair(action, interval, offset);
-            } else {
-                actionPair = EntityPlayerActionPack.getActionPair(action, interval, index);
-            }
-
-            actionList.add(actionPair);
-        });
         spawn(context, actionList);
-
-        return 1; // Success
+        return 1;
     }
+
+    public static void respawnActiveOfflinePlayers() {
+        STORAGE.findAll().stream()
+                .filter(offlinePlayerModel -> !offlinePlayerModel.getDied())
+                .filter(offlinePlayerModel -> Config.respawnKickedPlayers || !offlinePlayerModel.isKicked())
+                .toList()
+                .forEach(
+                        offlinePlayerModel -> {
+                            var offlinePlayer = OfflinePlayer.respawnOfflinePlayer(server, offlinePlayerModel.getId(), offlinePlayerModel.getPlayer());
+                            var actionList = getActionPackList(offlinePlayerModel.getActions(), null);
+                            actionList.forEach(actionTypeActionPair -> manipulate(offlinePlayer, ap -> ap.start(
+                                    actionTypeActionPair.first(),
+                                    actionTypeActionPair.second()
+                            )));
+                        }
+                );
+    }
+
 
     private static void manipulate(ServerPlayer player, Consumer<EntityPlayerActionPack> action) {
         action.accept(((ServerPlayerInterface) player).getActionPack());
@@ -214,7 +210,7 @@ public class OfflinePlayersReworked implements DedicatedServerModInitializer {
                 applyPlayerData(player, loadPlayerData(offlinePlayerModel.getId()));
                 player.teleportTo(offlinePlayerModel.getX(), offlinePlayerModel.getY(), offlinePlayerModel.getZ());
 
-                if (offlinePlayerModel.getDied() && killModes.contains(player.gameMode.getGameModeForPlayer())) {
+                if (offlinePlayerModel.getDied() && killModes.contains(player.gameMode.getGameModeForPlayer()) && Config.killOnDeath) {
                     try {
                         DamageSource originalDamageSource = DamageSourceSerializer.deserializeDamageSource(offlinePlayerModel.getDeathMessage(), player.serverLevel());
 
@@ -245,12 +241,19 @@ public class OfflinePlayersReworked implements DedicatedServerModInitializer {
                     }
                 } else {
                     // Do not kill player by copying the health of an offline player.
-                    player.setHealth(originalPlayerHealth);
+                    if (offlinePlayerModel.getDied()) {
+                        player.setHealth(originalPlayerHealth);
+                    }
+                }
+
+                if (Config.informAboutKickedPlayer) {
+                    player.sendSystemMessage(Component.literal("Your offline player was kicked."));
                 }
             }
             removeOfflinePlayer(offlinePlayerModel.getId());
         }
     }
+
 
     private static void removeOfflinePlayer(UUID id) {
         try {
@@ -295,5 +298,44 @@ public class OfflinePlayersReworked implements DedicatedServerModInitializer {
         if (playerData != null) {
             player.load(playerData);
         }
+    }
+
+    private static ArrayList<Pair<EntityPlayerActionPack.ActionType, EntityPlayerActionPack.Action>> getActionPackList(String[] pairs, @Nullable CommandSourceStack source) {
+        ArrayList<Pair<EntityPlayerActionPack.ActionType, EntityPlayerActionPack.Action>> actionList = new ArrayList<>();
+
+        IntStream.range(0, pairs.length).forEach(index -> {
+            String pair = pairs[index];
+            String[] actionInterval = pair.split(":");
+            if (actionInterval.length != 1 && actionInterval.length != 2 && actionInterval.length != 3) {
+                if (source != null) {
+                    source.sendFailure(Component.literal("Invalid format. Use action, action:interval or action:interval:offset."));
+                    throw new InvalidActionException();
+                }
+            }
+
+            String action = actionInterval[0];
+            if (!Config.availableOptions.contains(action) && source != null) {
+                source.sendFailure(Component.literal("Invalid action. " + action + " Is not a valid action."));
+                throw new UnavailableActionException();
+            }
+
+            int interval = 20;
+            if (actionInterval.length > 1) {
+                interval = Integer.parseInt(actionInterval[1]);
+            }
+
+            Pair<EntityPlayerActionPack.ActionType, EntityPlayerActionPack.Action> actionPair;
+
+            if (actionInterval.length > 2) {
+                int offset = Integer.parseInt(actionInterval[2]);
+                actionPair = EntityPlayerActionPack.getActionPair(action, interval, offset);
+            } else {
+                actionPair = EntityPlayerActionPack.getActionPair(action, interval, index);
+            }
+
+            actionList.add(actionPair);
+        });
+
+        return actionList;
     }
 }
