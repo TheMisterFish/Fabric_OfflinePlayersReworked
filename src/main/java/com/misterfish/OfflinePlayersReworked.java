@@ -201,7 +201,6 @@ public class OfflinePlayersReworked implements DedicatedServerModInitializer {
 
     public static void playerJoined(ServerPlayer player) {
         var offlinePlayerModel = STORAGE.findByPlayerUUID(player.getUUID());
-        float originalPlayerHealth = player.getHealth();
 
         if (offlinePlayerModel != null) {
             OfflinePlayer offlinePlayer = (OfflinePlayer) Objects.requireNonNull(player.getServer()).getPlayerList().getPlayer(offlinePlayerModel.getId());
@@ -243,9 +242,6 @@ public class OfflinePlayersReworked implements DedicatedServerModInitializer {
                     } catch (Exception e) {
                         LOGGER.error(e.getMessage(), e);
                     }
-                } else {
-                    // Do not kill player by copying the health of an offline player.
-                    player.setHealth(originalPlayerHealth);
                 }
             }
             removeOfflinePlayer(offlinePlayerModel.getId());
