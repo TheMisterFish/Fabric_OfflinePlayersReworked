@@ -41,8 +41,8 @@ public class OfflinePlayersReworkedStorage {
         return jsonDBTemplate.findAll(OfflinePlayerModel.class);
     }
 
-    public void create(UUID offlinePlayerUUID, UUID playerUUID, String[] actions) {
-        OfflinePlayerModel offlinePlayer = new OfflinePlayerModel(offlinePlayerUUID, playerUUID, actions);
+    public void create(UUID offlinePlayerUUID, UUID playerUUID, String[] actions, double x, double y, double z) {
+        OfflinePlayerModel offlinePlayer = new OfflinePlayerModel(offlinePlayerUUID, playerUUID, actions, x, y, z);
         jsonDBTemplate.upsert(offlinePlayer);
     }
 
@@ -61,6 +61,13 @@ public class OfflinePlayersReworkedStorage {
         update.set("x", position.x);
         update.set("y", position.y);
         update.set("z", position.z);
+
+        String jxQuery = String.format("/.[id='%s']", uuid);
+        jsonDBTemplate.findAndModify(jxQuery, update, "offlinePlayerModels");
+    }
+
+    public void kicked(UUID uuid){
+        Update update = Update.update("kicked", true);
 
         String jxQuery = String.format("/.[id='%s']", uuid);
         jsonDBTemplate.findAndModify(jxQuery, update, "offlinePlayerModels");

@@ -27,9 +27,9 @@ public class ServerPlayerMapper {
         }
     }
 
-    public static void copyPlayerSkin(ServerPlayer source, GameProfile gameprofile) {
+    public static void copyPlayerSkin(GameProfile sourceGameprofile, GameProfile gameprofile) {
         if(Config.copySkin) {
-            source.getGameProfile().getProperties().get("textures")
+            sourceGameprofile.getProperties().get("textures")
                     .forEach(property -> gameprofile.getProperties().put("textures", property));
         }
     }

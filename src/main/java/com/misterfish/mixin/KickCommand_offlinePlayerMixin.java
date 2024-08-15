@@ -1,7 +1,6 @@
 package com.misterfish.mixin;
 
 import com.misterfish.patch.OfflinePlayer;
-import com.mojang.brigadier.context.CommandContext;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.commands.KickCommand;
@@ -21,7 +20,7 @@ public class KickCommand_offlinePlayerMixin {
         for (ServerPlayer player : collection) {
             if (player instanceof OfflinePlayer offlinePlayer) {
                 // Disconnect the OfflinePlayer
-                offlinePlayer.disconnect(component);
+                offlinePlayer.kickOfflinePlayer(component);
             }
         }
     }
