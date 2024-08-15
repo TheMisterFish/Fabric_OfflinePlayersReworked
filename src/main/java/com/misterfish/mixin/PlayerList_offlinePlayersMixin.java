@@ -32,15 +32,6 @@ public abstract class PlayerList_offlinePlayersMixin {
         }
     }
 
-//    @Redirect(method = "placeNewPlayer", at = @At(value = "NEW", target = "(Lnet/minecraft/server/MinecraftServer;Lnet/minecraft/network/Connection;Lnet/minecraft/server/level/ServerPlayer;Lnet/minecraft/server/network/CommonListenerCookie;)Lnet/minecraft/server/network/ServerGamePacketListenerImpl;"))
-//    private ServerGamePacketListenerImpl replaceNetworkHandler(MinecraftServer server, Connection clientConnection, ServerPlayer playerIn, CommonListenerCookie cookie) {
-//        if (playerIn instanceof OfflinePlayer fake) {
-//            return new NetHandlerPlayServerFake(this.server, clientConnection, fake, cookie);
-//        } else {
-//            return new ServerGamePacketListenerImpl(this.server, clientConnection, playerIn, cookie);
-//        }
-//    }
-
     @Inject(method = "placeNewPlayer", at = @At("TAIL"))
     private void afterPlaceNewPlayer(Connection clientConnection, ServerPlayer playerIn, CommonListenerCookie cookie, CallbackInfo ci) {
         if (playerIn instanceof OfflinePlayer fake) {
