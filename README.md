@@ -89,8 +89,11 @@ The configuration looks as follows:
   "autoWhitelist": true,
   "autoDisconnect": true,
   "killOnDeath": true,
+  "respawnKickedPlayers": true,
+  "informAboutKickedPlayer": true,
   "copySkin": true,
-  "databaseLocation": "./offlineplayersreworked/"
+  "databaseLocation": "./offlineplayersreworked/",
+  "availableOptions": ["attack","use","etc..."]
 }
 ```
 - `opRequired`: If true, only OPs can use `/offline`.
@@ -98,9 +101,11 @@ The configuration looks as follows:
 - `autoWhitelist`: If true and whitelist is enabled, offline players are auto-whitelisted.
 - `autoDisconnect`: If true, players automatically disconnect after using `/offline`. (Use false at your own risk)
 - `killOnDeath`: If true, players automatically die upon reconnecting if their offline player died.
+- `respawnKickedPlayers`: If true, offline players automatically respawn on server restart when kicked
+- `informAboutKickedPlayer`: If true, if offline player was kicked and player rejoins, player will be informed about offlline player being kicked
 - `copySkin`: If true, offline players copy the original player's skin.
 - `databaseLocation`: Folder location for the database. Default is `./offlinePlayersReworked/`.
-
+- `availableOptions`: A list of the available action options that can be used.
 ## Reporting Issues
 
 If you encounter any bugs or have suggestions for improvements, please create an issue on our GitHub repository. To create an issue:

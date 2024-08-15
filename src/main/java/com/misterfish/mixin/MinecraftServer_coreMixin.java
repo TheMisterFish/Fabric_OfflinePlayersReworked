@@ -16,6 +16,6 @@ public class MinecraftServer_coreMixin {
 
     @Inject(method = "loadLevel", at = @At("RETURN"))
     private void serverLoadedReady(CallbackInfo ci) {
-        OfflinePlayersReworked.afterWorldLoad();
+        OfflinePlayersReworked.respawnActiveOfflinePlayers();
     }
 }
