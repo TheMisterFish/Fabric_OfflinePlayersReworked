@@ -2,9 +2,9 @@
 
 **Updates:**
 - Carpet is now compatible
-- /kick now kick's the offline player (+ new option in config to inform the player his offline player had been kicked)
+- /kick now kick's the offline player (+ new option `informAboutKickedPlayer` in config to inform the player his offline player had been kicked)
 - Offline players now able to be created in the nether and the end
-- On server restart, offline players will be recreated (+ new option in config to also recreate kicked offline players)
+- On server restart, offline players will be recreated (+ new option `respawnKickedPlayers` in config to also recreate kicked offline players)
 - Configurable actions using `availableOptions` config
 - Minor bug fixes
 
