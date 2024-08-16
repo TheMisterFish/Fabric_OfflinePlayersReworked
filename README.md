@@ -21,7 +21,7 @@ Other dependencies:
 
 ## Versions
 
-- **Current Version (1.21)**: [Download v1.0.2-mc.1.21](https://github.com/lilfish/Fabric_OfflinePlayersReworked/releases/tag/v1.0.2-mc.1.21)
+- **Current Version (1.21)**: [Download v1.0.3-mc.1.21](https://github.com/lilfish/Fabric_OfflinePlayersReworked/releases/tag/v1.0.3-mc.1.21)
     - Available on modrinth: [OfflinePlayers - Modrinth](https://modrinth.com/mod/offlineplayers)
 - **Legacy Version (1.18.2)**: [Download v0.1.6-mc.1.18.2](https://github.com/lilfish/Fabric_OfflinePlayersReworked/releases/tag/v0.1.6-mc.1.18.2)
     - This version is deprecated and will not be available on Modrinth.
