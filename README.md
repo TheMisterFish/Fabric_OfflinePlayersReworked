@@ -21,7 +21,7 @@ Other dependencies:
 
 ## Versions
 
-- **Current Version (1.21)**: [Download v1.0.0-mc.1.21](https://github.com/lilfish/Fabric_OfflinePlayersReworked/releases/tag/v1.0.0-mc.1.21)
+- **Current Version (1.21)**: [Download v1.0.1-mc.1.21](https://github.com/lilfish/Fabric_OfflinePlayersReworked/releases/tag/v1.0.1-mc.1.21)
     - This version will be available on Modrinth soon.
 - **Legacy Version (1.18.2)**: [Download v0.1.6-mc.1.18.2](https://github.com/lilfish/Fabric_OfflinePlayersReworked/releases/tag/v0.1.6-mc.1.18.2)
     - This version is deprecated and will not be available on Modrinth.
@@ -57,6 +57,7 @@ You can add actions to your offline player. Available actions include:
 | drop_stack    | Drops all items from the active slot                     |
 | move_forward  | Moves the player forward                                 |
 | move_backward | Moves the player backwards                               |
+ | disconnect    | Automatically disconnects the offline player after a set interval |
 
 To use an action, type `/offline [action]`, e.g., `/offline attack`.
 

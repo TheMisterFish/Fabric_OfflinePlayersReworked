@@ -87,6 +87,7 @@ public class OfflinePlayersReworked implements DedicatedServerModInitializer {
                                                     .append(Component.literal("  - drop_item \n").withStyle(ChatFormatting.AQUA))
                                                     .append(Component.literal("  - drop_stack \n").withStyle(ChatFormatting.AQUA))
                                                     .append(Component.literal("  - move_forward, move_backward").withStyle(ChatFormatting.AQUA))
+                                                    .append(Component.literal("  - disconnect").withStyle(ChatFormatting.AQUA))
                                             );
 
                                     return 1;
@@ -181,11 +182,13 @@ public class OfflinePlayersReworked implements DedicatedServerModInitializer {
                 .forEach(
                         offlinePlayerModel -> {
                             var offlinePlayer = OfflinePlayer.respawnOfflinePlayer(server, offlinePlayerModel.getId(), offlinePlayerModel.getPlayer());
-                            var actionList = getActionPackList(offlinePlayerModel.getActions(), null);
-                            actionList.forEach(actionTypeActionPair -> manipulate(offlinePlayer, ap -> ap.start(
-                                    actionTypeActionPair.first(),
-                                    actionTypeActionPair.second()
-                            )));
+                            if(offlinePlayer != null) {
+                                var actionList = getActionPackList(offlinePlayerModel.getActions(), null);
+                                actionList.forEach(actionTypeActionPair -> manipulate(offlinePlayer, ap -> ap.start(
+                                        actionTypeActionPair.first(),
+                                        actionTypeActionPair.second()
+                                )));
+                            }
                         }
                 );
     }
@@ -246,7 +249,7 @@ public class OfflinePlayersReworked implements DedicatedServerModInitializer {
                     }
                 }
 
-                if (Config.informAboutKickedPlayer) {
+                if (Config.informAboutKickedPlayer && offlinePlayerModel.isKicked()) {
                     player.sendSystemMessage(Component.literal("Your offline player was kicked."));
                 }
             }
