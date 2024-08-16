@@ -68,6 +68,12 @@ You can execute actions with set intervals or offsets:
 - Interval: `/offline attack:20` (20 tick or 1 second interval between attacks)
 - Offset: `/offline attack:20:10` (10 tick offset added to the action)
 
+#### Time Parsing
+
+Besides, using ticks (the default) it is also possible to set the interval and offset to millis, seconds, minutes, hours, and even days.
+
+Example: `/offline use:100ms`, `/offline attack:1s`, `/offline attack:1.5m`, `/offline eat:0.25h`, `/offline disconnect:1d`
+
 ### Chaining
 
 You can chain actions, for example:
