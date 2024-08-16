@@ -94,6 +94,7 @@ The configuration looks as follows:
   "informAboutKickedPlayer": true,
   "copySkin": true,
   "databaseLocation": "./offlineplayersreworked/",
+  "offlinePlayerPrefix": "[OFF]",
   "availableOptions": ["attack","use","etc..."]
 }
 ```
@@ -106,6 +107,7 @@ The configuration looks as follows:
 - `informAboutKickedPlayer`: If true, if offline player was kicked and player rejoins, player will be informed about offlline player being kicked
 - `copySkin`: If true, offline players copy the original player's skin.
 - `databaseLocation`: Folder location for the database. Default is `./offlinePlayersReworked/`.
+- `offlinePlayerPrefix`: Sets the prefix for the offline player.
 - `availableOptions`: A list of the available action options that can be used.
 ## Reporting Issues
 
