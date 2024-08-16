@@ -70,7 +70,7 @@ You can execute actions with set intervals or offsets:
 
 #### Time Parsing
 
-Besides, using ticks (the default) it is also possible to set the interval and offset to millis, seconds, minutes, hours, and even days.
+Besides using ticks (the default), it is also possible to set the interval and offset to milliseconds, seconds, minutes, hours, and even days.
 
 Example: `/offline use:100ms`, `/offline attack:1s`, `/offline attack:1.5m`, `/offline eat:0.25h`, `/offline disconnect:1d`
 
