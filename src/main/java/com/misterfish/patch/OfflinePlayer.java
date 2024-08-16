@@ -1,5 +1,6 @@
 package com.misterfish.patch;
 
+import com.misterfish.config.Config;
 import com.misterfish.fakes.ServerPlayerInterface;
 import com.misterfish.utils.DamageSourceSerializer;
 import com.misterfish.utils.ServerPlayerMapper;
@@ -71,7 +72,8 @@ public class OfflinePlayer extends ServerPlayer {
         try {
             ServerLevel worldIn = player.serverLevel();
             var gameProfileUUID = UUID.fromString(StringUtils.reverse(player.getUUID().toString()));
-            var gameProfileName = "[OFF]" + StringUtils.truncate(player.getName().getString(), 0, 11);
+            var gameProfileName = StringUtils.truncate(Config.offlinePlayerPrefix + player.getName().getString(), 0, 15);
+
             GameProfile gameprofile = new GameProfile(gameProfileUUID, gameProfileName);
 
             ServerPlayerMapper.copyPlayerSkin(player.getGameProfile(), gameprofile);
