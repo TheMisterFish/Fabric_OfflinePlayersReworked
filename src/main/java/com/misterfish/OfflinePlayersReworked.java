@@ -1,6 +1,8 @@
 package com.misterfish;
 
 import com.misterfish.Exception.InvalidActionException;
+import com.misterfish.Exception.InvalidIntervalException;
+import com.misterfish.Exception.InvalidOffsetException;
 import com.misterfish.Exception.UnavailableActionException;
 import com.misterfish.config.Config;
 import com.misterfish.fakes.ServerPlayerInterface;
@@ -9,6 +11,7 @@ import com.misterfish.patch.OfflinePlayer;
 import com.misterfish.storage.OfflinePlayersReworkedStorage;
 import com.misterfish.utils.DamageSourceSerializer;
 import com.misterfish.utils.ServerPlayerMapper;
+import com.misterfish.utils.TimeParser;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import eu.midnightdust.lib.config.MidnightConfig;
@@ -324,13 +327,28 @@ public class OfflinePlayersReworked implements DedicatedServerModInitializer {
 
             int interval = 20;
             if (actionInterval.length > 1) {
-                interval = Integer.parseInt(actionInterval[1]);
+                try {
+                    interval = TimeParser.parse(actionInterval[1]);
+                } catch (IllegalArgumentException e) {
+                    if (source != null) {
+                        source.sendFailure(Component.literal("Invalid interval format: " + e.getMessage()));
+                    }
+                    throw new InvalidIntervalException("Invalid interval: " + actionInterval[1]);
+                }
             }
 
             Pair<EntityPlayerActionPack.ActionType, EntityPlayerActionPack.Action> actionPair;
 
             if (actionInterval.length > 2) {
-                int offset = Integer.parseInt(actionInterval[2]);
+                int offset;
+                try {
+                    offset = TimeParser.parse(actionInterval[2]);
+                } catch (IllegalArgumentException e) {
+                    if (source != null) {
+                        source.sendFailure(Component.literal("Invalid offset format: " + e.getMessage()));
+                    }
+                    throw new InvalidOffsetException("Invalid offset: " + actionInterval[2]);
+                }
                 actionPair = EntityPlayerActionPack.getActionPair(action, interval, offset);
             } else {
                 actionPair = EntityPlayerActionPack.getActionPair(action, interval, index);
