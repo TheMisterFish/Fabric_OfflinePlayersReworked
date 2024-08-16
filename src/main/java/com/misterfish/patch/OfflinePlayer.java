@@ -49,6 +49,7 @@ import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.Objects;
 import java.util.UUID;
@@ -117,7 +118,10 @@ public class OfflinePlayer extends ServerPlayer {
 
         try {
             playerData = NbtIo.readCompressed(playerDataFile, NbtAccounter.unlimitedHeap());
-        } catch (Exception e) {
+        } catch (NoSuchFileException e) {
+            LOGGER.error("Failed to load player data for {}, no player data found.", gameProfile.getName());
+            return null;
+        } catch (Exception e){
             LOGGER.error("Failed to load player data for {}", gameProfile.getName(), e);
             return null;
         }
