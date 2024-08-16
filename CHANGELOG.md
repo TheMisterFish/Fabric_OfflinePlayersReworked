@@ -1,3 +1,13 @@
+# OfflinePlayers-Reworked 1.0.2 (MC 1.21)
+
+**Updates:**
+- Added prefix option in config
+- Added time parser to parse times such as 100ms, 1s, 1m, 1.5h, 0.5d
+- Added disconnect action to allow offline player to disconnect after set time
+- Better exception handling of invalid/lost playerdata of offlinePlayer
+- Minor bug fixes
+
+
 # OfflinePlayers-Reworked 1.0.1 (MC 1.21)
 
 **Updates:**
