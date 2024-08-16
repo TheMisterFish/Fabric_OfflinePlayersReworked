@@ -8,6 +8,8 @@ import net.minecraft.commands.arguments.EntityAnchorArgument;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.component.DataComponents;
+import net.minecraft.network.DisconnectionDetails;
+import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundSetCarriedItemPacket;
 import net.minecraft.network.protocol.game.ServerboundPlayerActionPacket;
 import net.minecraft.server.level.ServerLevel;
@@ -488,14 +490,13 @@ public class EntityPlayerActionPack {
                 return false;
             }
         },
-        SWAP_HANDS(true) {
+        DISCONNECT(false) {
             @Override
             boolean execute(ServerPlayer player, Action action) {
-                player.resetLastActionTime();
-                ItemStack itemStack_1 = player.getItemInHand(InteractionHand.OFF_HAND);
-                player.setItemInHand(InteractionHand.OFF_HAND, player.getItemInHand(InteractionHand.MAIN_HAND));
-                player.setItemInHand(InteractionHand.MAIN_HAND, itemStack_1);
-                return false;
+                Component reason = Component.literal(player.getName().getString() + " automatically disconnected.");
+                player.connection.onDisconnect(new DisconnectionDetails(reason));
+                player.disconnect();
+                return true;
             }
         };
 
@@ -619,6 +620,7 @@ public class EntityPlayerActionPack {
             case "drop_stack" -> actionType = EntityPlayerActionPack.ActionType.DROP_STACK;
             case "move_forward" -> actionType = EntityPlayerActionPack.ActionType.MOVE_FORWARD;
             case "move_backward" -> actionType = EntityPlayerActionPack.ActionType.MOVE_BACKWARDS;
+            case "disconnect" -> actionType = EntityPlayerActionPack.ActionType.DISCONNECT;
         }
 
         return Pair.of(actionType, actionInterval);
