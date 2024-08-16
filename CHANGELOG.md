@@ -1,3 +1,8 @@
+# OfflinePlayers-Reworked 1.0.3 (MC 1.21)
+
+**Updates:**
+- Fix startup bug because of missing libraries.
+
 # OfflinePlayers-Reworked 1.0.2 (MC 1.21)
 
 **Updates:**
