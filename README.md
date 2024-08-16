@@ -16,7 +16,6 @@ This mod is built for Minecraft version 1.21 and requires the following:
 Other dependencies:
 - MidnightLib 1.5.7-fabric
 - JsonDB 1.0.106
-- ModelMapper 3.2.1
 - Commons Logging 1.3.3
 
 ## Versions
