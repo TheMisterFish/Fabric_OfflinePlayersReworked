@@ -8,6 +8,11 @@ plugins {
 version = project.mod_version
 group = project.maven_group
 
+
+configurations {
+	extraLibs
+}
+
 loom {
 	accessWidenerPath = file("src/main/resources/offlineplayersreworked.accesswidener")
 	runtimeOnlyLog4j = true
@@ -44,6 +49,12 @@ dependencies {
 	implementation "io.jsondb:jsondb-core:${project.jsondb_version}"
 	implementation "commons-logging:commons-logging:${project.commonslogging_version}"
 
+	extraLibs "commons-logging:commons-logging:${project.commonslogging_version}"
+	extraLibs "io.jsondb:jsondb-core:${project.jsondb_version}"
+
+	extraLibs "com.google.guava:guava:${project.guava_version}"
+
+	extraLibs "maven.modrinth:midnightlib:${project.midnightlib_version}"
 }
 
 processResources {
@@ -72,14 +83,27 @@ jar {
 	from("LICENSE") {
 		rename { "${it}_${project.base.archivesName.get()}"}
 	}
+	from {
+		configurations.extraLibs.collect { it.isDirectory() ? it : zipTree(it) }
+	}
+	duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
 
 // configure the maven publication
 publishing {
 	publications {
-		create("mavenJava", MavenPublication) {
+		mavenJava(MavenPublication) {
 			artifactId = project.archives_base_name
-			from components.java
+
+			artifact(remapJar.archiveFile) {
+				builtBy remapJar
+				classifier null
+			}
+
+			artifact(sourcesJar) {
+				builtBy remapSourcesJar
+				classifier "sources"
+			}
 		}
 	}
 
