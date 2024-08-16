@@ -68,6 +68,12 @@ You can execute actions with set intervals or offsets:
 - Interval: `/offline attack:20` (20 tick or 1 second interval between attacks)
 - Offset: `/offline attack:20:10` (10 tick offset added to the action)
 
+#### Time Parsing
+
+Besides, using ticks (the default) it is also possible to set the interval and offset to millis, seconds, minutes, hours, and even days.
+
+Example: `/offline use:100ms`, `/offline attack:1s`, `/offline attack:1.5m`, `/offline eat:0.25h`, `/offline disconnect:1d`
+
 ### Chaining
 
 You can chain actions, for example:
@@ -94,6 +100,7 @@ The configuration looks as follows:
   "informAboutKickedPlayer": true,
   "copySkin": true,
   "databaseLocation": "./offlineplayersreworked/",
+  "offlinePlayerPrefix": "[OFF]",
   "availableOptions": ["attack","use","etc..."]
 }
 ```
@@ -106,6 +113,7 @@ The configuration looks as follows:
 - `informAboutKickedPlayer`: If true, if offline player was kicked and player rejoins, player will be informed about offlline player being kicked
 - `copySkin`: If true, offline players copy the original player's skin.
 - `databaseLocation`: Folder location for the database. Default is `./offlinePlayersReworked/`.
+- `offlinePlayerPrefix`: Sets the prefix for the offline player.
 - `availableOptions`: A list of the available action options that can be used.
 ## Reporting Issues
 
