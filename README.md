@@ -8,19 +8,20 @@ Download/Build the .jar file and place it in the `/mods/` folder of your Minecra
 
 ## Dependencies and Compatibility
 
-This mod is built for Minecraft version 1.21 and requires the following:
+This mod is built for Minecraft version 1.21 & 1.21.1 and is build using the following dependencies:
 
 - Fabric Loader 0.15.11 or higher
-- Fabric API 0.101.2+1.21 or higher
+- Fabric API 0.102.1+1.21.1 or higher
 
 Other dependencies:
-- MidnightLib 1.5.7-fabric
+- MidnightLib 1.5.8-fabric
 - JsonDB 1.0.106
 - Commons Logging 1.3.3
+- Guava 33.3.0-jre
 
 ## Versions
 
-- **Current Version (1.21)**: [Download v1.0.5-mc.1.21](https://github.com/lilfish/Fabric_OfflinePlayersReworked/releases/tag/v1.0.5-mc.1.21)
+- **Current Version (1.21 & 1.21.1)**: [Download v1.0.6-mc.1.21.1](https://github.com/lilfish/Fabric_OfflinePlayersReworked/releases/tag/v1.0.6-mc.1.21.1)
     - Available on modrinth: [OfflinePlayers - Modrinth](https://modrinth.com/mod/offlineplayers)
 - **Legacy Version (1.18.2)**: [Download v0.1.6-mc.1.18.2](https://github.com/lilfish/Fabric_OfflinePlayersReworked/releases/tag/v0.1.6-mc.1.18.2)
     - This version is deprecated and will not be available on Modrinth.
