@@ -81,7 +81,13 @@ public class OfflinePlayer extends ServerPlayer {
             OfflinePlayer offlinePlayer = new OfflinePlayer(server, worldIn, gameprofile, player.clientInformation());
 
             offlinePlayer.setCustomNameVisible(true);
-            offlinePlayer.setChatSession(Objects.requireNonNull(player.getChatSession()));
+
+            if (player.getChatSession() != null) {
+                offlinePlayer.setChatSession(player.getChatSession());
+            } else {
+                LOGGER.warn("Chat session was null for '{}', not setting the chat session for '{}'", player.getName().getString(), offlinePlayer.getName().getString());
+            }
+
             server.getPlayerList().placeNewPlayer(new FakeClientConnection(PacketFlow.SERVERBOUND), offlinePlayer, new CommonListenerCookie(gameprofile, 0, player.clientInformation(), true));
 
             ServerPlayerMapper.copyPlayerRights(player, offlinePlayer);
@@ -108,7 +114,11 @@ public class OfflinePlayer extends ServerPlayer {
     }
 
     public static OfflinePlayer recreateOfflinePlayer(MinecraftServer server, UUID offlinePlayerUUID, @Nullable UUID playerUUID) {
-        GameProfile gameProfile = Objects.requireNonNull(server.getProfileCache()).get(offlinePlayerUUID).orElse(null);
+        GameProfile gameProfile = null;
+
+        if (server.getProfileCache() != null) {
+            gameProfile = server.getProfileCache().get(offlinePlayerUUID).orElse(null);
+        }
         if (gameProfile == null) {
             LOGGER.error("Failed to respawn offline player: GameProfile not found for UUID {}", offlinePlayerUUID);
             return null;
@@ -123,7 +133,7 @@ public class OfflinePlayer extends ServerPlayer {
         } catch (NoSuchFileException e) {
             LOGGER.error("Failed to load player data for {}, no player data found.", gameProfile.getName());
             return null;
-        } catch (Exception e){
+        } catch (Exception e) {
             LOGGER.error("Failed to load player data for {}", gameProfile.getName(), e);
             return null;
         }
@@ -154,7 +164,7 @@ public class OfflinePlayer extends ServerPlayer {
             return null;
         }
 
-        if(playerUUID != null) {
+        if (playerUUID != null) {
             ServerPlayerMapper.copyPlayerSkin(new GameProfile(playerUUID, ""), gameProfile);
         }
 
