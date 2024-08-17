@@ -9,6 +9,7 @@ import com.misterfish.fakes.ServerPlayerInterface;
 import com.misterfish.helper.EntityPlayerActionPack;
 import com.misterfish.patch.OfflinePlayer;
 import com.misterfish.storage.OfflinePlayersReworkedStorage;
+import com.misterfish.utils.ActionTypeMapper;
 import com.misterfish.utils.DamageSourceSerializer;
 import com.misterfish.utils.OfflineCommandSuggestion;
 import com.misterfish.utils.ServerPlayerMapper;
@@ -338,7 +339,12 @@ public class OfflinePlayersReworked implements DedicatedServerModInitializer {
             }
 
             String action = actionInterval[0];
-            if (!Config.availableOptions.contains(action) && source != null) {
+
+            boolean validOption = Config.availableOptions.stream()
+                    .filter(option -> ActionTypeMapper.getActionType(option) != null)
+                    .anyMatch(option -> option.equals(action));
+
+            if (!validOption && source != null) {
                 source.sendFailure(Component.literal("Invalid action. " + action + " Is not a valid action."));
                 throw new UnavailableActionException();
             }

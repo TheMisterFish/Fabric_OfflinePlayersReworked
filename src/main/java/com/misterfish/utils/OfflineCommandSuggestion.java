@@ -28,6 +28,7 @@ public class OfflineCommandSuggestion {
                 .collect(Collectors.toSet());
 
         List<String> filteredOptions = Config.availableOptions.stream()
+                .filter(option -> ActionTypeMapper.getActionType(option) != null)
                 .filter(option -> !usedOptions.contains(option))
                 .toList();
 
