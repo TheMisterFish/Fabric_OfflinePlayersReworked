@@ -10,6 +10,7 @@ import com.misterfish.helper.EntityPlayerActionPack;
 import com.misterfish.patch.OfflinePlayer;
 import com.misterfish.storage.OfflinePlayersReworkedStorage;
 import com.misterfish.utils.DamageSourceSerializer;
+import com.misterfish.utils.OfflineCommandSuggestion;
 import com.misterfish.utils.ServerPlayerMapper;
 import com.misterfish.utils.TimeParser;
 import com.mojang.brigadier.arguments.StringArgumentType;
@@ -18,6 +19,7 @@ import eu.midnightdust.lib.config.MidnightConfig;
 import it.unimi.dsi.fastutil.Pair;
 import net.fabricmc.api.DedicatedServerModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.nbt.CompoundTag;
@@ -50,6 +52,10 @@ import static net.minecraft.commands.Commands.literal;
 public class OfflinePlayersReworked implements DedicatedServerModInitializer {
     public static MinecraftServer server;
     public static final String MOD_ID = "OfflinePlayersReworked";
+    private static final String MOD_VERSION = FabricLoader.getInstance()
+            .getModContainer(MOD_ID.toLowerCase())
+            .map(modContainer -> modContainer.getMetadata().getVersion().getFriendlyString())
+            .orElse("Unknown");
     private static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
     private static final List<GameType> killModes = List.of(GameType.SURVIVAL, GameType.DEFAULT_MODE, GameType.ADVENTURE);
 
@@ -72,6 +78,7 @@ public class OfflinePlayersReworked implements DedicatedServerModInitializer {
                 dispatcher.register(literal("offline")
                         .executes(commandSourceStackCommandContext -> OfflinePlayersReworked.spawn(commandSourceStackCommandContext, List.of()))
                         .then(argument("arguments", StringArgumentType.greedyString())
+                                .suggests(OfflineCommandSuggestion::suggestArguments)
                                 .executes(this::spawnWithArguments)
                         )
                         .then(literal("help")
@@ -80,15 +87,9 @@ public class OfflinePlayersReworked implements DedicatedServerModInitializer {
                                             .getSource()
                                             .sendSystemMessage(Component.empty()
                                                     .append(Component.literal("offline players provides the following action types: \n"))
-                                                    .append(Component.literal("  - attack \n").withStyle(ChatFormatting.AQUA))
-                                                    .append(Component.literal("  - place \n").withStyle(ChatFormatting.AQUA))
-                                                    .append(Component.literal("  - use \n").withStyle(ChatFormatting.AQUA))
-                                                    .append(Component.literal("  - crouch \n").withStyle(ChatFormatting.AQUA))
-                                                    .append(Component.literal("  - jump \n").withStyle(ChatFormatting.AQUA))
-                                                    .append(Component.literal("  - eat \n").withStyle(ChatFormatting.AQUA))
-                                                    .append(Component.literal("  - drop_item \n").withStyle(ChatFormatting.AQUA))
-                                                    .append(Component.literal("  - drop_stack \n").withStyle(ChatFormatting.AQUA))
-                                                    .append(Component.literal("  - move_forward, move_backward").withStyle(ChatFormatting.AQUA))
+                                                    .append(Component.literal("  - attack, place, use, crouch, jump, \n").withStyle(ChatFormatting.AQUA))
+                                                    .append(Component.literal("  - eat, drop_item, drop_stack, \n").withStyle(ChatFormatting.AQUA))
+                                                    .append(Component.literal("  - move_forward, move_backward, \n").withStyle(ChatFormatting.AQUA))
                                                     .append(Component.literal("  - disconnect").withStyle(ChatFormatting.AQUA))
                                             );
 
@@ -101,10 +102,23 @@ public class OfflinePlayersReworked implements DedicatedServerModInitializer {
                                             .getSource()
                                             .sendSystemMessage(Component.empty()
                                                     .append(Component.literal("The following example will spawn a offline-player which will attack every second: \n\n"))
-                                                    .append(Component.literal("/offline attack:20 \n\n").withStyle(ChatFormatting.AQUA))
+                                                    .append(Component.literal("/offline attack:20 \n").withStyle(ChatFormatting.AQUA))
+                                                    .append(Component.literal("or: \n"))
+                                                    .append(Component.literal("/offline attack:1s \n\n").withStyle(ChatFormatting.AQUA))
                                                     .append(Component.literal("[Please note that the action:interval:offset arguments are optional, using /offline would spawn a offline player doing nothing] \n")
                                                             .withStyle(ChatFormatting.ITALIC)
                                                             .withStyle(ChatFormatting.DARK_GRAY))
+                                            );
+
+                                    return 1;
+                                })
+                        )
+                        .then(literal("version")
+                                .executes(context -> {
+                                    context
+                                            .getSource()
+                                            .sendSystemMessage(Component.empty()
+                                                    .append(Component.literal(MOD_ID + " version: " + MOD_VERSION))
                                             );
 
                                     return 1;
@@ -117,7 +131,7 @@ public class OfflinePlayersReworked implements DedicatedServerModInitializer {
         });
     }
 
-    private static int spawn(CommandContext<CommandSourceStack> context, List<Pair<EntityPlayerActionPack.ActionType, EntityPlayerActionPack.Action>> actionList) {
+    public static int spawn(CommandContext<CommandSourceStack> context, List<Pair<EntityPlayerActionPack.ActionType, EntityPlayerActionPack.Action>> actionList) {
         var source = context.getSource();
 
         ServerPlayer player = source.getPlayer();
