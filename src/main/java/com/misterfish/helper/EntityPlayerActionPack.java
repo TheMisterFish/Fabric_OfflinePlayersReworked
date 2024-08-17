@@ -17,6 +17,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.entity.animal.horse.AbstractHorse;
@@ -25,9 +26,19 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.vehicle.Boat;
 import net.minecraft.world.entity.vehicle.Minecart;
 import net.minecraft.world.food.FoodProperties;
+import net.minecraft.world.item.HoneyBottleItem;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.MilkBucketItem;
+import net.minecraft.world.item.OminousBottleItem;
+import net.minecraft.world.item.PotionItem;
+import net.minecraft.world.item.SplashPotionItem;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.phys.*;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.EntityHitResult;
+import net.minecraft.world.phys.HitResult;
+import net.minecraft.world.phys.Vec2;
+import net.minecraft.world.phys.Vec3;
 
 import java.util.EnumMap;
 import java.util.HashMap;
@@ -228,7 +239,6 @@ public class EntityPlayerActionPack {
 
             player.move(MoverType.PLAYER, movement);
         }
-
 
         float vel = sneaking ? 0.3F : 1.0F;
         // The != 0.0F checks are needed given else real players can't control minecarts, however it works with fakes and else they don't stop immediately
@@ -444,18 +454,13 @@ public class EntityPlayerActionPack {
         EAT(true) {
             @Override
             boolean execute(ServerPlayer player, Action action) {
-                if (player.canEat(false)) {
-                    ItemStack mainHandItemStack = player.getMainHandItem();
-                    ItemStack offHandItemStack = player.getOffhandItem();
+                ItemStack mainHandItemStack = player.getMainHandItem();
+                ItemStack offHandItemStack = player.getOffhandItem();
 
-                    FoodProperties mainHandFoodProperties = mainHandItemStack.get(DataComponents.FOOD);
-                    FoodProperties offHandFoodProperties = offHandItemStack.get(DataComponents.FOOD);
-
-                    if (mainHandFoodProperties != null) {
-                        player.startUsingItem(InteractionHand.MAIN_HAND);
-                    } else if (offHandFoodProperties != null) {
-                        player.startUsingItem(InteractionHand.OFF_HAND);
-                    }
+                if (canConsumeItem(player, mainHandItemStack)) {
+                    player.startUsingItem(InteractionHand.MAIN_HAND);
+                } else if (canConsumeItem(player, offHandItemStack)) {
+                    player.startUsingItem(InteractionHand.OFF_HAND);
                 }
 
                 player.resetLastActionTime();
@@ -516,6 +521,35 @@ public class EntityPlayerActionPack {
 
         void stop(ServerPlayer player, Action action) {
             inactiveTick(player, action);
+        }
+
+        private static boolean canConsumeItem(ServerPlayer player, ItemStack itemStack) {
+            if (itemStack.isEmpty()) {
+                return false;
+            }
+
+            Item item = itemStack.getItem();
+
+            if (isAlwaysConsumableItem(item, player)) {
+                return true;
+            }
+
+            FoodProperties foodProperties = itemStack.get(DataComponents.FOOD);
+            if (foodProperties != null) {
+                return player.canEat(foodProperties.canAlwaysEat());
+            }
+
+            return false;
+        }
+
+        private static boolean isAlwaysConsumableItem(Item item, ServerPlayer player) {
+            if (item instanceof PotionItem && !(item instanceof SplashPotionItem)) {
+                return true;
+            }
+            if (item instanceof OminousBottleItem) {
+                return !player.hasEffect(MobEffects.BAD_OMEN) && !player.hasEffect(MobEffects.RAID_OMEN);
+            }
+            return item instanceof MilkBucketItem || item instanceof HoneyBottleItem;
         }
 
     }
