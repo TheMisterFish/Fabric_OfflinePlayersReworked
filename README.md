@@ -61,6 +61,8 @@ You can add actions to your offline player. Available actions include:
 
 To use an action, type `/offline [action]`, e.g., `/offline attack`.
 
+> Tip: use `/offline actions` to see a list of available actions
+
 ### Interval/Offset
 
 You can execute actions with set intervals or offsets:
