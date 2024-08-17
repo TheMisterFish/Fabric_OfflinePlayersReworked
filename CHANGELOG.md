@@ -1,3 +1,9 @@
+# OfflinePlayers-Reworked 1.0.5 (MC 1.21)
+
+**Updates:**
+- Added check to see if item is consumable which includes bottles & milk. 
+- Added a check that makes sure that no ominous effect is active. Without this check it can reset the raid effect causing no raid to start.
+
 # OfflinePlayers-Reworked 1.0.4 (MC 1.21)
 
 **Updates:**
