@@ -80,7 +80,6 @@ public class DamageSourceSerializer {
             if (tag.contains("sourceEntity")) {
                 CompoundTag sourceEntityTag = tag.getCompound("sourceEntity");
                 if ("player".equals(sourceEntityTag.getString("entityType"))) {
-                    // For players, we can't fully reconstruct the entity, but we can create a fake one
                     sourceEntity = new DamageSourcePlayer(level, sourceEntityTag.getUUID("playerUUID"), sourceEntityTag.getString("playerName"));
                 } else {
                     sourceEntity = EntityType.loadEntityRecursive(sourceEntityTag, level, entity -> entity);

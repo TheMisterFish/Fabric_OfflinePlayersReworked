@@ -193,7 +193,6 @@ public class OfflinePlayer extends ServerPlayer {
             var clientInformation = new ClientInformation("", 0, ChatVisiblity.FULL, true, 0, HumanoidArm.RIGHT, false, false);
             server.getPlayerList().placeNewPlayer(new FakeClientConnection(PacketFlow.SERVERBOUND), offlinePlayer, new CommonListenerCookie(offlinePlayer.getGameProfile(), 0, clientInformation, true));
 
-            // Run any additional setup logic
             offlinePlayer.fixStartingPosition.run();
 
             LOGGER.info("Respawned offline player: {}", offlinePlayer.getGameProfile().getName());

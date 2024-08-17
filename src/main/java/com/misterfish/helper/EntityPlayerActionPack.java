@@ -2,6 +2,7 @@ package com.misterfish.helper;
 
 import com.misterfish.fakes.ServerPlayerInterface;
 import com.misterfish.patch.OfflinePlayer;
+import com.misterfish.utils.ActionTypeMapper;
 import com.misterfish.utils.Tracer;
 import it.unimi.dsi.fastutil.Pair;
 import net.minecraft.commands.arguments.EntityAnchorArgument;
@@ -643,19 +644,7 @@ public class EntityPlayerActionPack {
             actionInterval = EntityPlayerActionPack.Action.continuous();
         }
 
-        EntityPlayerActionPack.ActionType actionType = null;
-        switch (actionString) {
-            case "attack" -> actionType = EntityPlayerActionPack.ActionType.ATTACK;
-            case "place", "use" -> actionType = EntityPlayerActionPack.ActionType.USE;
-            case "crouch" -> actionType = EntityPlayerActionPack.ActionType.CROUCH;
-            case "jump" -> actionType = EntityPlayerActionPack.ActionType.JUMP;
-            case "eat" -> actionType = EntityPlayerActionPack.ActionType.EAT;
-            case "drop_item" -> actionType = EntityPlayerActionPack.ActionType.DROP_ITEM;
-            case "drop_stack" -> actionType = EntityPlayerActionPack.ActionType.DROP_STACK;
-            case "move_forward" -> actionType = EntityPlayerActionPack.ActionType.MOVE_FORWARD;
-            case "move_backward" -> actionType = EntityPlayerActionPack.ActionType.MOVE_BACKWARD;
-            case "disconnect" -> actionType = EntityPlayerActionPack.ActionType.DISCONNECT;
-        }
+        EntityPlayerActionPack.ActionType actionType = ActionTypeMapper.getActionType(actionString);
 
         return Pair.of(actionType, actionInterval);
     }
