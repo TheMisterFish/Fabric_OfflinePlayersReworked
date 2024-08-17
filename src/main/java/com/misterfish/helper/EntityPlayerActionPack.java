@@ -229,7 +229,7 @@ public class EntityPlayerActionPack {
         if (actions.containsKey(ActionType.MOVE_FORWARD)) {
             movement = movement.add(player.getLookAngle().normalize());
         }
-        if (actions.containsKey(ActionType.MOVE_BACKWARDS)) {
+        if (actions.containsKey(ActionType.MOVE_BACKWARD)) {
             movement = movement.subtract(player.getLookAngle().normalize());
         }
 
@@ -489,7 +489,7 @@ public class EntityPlayerActionPack {
                 return false;
             }
         },
-        MOVE_BACKWARDS(true) {
+        MOVE_BACKWARD(true) {
             @Override
             boolean execute(ServerPlayer player, Action action) {
                 return false;
@@ -653,7 +653,7 @@ public class EntityPlayerActionPack {
             case "drop_item" -> actionType = EntityPlayerActionPack.ActionType.DROP_ITEM;
             case "drop_stack" -> actionType = EntityPlayerActionPack.ActionType.DROP_STACK;
             case "move_forward" -> actionType = EntityPlayerActionPack.ActionType.MOVE_FORWARD;
-            case "move_backward" -> actionType = EntityPlayerActionPack.ActionType.MOVE_BACKWARDS;
+            case "move_backward" -> actionType = EntityPlayerActionPack.ActionType.MOVE_BACKWARD;
             case "disconnect" -> actionType = EntityPlayerActionPack.ActionType.DISCONNECT;
         }
 
