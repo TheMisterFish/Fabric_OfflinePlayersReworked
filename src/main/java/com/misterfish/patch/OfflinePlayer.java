@@ -83,8 +83,9 @@ public class OfflinePlayer extends ServerPlayer {
             offlinePlayer.setCustomNameVisible(true);
 
             if (player.getChatSession() != null) {
-                LOGGER.warn("Chat session was null for '{}', not setting the chat session for '{}'", player.getName().getString(), offlinePlayer.getName().getString());
                 offlinePlayer.setChatSession(player.getChatSession());
+            } else {
+                LOGGER.warn("Chat session was null for '{}', not setting the chat session for '{}'", player.getName().getString(), offlinePlayer.getName().getString());
             }
 
             server.getPlayerList().placeNewPlayer(new FakeClientConnection(PacketFlow.SERVERBOUND), offlinePlayer, new CommonListenerCookie(gameprofile, 0, player.clientInformation(), true));
