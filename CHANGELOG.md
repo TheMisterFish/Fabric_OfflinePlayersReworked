@@ -2,6 +2,7 @@
 
 **Updates:**
 - Fix OfflinePlayer not spawning because of no chat session, replaced with a warning log.
+- Updated mod icon
 
 # OfflinePlayers-Reworked 1.0.3 (MC 1.21)
 
