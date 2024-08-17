@@ -3,11 +3,11 @@ name: Publish on GitHub
 on: [ workflow_dispatch ]           
 
 env:                                              
-  MINECRAFT_VERSION: 1.21
+  MINECRAFT_VERSION: 1.21.1
   JAVA_VERSION: 21
-  VERSION: 1.0.5-mc.1.21
-  RELEASE_NAME: OfflinePlayers-Reworked 1.0.5 for Minecraft 1.21
-  GITHUB_TOKEN: ${{ secrets.PUBLISH_GITHUB_TOKEN }}           
+  VERSION: 1.0.6-mc.1.21.1
+  RELEASE_NAME: OfflinePlayers-Reworked 1.0.6 for Minecraft 1.21.1
+  GITHUB_TOKEN: ${{ secrets.PUBLISH_GITHUB_TOKEN }}
 
 permissions:
   contents: write
