@@ -39,7 +39,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.stream.IntStream;
@@ -185,7 +184,7 @@ public class OfflinePlayersReworked implements DedicatedServerModInitializer {
                 .forEach(
                         offlinePlayerModel -> {
                             var offlinePlayer = OfflinePlayer.respawnOfflinePlayer(server, offlinePlayerModel.getId(), offlinePlayerModel.getPlayer());
-                            if(offlinePlayer != null) {
+                            if (offlinePlayer != null) {
                                 var actionList = getActionPackList(offlinePlayerModel.getActions(), null);
                                 actionList.forEach(actionTypeActionPair -> manipulate(offlinePlayer, ap -> ap.start(
                                         actionTypeActionPair.first(),
@@ -206,7 +205,12 @@ public class OfflinePlayersReworked implements DedicatedServerModInitializer {
         float originalPlayerHealth = player.getHealth();
 
         if (offlinePlayerModel != null) {
-            OfflinePlayer offlinePlayer = (OfflinePlayer) Objects.requireNonNull(player.getServer()).getPlayerList().getPlayer(offlinePlayerModel.getId());
+            if (player.getServer() == null) {
+                LOGGER.error("Could not create offline player as the target ({}) getServer() returned null", player.getName().getString());
+                return;
+            }
+
+            OfflinePlayer offlinePlayer = (OfflinePlayer) player.getServer().getPlayerList().getPlayer(offlinePlayerModel.getId());
 
             if (offlinePlayer != null) {
                 ServerPlayerMapper.copyPlayerData(offlinePlayer, player);
