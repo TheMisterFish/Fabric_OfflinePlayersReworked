@@ -44,6 +44,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static com.mojang.brigadier.arguments.StringArgumentType.getString;
@@ -82,16 +83,16 @@ public class OfflinePlayersReworked implements DedicatedServerModInitializer {
                                 .suggests(OfflineCommandSuggestion::suggestArguments)
                                 .executes(this::spawnWithArguments)
                         )
-                        .then(literal("help")
+                        .then(literal("actions")
                                 .executes(context -> {
+                                    var allOptions = Config.availableOptions.stream()
+                                            .filter(option -> ActionTypeMapper.getActionType(option) != null)
+                                            .collect(Collectors.joining(", "));
                                     context
                                             .getSource()
                                             .sendSystemMessage(Component.empty()
-                                                    .append(Component.literal("offline players provides the following action types: \n"))
-                                                    .append(Component.literal("  - attack, place, use, crouch, jump, \n").withStyle(ChatFormatting.AQUA))
-                                                    .append(Component.literal("  - eat, drop_item, drop_stack, \n").withStyle(ChatFormatting.AQUA))
-                                                    .append(Component.literal("  - move_forward, move_backward, \n").withStyle(ChatFormatting.AQUA))
-                                                    .append(Component.literal("  - disconnect").withStyle(ChatFormatting.AQUA))
+                                                    .append(Component.literal("The following action types are available: \n"))
+                                                    .append(Component.literal(allOptions).withStyle(ChatFormatting.AQUA))
                                             );
 
                                     return 1;
