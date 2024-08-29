@@ -95,7 +95,7 @@ The configuration looks as follows:
 {
   "opRequired": false,
   "autoOp": true,
-  "autoWhitelist": true,
+  "autoWhitelist": false,
   "autoDisconnect": true,
   "killOnDeath": true,
   "respawnKickedPlayers": true,
@@ -108,7 +108,7 @@ The configuration looks as follows:
 ```
 - `opRequired`: If true, only OPs can use `/offline`.
 - `autoOp`: If true, offline players of OPs are automatically made OPs.
-- `autoWhitelist`: If true and whitelist is enabled, offline players are auto-whitelisted.
+- `autoWhitelist`: If true and whitelist is enabled, offline players are auto-whitelisted. (Default value is false at it doesn't seem necessary)
 - `autoDisconnect`: If true, players automatically disconnect after using `/offline`. (Use false at your own risk)
 - `killOnDeath`: If true, players automatically die upon reconnecting if their offline player died.
 - `respawnKickedPlayers`: If true, offline players automatically respawn on server restart when kicked
