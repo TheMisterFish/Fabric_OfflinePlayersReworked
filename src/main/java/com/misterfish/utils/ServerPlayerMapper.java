@@ -29,18 +29,18 @@ public class ServerPlayerMapper {
         var playerList = target.getServer().getPlayerList();
 
         if (Config.autoWhitelist && playerList.isUsingWhitelist() && !playerList.isWhiteListed(source.getGameProfile())) {
-            UserWhiteListEntry whitelistEntry = new UserWhiteListEntry(source.getGameProfile());
+            UserWhiteListEntry whitelistEntry = new UserWhiteListEntry(target.getGameProfile());
             playerList.getWhiteList().add(whitelistEntry);
         }
-        if (Config.autoOp && playerList.isOp(target.getGameProfile())) {
-            playerList.op(source.getGameProfile());
+        if (Config.autoOp && playerList.isOp(source.getGameProfile())) {
+            playerList.op(target.getGameProfile());
         }
     }
 
-    public static void copyPlayerSkin(GameProfile sourceGameprofile, GameProfile gameprofile) {
+    public static void copyPlayerSkin(GameProfile sourceGameProfile, GameProfile targetGameProfile) {
         if (Config.copySkin) {
-            sourceGameprofile.getProperties().get("textures")
-                    .forEach(property -> gameprofile.getProperties().put("textures", property));
+            sourceGameProfile.getProperties().get("textures")
+                    .forEach(property -> targetGameProfile.getProperties().put("textures", property));
         }
     }
 

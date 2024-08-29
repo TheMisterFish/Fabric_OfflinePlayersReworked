@@ -28,7 +28,7 @@ Other dependencies:
 
 ## Download
 
-Currently, the mod is only available through GitHub Releases. We plan to add it to Modrinth in the near future.
+Available on [Modrinth](https://modrinth.com/mod/offlineplayers).
 
 ## Goal
 
