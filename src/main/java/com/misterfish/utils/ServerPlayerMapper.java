@@ -28,10 +28,11 @@ public class ServerPlayerMapper {
 
         var playerList = target.getServer().getPlayerList();
 
-        if (Config.autoWhitelist && playerList.isUsingWhitelist() && !playerList.isWhiteListed(source.getGameProfile())) {
+        if (Config.autoWhitelist && playerList.isUsingWhitelist() && playerList.isWhiteListed(source.getGameProfile())) {
             UserWhiteListEntry whitelistEntry = new UserWhiteListEntry(target.getGameProfile());
             playerList.getWhiteList().add(whitelistEntry);
         }
+
         if (Config.autoOp && playerList.isOp(source.getGameProfile())) {
             playerList.op(target.getGameProfile());
         }
