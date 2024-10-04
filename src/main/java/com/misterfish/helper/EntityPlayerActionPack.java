@@ -563,6 +563,7 @@ public class EntityPlayerActionPack {
         private int count;
         private int next;
         private final boolean isContinuous;
+        public boolean isBreakAction;
 
         private Action(int limit, int interval, int offset, boolean continuous) {
             this.limit = limit;
@@ -570,6 +571,7 @@ public class EntityPlayerActionPack {
             this.offset = offset;
             next = interval + offset;
             isContinuous = continuous;
+            isBreakAction = false;
         }
 
         public static Action once() {
@@ -604,22 +606,26 @@ public class EntityPlayerActionPack {
                     cancel = type.execute(actionPack.player, this);
                 }
                 count++;
-                if (count == limit) {
+
+                // If it's not a break action OR if the block was successfully broken set next as interval.
+                // Otherwise (it's a break action and the block wasn't broken), set next to 0.
+                next = (!isBreakAction || (cancel != null && cancel)) ? interval : 0;
+
+                if (count == limit && next == interval) {
                     type.stop(actionPack.player, null);
                     done = true;
-                    return cancel;
                 }
-                next = interval;
             } else {
                 if (!type.preventSpectator || !actionPack.player.isSpectator()) {
                     type.inactiveTick(actionPack.player, this);
                 }
             }
+
             return cancel;
         }
 
         void retry(EntityPlayerActionPack actionPack, ActionType type) {
-            //assuming action run but was unsuccesful that tick, but opportunity emerged to retry it, lets retry it.
+            //assuming action run but was unsuccessful that tick, but opportunity emerged to retry it, lets retry it.
             if (!type.preventSpectator || !actionPack.player.isSpectator()) {
                 type.execute(actionPack.player, this);
             }
@@ -632,19 +638,20 @@ public class EntityPlayerActionPack {
     }
 
     public static Pair<ActionType, Action> getActionPair(String actionString, int intervalInteger, int offsetInteger) {
-        EntityPlayerActionPack.Action actionInterval = EntityPlayerActionPack.Action.once();
+        Action actionInterval = Action.once();
 
         if (intervalInteger > 0) {
             if (offsetInteger > 0) {
-                actionInterval = EntityPlayerActionPack.Action.interval(intervalInteger, offsetInteger);
+                actionInterval = Action.interval(intervalInteger, offsetInteger);
             } else {
-                actionInterval = EntityPlayerActionPack.Action.interval(intervalInteger);
+                actionInterval = Action.interval(intervalInteger);
             }
         } else if (intervalInteger == 0) {
-            actionInterval = EntityPlayerActionPack.Action.continuous();
+            actionInterval = Action.continuous();
         }
 
-        EntityPlayerActionPack.ActionType actionType = ActionTypeMapper.getActionType(actionString);
+        ActionType actionType = ActionTypeMapper.getActionType(actionString);
+        actionInterval.isBreakAction = actionString.equalsIgnoreCase("break");
 
         return Pair.of(actionType, actionInterval);
     }
