@@ -42,6 +42,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -350,7 +351,8 @@ public class OfflinePlayersReworked implements DedicatedServerModInitializer {
                 throw new UnavailableActionException();
             }
 
-            int interval = 20;
+            int interval = Objects.equals(action, "break") ? 0 : 20; // by default break should be continuously
+
             if (actionInterval.length > 1) {
                 try {
                     interval = TimeParser.parse(actionInterval[1]);
