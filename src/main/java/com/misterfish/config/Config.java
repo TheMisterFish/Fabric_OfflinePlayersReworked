@@ -15,7 +15,7 @@ public class Config extends MidnightConfig {
     @Entry(category = "text") public static boolean copySkin = true;
     @Entry(category = "text") public static String databaseLocation = "./offlineplayersreworked/";
     @Entry(category = "text") public static String offlinePlayerPrefix = "[OFF]";
-    @Entry(category = "text") public static List<String> availableOptions = List.of("attack", "place", "use", "crouch", "jump", "eat", "drop_item", "drop_stack", "move_forward", "move_backward", "disconnect");
+    @Entry(category = "text") public static List<String> availableOptions = List.of("attack", "break", "place", "use", "crouch", "jump", "eat", "drop_item", "drop_stack", "move_forward", "move_backward", "disconnect");
 
 
 }

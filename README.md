@@ -21,7 +21,7 @@ Other dependencies:
 
 ## Versions
 
-- **Current Version (1.21 & 1.21.1)**: [Download v1.0.7-mc.1.21.1](https://github.com/lilfish/Fabric_OfflinePlayersReworked/releases/tag/v1.0.7-mc.1.21.1)
+- **Current Version (1.21 & 1.21.1)**: [Download v1.0.8-mc.1.21.1](https://github.com/lilfish/Fabric_OfflinePlayersReworked/releases/tag/v1.0.8-mc.1.21.1)
     - Available on modrinth: [OfflinePlayers - Modrinth](https://modrinth.com/mod/offlineplayers)
 - **Legacy Version (1.18.2)**: [Download v0.1.6-mc.1.18.2](https://github.com/lilfish/Fabric_OfflinePlayersReworked/releases/tag/v0.1.6-mc.1.18.2)
     - This version is deprecated and will not be available on Modrinth.
@@ -42,17 +42,18 @@ Type `/offline` to spawn an offline player.
 
 You can add actions to your offline player. Available actions include:
 
-| Name          | Description                                              |
-|---------------|----------------------------------------------------------|
-| attack        | Player left click                                        |
-| place / use   | Player right click                                       |
-| crouch        | Player crouching                                         |
-| jump          | Player jumping                                           |
-| eat           | Player eating (only if hungry & having food in one hand) |
-| drop_item     | Drops an item from the active slot                       |
-| drop_stack    | Drops all items from the active slot                     |
-| move_forward  | Moves the player forward                                 |
-| move_backward | Moves the player backwards                               |
+| Name          | Description                                                       |
+|---------------|-------------------------------------------------------------------|
+| attack        | Player left click                                                 |
+| break         | Player left click, but wait for block to fully break.             |
+| place / use   | Player right click                                                |
+| crouch        | Player crouching                                                  |
+| jump          | Player jumping                                                    |
+| eat           | Player eating (only if hungry & having food in one hand)          |
+| drop_item     | Drops an item from the active slot                                |
+| drop_stack    | Drops all items from the active slot                              |
+| move_forward  | Moves the player forward                                          |
+| move_backward | Moves the player backwards                                        |
  | disconnect    | Automatically disconnects the offline player after a set interval |
 
 To use an action, type `/offline [action]`, e.g., `/offline attack`.
@@ -63,7 +64,7 @@ To use an action, type `/offline [action]`, e.g., `/offline attack`.
 
 You can execute actions with set intervals or offsets:
 
-- Interval: `/offline attack:20` (20 tick or 1 second interval between attacks)
+- Interval: `/offline break:20` (20 tick or 1 second interval between breaking blocks)
 - Offset: `/offline attack:20:10` (10 tick offset added to the action)
 
 #### Time Parsing
@@ -99,7 +100,7 @@ The configuration looks as follows:
   "copySkin": true,
   "databaseLocation": "./offlineplayersreworked/",
   "offlinePlayerPrefix": "[OFF]",
-  "availableOptions": ["attack","use","etc..."]
+  "availableOptions": ["attack", "break", "use","etc..."]
 }
 ```
 - `opRequired`: If true, only OPs can use `/offline`.

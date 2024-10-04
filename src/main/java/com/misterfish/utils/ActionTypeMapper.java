@@ -10,6 +10,7 @@ public class ActionTypeMapper {
 
     private static final List<Map.Entry<String, EntityPlayerActionPack.ActionType>> ACTION_TYPE_MAPPINGS = List.of(
             new AbstractMap.SimpleEntry<>("attack", EntityPlayerActionPack.ActionType.ATTACK),
+            new AbstractMap.SimpleEntry<>("break", EntityPlayerActionPack.ActionType.ATTACK),
             new AbstractMap.SimpleEntry<>("place", EntityPlayerActionPack.ActionType.USE),
             new AbstractMap.SimpleEntry<>("use", EntityPlayerActionPack.ActionType.USE),
             new AbstractMap.SimpleEntry<>("crouch", EntityPlayerActionPack.ActionType.CROUCH),
