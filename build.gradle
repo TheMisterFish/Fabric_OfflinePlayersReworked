@@ -3,6 +3,7 @@ plugins {
 	id 'maven-publish'
 	id 'io.github.juuxel.loom-quiltflower' version '1.7.3'
 	id 'io.freefair.lombok' version '8.6'
+	id "com.gradleup.shadow" version "8.3.3"
 }
 
 version = project.mod_version
@@ -79,12 +80,23 @@ java {
 	targetCompatibility = JavaVersion.VERSION_21
 }
 
+shadowJar {
+	configurations = [project.configurations.extraLibs]
+	relocate 'io.jsondb', 'com.misterfish.jsondb'
+	relocate 'org.apache.commons.logging', 'com.misterfish.commons.logging'
+	relocate 'com.google.guava', 'com.misterfish.guava'
+	relocate 'org.reflections', 'com.misterfish.reflections'
+	archiveClassifier.set('')
+}
+
+remapJar {
+	input.set shadowJar.archiveFile
+	dependsOn shadowJar
+}
+
 jar {
 	from("LICENSE") {
 		rename { "${it}_${project.base.archivesName.get()}"}
-	}
-	from {
-		configurations.extraLibs.collect { it.isDirectory() ? it : zipTree(it) }
 	}
 	duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
@@ -114,4 +126,4 @@ publishing {
 		// The repositories here will be used for publishing your artifact, not for
 		// retrieving dependencies.
 	}
-}
+}	}}
