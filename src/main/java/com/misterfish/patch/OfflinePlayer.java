@@ -228,7 +228,6 @@ public class OfflinePlayer extends ServerPlayer {
             this.server.tell(new TickTask(this.server.getTickCount(), () -> this.connection.onDisconnect(new DisconnectionDetails(reason))));
         }
 
-        STORAGE.remove(this.uuid);
     }
 
     public void kickOfflinePlayer(Component reason) {
