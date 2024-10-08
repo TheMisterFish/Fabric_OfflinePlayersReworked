@@ -1,4 +1,4 @@
-package com.misterfish.Exception;
+package com.misterfish.exception;
 
 public class InvalidIntervalException extends IllegalArgumentException {
     public InvalidIntervalException(String s) {

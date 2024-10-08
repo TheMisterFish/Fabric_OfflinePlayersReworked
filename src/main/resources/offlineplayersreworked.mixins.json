@@ -4,7 +4,6 @@
   "compatibilityLevel": "JAVA_21",
   "mixins": [
     "KickCommand_offlinePlayerMixin",
-    "MinecraftServer_coreMixin",
     "PlayerList_offlinePlayersMixin",
     "ServerPlayer_actionPackMixin",
     "ServerStatus_metaPingMixin"

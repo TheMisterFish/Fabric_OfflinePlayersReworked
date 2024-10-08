@@ -1,4 +1,4 @@
-package com.misterfish.Exception;
+package com.misterfish.exception;
 
 public class InvalidOffsetException extends IllegalArgumentException {
     public InvalidOffsetException(String s) {

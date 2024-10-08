@@ -8,11 +8,6 @@ plugins {
 version = project.mod_version
 group = project.maven_group
 
-
-configurations {
-	extraLibs
-}
-
 loom {
 	accessWidenerPath = file("src/main/resources/offlineplayersreworked.accesswidener")
 	runtimeOnlyLog4j = true
@@ -41,20 +36,6 @@ dependencies {
 
 	// Fabric API. This is technically optional, but you probably want it anyway.
 	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
-
-	// Config dependency
-	modImplementation "maven.modrinth:midnightlib:${project.midnightlib_version}"
-
-	// Database dependencies
-	implementation "io.jsondb:jsondb-core:${project.jsondb_version}"
-	implementation "commons-logging:commons-logging:${project.commonslogging_version}"
-
-	extraLibs "commons-logging:commons-logging:${project.commonslogging_version}"
-	extraLibs "io.jsondb:jsondb-core:${project.jsondb_version}"
-
-	extraLibs "com.google.guava:guava:${project.guava_version}"
-
-	extraLibs "maven.modrinth:midnightlib:${project.midnightlib_version}"
 }
 
 processResources {
