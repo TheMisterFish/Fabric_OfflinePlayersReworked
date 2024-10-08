@@ -12,12 +12,7 @@ This mod is built for Minecraft version 1.21 & 1.21.1 and is build using the fol
 
 - Fabric Loader 0.15.11 or higher
 - Fabric API 0.102.1+1.21.1 or higher
-
-Other dependencies:
-- MidnightLib 1.5.8-fabric
-- JsonDB 1.0.106
-- Commons Logging 1.3.3
-- Guava 33.3.0-jre
+- Loom-quiltflower version 1.7.3
 
 ## Versions
 
@@ -85,35 +80,23 @@ Actions are executed in the order specified.
 
 ## Config
 
-After initialization, the configuration file is located at `config/OfflinePlayersReworked.json` in your Minecraft server's root folder.
+After initialization, the configuration file is located at `config/OfflinePlayersReworked.properties` in your Minecraft server's root folder.
 
 The configuration looks as follows:
-```json
-{
-  "opRequired": false,
-  "autoOp": true,
-  "autoWhitelist": false,
-  "autoDisconnect": true,
-  "killOnDeath": true,
-  "respawnKickedPlayers": true,
-  "informAboutKickedPlayer": true,
-  "copySkin": true,
-  "databaseLocation": "./offlineplayersreworked/",
-  "offlinePlayerPrefix": "[OFF]",
-  "availableOptions": ["attack", "break", "use","etc..."]
-}
+```properties
+opRequired=false #               - If true, only OPs can use `/offline`. | default: false
+autoOp=true #                    - If true, offline players of OPs are automatically made OPs. | default: true
+autoWhitelist=false #            - If true and whitelist is enabled, offline players are auto-whitelisted. | default: false
+autoDisconnect=true #            - If true, players automatically disconnect after using `/offline`. (Use false at your own risk) | default: true
+killOnDeath=true #               - If true, players automatically die upon reconnecting if their offline player died. | default: true
+respawnKickedPlayers=true #      - If true, offline players automatically respawn on server restart when kicked | default: true
+informAboutKickedPlayer=true #   - If true, if offline player was kicked and player rejoins, player will be informed about offline player being kicked | default: true
+copySkin=true #                  - If true, offline players copy the original player's skin. | default: true
+offlinePlayerPrefix=OFF_ #       - Sets the prefix for the offline player. | default: OFF_
+
+availableOptions=attack,break,place,use,crouch,jump,eat,drop_item,drop_stack,move_forward,move_backward,disconnect #  | default: attack,break,place,use,crouch,jump,eat,drop_item,drop_stack,move_forward,move_backward,disconnect
+# ^ A comma-separated list of the available action options that can be used.
 ```
-- `opRequired`: If true, only OPs can use `/offline`.
-- `autoOp`: If true, offline players of OPs are automatically made OPs.
-- `autoWhitelist`: If true and whitelist is enabled, offline players are auto-whitelisted. (Default value is false at it doesn't seem necessary)
-- `autoDisconnect`: If true, players automatically disconnect after using `/offline`. (Use false at your own risk)
-- `killOnDeath`: If true, players automatically die upon reconnecting if their offline player died.
-- `respawnKickedPlayers`: If true, offline players automatically respawn on server restart when kicked
-- `informAboutKickedPlayer`: If true, if offline player was kicked and player rejoins, player will be informed about offlline player being kicked
-- `copySkin`: If true, offline players copy the original player's skin.
-- `databaseLocation`: Folder location for the database. Default is `./offlinePlayersReworked/`.
-- `offlinePlayerPrefix`: Sets the prefix for the offline player.
-- `availableOptions`: A list of the available action options that can be used.
 
 ## Reporting Issues
 

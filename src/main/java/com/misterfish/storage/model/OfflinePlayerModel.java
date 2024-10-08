@@ -1,34 +1,43 @@
 package com.misterfish.storage.model;
 
-import io.jsondb.annotation.Document;
-import io.jsondb.annotation.Id;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import lombok.Setter;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.StringTag;
 
 import java.util.UUID;
 
-/**
- * offlinePlayer DB model
- *
- * @version 1.0 08-08-2024
- */
-@Document(collection = "offlinePlayerModels", schemaVersion = "1.0")
 @RequiredArgsConstructor
 public class OfflinePlayerModel {
-    @Id
+    @Getter
+    @Setter
     private UUID id;
+    @Getter
+    @Setter
     private UUID player;
+    @Getter
+    @Setter
     private String[] actions;
+    @Getter
+    @Setter
     private boolean kicked = false;
+    @Getter
+    @Setter
     private boolean died = false;
+    @Getter
+    @Setter
     private String deathMessage;
-
+    @Getter
+    @Setter
     private double x;
+    @Getter
+    @Setter
     private double y;
+    @Getter
+    @Setter
     private double z;
-
-    public OfflinePlayerModel(UUID id) {
-        this.id = id;
-    }
 
     public OfflinePlayerModel(UUID id, UUID player, String[] actions, double x, double y, double z) {
         this.id = id;
@@ -41,75 +50,40 @@ public class OfflinePlayerModel {
         this.z = z;
     }
 
-    public UUID getId() {
-        return id;
+    public CompoundTag toTag() {
+        CompoundTag tag = new CompoundTag();
+        tag.putUUID("id", id);
+        tag.putUUID("player", player);
+        ListTag actionsList = new ListTag();
+        for (String action : actions) {
+            actionsList.add(StringTag.valueOf(action));
+        }
+        tag.put("actions", actionsList);
+        tag.putDouble("x", x);
+        tag.putDouble("y", y);
+        tag.putDouble("z", z);
+        tag.putBoolean("died", died);
+        tag.putString("deathMessage", deathMessage);
+        tag.putBoolean("kicked", kicked);
+        return tag;
     }
 
-    public void setId(UUID id) {
-        this.id = id;
-    }
+    public static OfflinePlayerModel fromTag(CompoundTag tag) {
+        UUID id = tag.getUUID("id");
+        UUID player = tag.getUUID("player");
+        ListTag actionsList = tag.getList("actions", 8);
+        String[] actions = new String[actionsList.size()];
+        for (int i = 0; i < actionsList.size(); i++) {
+            actions[i] = actionsList.getString(i);
+        }
+        double x = tag.getDouble("x");
+        double y = tag.getDouble("y");
+        double z = tag.getDouble("z");
 
-    public UUID getPlayer() {
-        return player;
-    }
-
-    public void setPlayer(UUID player) {
-        this.player = player;
-    }
-
-    public String[] getActions() {
-        return actions;
-    }
-
-    public void setActions(String[] actions) {
-        this.actions = actions;
-    }
-
-    public String getDeathMessage() {
-        return deathMessage;
-    }
-
-    public void setDeathMessage(String deathMessage) {
-        this.deathMessage = deathMessage;
-    }
-
-    public boolean isKicked() {
-        return kicked;
-    }
-
-    public void setKicked(boolean kicked) {
-        this.kicked = kicked;
-    }
-
-    public boolean getDied() {
-        return died;
-    }
-
-    public void setDied(boolean died) {
-        this.died = died;
-    }
-
-    public double getX() {
-        return x;
-    }
-
-    public void setX(double x) {
-        this.x = x;
-    }
-
-    public double getY() {
-        return y;
-    }
-
-    public void setY(double y) {
-        this.y = y;
-    }
-
-    public double getZ() {
-        return z;
-    }
-
-    public void setZ(double z) {
-        this.z = z;
+        OfflinePlayerModel model = new OfflinePlayerModel(id, player, actions, x, y, z);
+        model.setDied(tag.getBoolean("died"));
+        model.setDeathMessage(tag.getString("deathMessage"));
+        model.setKicked(tag.getBoolean("kicked"));
+        return model;
     }
 }
