@@ -3,16 +3,10 @@ plugins {
 	id 'maven-publish'
 	id 'io.github.juuxel.loom-quiltflower' version '1.7.3'
 	id 'io.freefair.lombok' version '8.6'
-	id "com.gradleup.shadow" version "8.3.3"
 }
 
 version = project.mod_version
 group = project.maven_group
-
-
-configurations {
-	extraLibs
-}
 
 loom {
 	accessWidenerPath = file("src/main/resources/offlineplayersreworked.accesswidener")
@@ -40,22 +34,34 @@ dependencies {
 	mappings loom.officialMojangMappings()
 	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
 
-	// Fabric API. This is technically optional, but you probably want it anyway.
 	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
 
-	// Config dependency
-	modImplementation "maven.modrinth:midnightlib:${project.midnightlib_version}"
+	//	Midnightlib Config dependency
+	modImplementation include("maven.modrinth:midnightlib:${project.midnightlib_version}")
 
-	// Database dependencies
-	implementation "io.jsondb:jsondb-core:${project.jsondb_version}"
-	implementation "commons-logging:commons-logging:${project.commonslogging_version}"
+	// Include jsondb-core and its dependencies
+	implementation include("io.jsondb:jsondb-core:${project.jsondb_version}")
+	implementation include("commons-logging:commons-logging:${project.commonslogging_version}")
+	implementation include("com.google.guava:guava:${project.guava_version}")
 
-	extraLibs "commons-logging:commons-logging:${project.commonslogging_version}"
-	extraLibs "io.jsondb:jsondb-core:${project.jsondb_version}"
+	// Add Jackson dependencies
+	implementation include("com.fasterxml.jackson.core:jackson-core:${project.jackson_version}")
+	implementation include("com.fasterxml.jackson.core:jackson-databind:${project.jackson_version}")
+	implementation include("com.fasterxml.jackson.module:jackson-module-parameter-names:${project.jackson_version}")
+	implementation include("com.fasterxml.jackson.datatype:jackson-datatype-jdk8:${project.jackson_version}")
+	implementation include("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:${project.jackson_version}")
+	implementation include("com.fasterxml.jackson.core:jackson-annotations:${project.jackson_version}")
 
-	extraLibs "com.google.guava:guava:${project.guava_version}"
+	// Include Reflections 0.9.10 explicitly
+	implementation include("org.reflections:reflections:${project.reflections_version}")
 
-	extraLibs "maven.modrinth:midnightlib:${project.midnightlib_version}"
+	// Include other JsonDB Dependencies.
+	implementation include("org.javassist:javassist:${project.javassist_version}")
+	implementation include("com.google.guava:guava:${project.guava_version}")
+	implementation include("commons-beanutils:commons-beanutils:${project.commonsbeanutils_version}")
+	implementation include("commons-jxpath:commons-jxpath:${project.commonsjxpath_version}")
+	implementation include("org.slf4j:slf4j-api:${project.slf4j_version}")
+	implementation include("commons-logging:commons-logging:${project.commonslogging_version}")
 }
 
 processResources {
@@ -80,24 +86,11 @@ java {
 	targetCompatibility = JavaVersion.VERSION_21
 }
 
-shadowJar {
-	configurations = [project.configurations.extraLibs]
-	relocate 'io.jsondb', 'com.misterfish.jsondb'
-	relocate 'org.apache.commons.logging', 'com.misterfish.commons.logging'
-	relocate 'com.google.guava', 'com.misterfish.guava'
-	relocate 'org.reflections', 'com.misterfish.reflections'
-	archiveClassifier.set('')
-}
-
-remapJar {
-	input.set shadowJar.archiveFile
-	dependsOn shadowJar
-}
-
 jar {
 	from("LICENSE") {
 		rename { "${it}_${project.base.archivesName.get()}"}
 	}
+
 	duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
 
@@ -126,4 +119,4 @@ publishing {
 		// The repositories here will be used for publishing your artifact, not for
 		// retrieving dependencies.
 	}
-}	}}
+}
