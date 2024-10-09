@@ -2,7 +2,9 @@ package com.misterfish.storage.model;
 
 import io.jsondb.annotation.Document;
 import io.jsondb.annotation.Id;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 
 import java.util.UUID;
 
@@ -15,15 +17,32 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class OfflinePlayerModel {
     @Id
+    @Getter
+    @Setter
     private UUID id;
+    @Getter
+    @Setter
     private UUID player;
+    @Getter
+    @Setter
     private String[] actions;
+    @Getter
+    @Setter
     private boolean kicked = false;
+    @Getter
+    @Setter
     private boolean died = false;
+    @Getter
+    @Setter
     private String deathMessage;
-
+    @Getter
+    @Setter
     private double x;
+    @Getter
+    @Setter
     private double y;
+    @Getter
+    @Setter
     private double z;
 
     public OfflinePlayerModel(UUID id) {
@@ -38,78 +57,6 @@ public class OfflinePlayerModel {
         this.deathMessage = "";
         this.x = x;
         this.y = y;
-        this.z = z;
-    }
-
-    public UUID getId() {
-        return id;
-    }
-
-    public void setId(UUID id) {
-        this.id = id;
-    }
-
-    public UUID getPlayer() {
-        return player;
-    }
-
-    public void setPlayer(UUID player) {
-        this.player = player;
-    }
-
-    public String[] getActions() {
-        return actions;
-    }
-
-    public void setActions(String[] actions) {
-        this.actions = actions;
-    }
-
-    public String getDeathMessage() {
-        return deathMessage;
-    }
-
-    public void setDeathMessage(String deathMessage) {
-        this.deathMessage = deathMessage;
-    }
-
-    public boolean isKicked() {
-        return kicked;
-    }
-
-    public void setKicked(boolean kicked) {
-        this.kicked = kicked;
-    }
-
-    public boolean getDied() {
-        return died;
-    }
-
-    public void setDied(boolean died) {
-        this.died = died;
-    }
-
-    public double getX() {
-        return x;
-    }
-
-    public void setX(double x) {
-        this.x = x;
-    }
-
-    public double getY() {
-        return y;
-    }
-
-    public void setY(double y) {
-        this.y = y;
-    }
-
-    public double getZ() {
-        return z;
-    }
-
-    public void setZ(double z) {
         this.z = z;
     }
 }

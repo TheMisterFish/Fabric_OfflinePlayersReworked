@@ -1,9 +1,9 @@
 package com.misterfish;
 
-import com.misterfish.Exception.InvalidActionException;
-import com.misterfish.Exception.InvalidIntervalException;
-import com.misterfish.Exception.InvalidOffsetException;
-import com.misterfish.Exception.UnavailableActionException;
+import com.misterfish.exception.InvalidActionException;
+import com.misterfish.exception.InvalidIntervalException;
+import com.misterfish.exception.InvalidOffsetException;
+import com.misterfish.exception.UnavailableActionException;
 import com.misterfish.config.Config;
 import com.misterfish.fakes.ServerPlayerInterface;
 import com.misterfish.helper.EntityPlayerActionPack;
@@ -195,7 +195,7 @@ public class OfflinePlayersReworked implements DedicatedServerModInitializer {
 
     public static void respawnActiveOfflinePlayers() {
         STORAGE.findAll().stream()
-                .filter(offlinePlayerModel -> !offlinePlayerModel.getDied())
+                .filter(offlinePlayerModel -> !offlinePlayerModel.isDied())
                 .filter(offlinePlayerModel -> Config.respawnKickedPlayers || !offlinePlayerModel.isKicked())
                 .toList()
                 .forEach(
@@ -237,7 +237,7 @@ public class OfflinePlayersReworked implements DedicatedServerModInitializer {
                 applyPlayerData(player, loadPlayerData(offlinePlayerModel.getId()));
                 player.teleportTo(offlinePlayerModel.getX(), offlinePlayerModel.getY(), offlinePlayerModel.getZ());
 
-                if (offlinePlayerModel.getDied() && killModes.contains(player.gameMode.getGameModeForPlayer()) && Config.killOnDeath) {
+                if (offlinePlayerModel.isDied() && killModes.contains(player.gameMode.getGameModeForPlayer()) && Config.killOnDeath) {
                     try {
                         DamageSource originalDamageSource = DamageSourceSerializer.deserializeDamageSource(offlinePlayerModel.getDeathMessage(), player.serverLevel());
 
@@ -268,7 +268,7 @@ public class OfflinePlayersReworked implements DedicatedServerModInitializer {
                     }
                 } else {
                     // Do not kill player by copying the health of an offline player.
-                    if (offlinePlayerModel.getDied()) {
+                    if (offlinePlayerModel.isDied()) {
                         player.setHealth(originalPlayerHealth);
                     }
                 }
