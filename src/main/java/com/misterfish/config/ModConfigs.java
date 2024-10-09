@@ -40,7 +40,7 @@ public class ModConfigs {
         configs.addKeyValuePair(new Pair<>("respawnKickedPlayers", true), "     - If true, offline players automatically respawn on server restart when kicked");
         configs.addKeyValuePair(new Pair<>("informAboutKickedPlayer", true), "  - If true, if offline player was kicked and player rejoins, player will be informed about offline player being kicked");
         configs.addKeyValuePair(new Pair<>("copySkin", true), "                 - If true, offline players copy the original player's skin.");
-        configs.addKeyValuePair(new Pair<>("offlinePlayerPrefix", "OFF_"), "      - Sets the prefix for the offline player.");
+        configs.addKeyValuePair(new Pair<>("offlinePlayerPrefix", "[OFF]"), "      - Sets the prefix for the offline player.");
 
         configs.addEmptyLine();
         String defaultOptions = String.join(",", "attack", "break", "place", "use", "crouch", "jump", "eat", "drop_item", "drop_stack", "move_forward", "move_backward", "disconnect");
@@ -57,7 +57,7 @@ public class ModConfigs {
         RESPAWN_KICKED_PLAYERS = CONFIG.getOrDefault("respawnKickedPlayers", true);
         INFORM_ABOUT_KICKED_PLAYER = CONFIG.getOrDefault("informAboutKickedPlayer", true);
         COPY_SKIN = CONFIG.getOrDefault("copySkin", true);
-        OFFLINE_PLAYER_PREFIX = CONFIG.getOrDefault("offlinePlayerPrefix", "OFF_");
+        OFFLINE_PLAYER_PREFIX = CONFIG.getOrDefault("offlinePlayerPrefix", "[OFF]");
 
         String optionsString = CONFIG.getOrDefault("availableOptions", "attack,break,place,use,crouch,jump,eat,drop_item,drop_stack,move_forward,move_backward,disconnect");
         AVAILABLE_OPTIONS = Arrays.asList(optionsString.split(","));
