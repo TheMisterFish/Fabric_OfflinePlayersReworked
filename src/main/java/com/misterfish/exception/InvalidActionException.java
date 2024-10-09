@@ -1,4 +1,4 @@
-package com.misterfish.Exception;
+package com.misterfish.exception;
 
 public class InvalidActionException extends IllegalArgumentException {
     public InvalidActionException() {
