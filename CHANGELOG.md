@@ -5,3 +5,4 @@
 - Removed "Other" dependencies
   
   OfflinePlayersReworked now doesn't work with a (JsonDB) database or MidnightLib. Instead it uses the Minecraft internal storage as well as SimpleConfig which has no dependencies.
+- Fixed minor chat session error that showed when OfflinePlayer was spawned.

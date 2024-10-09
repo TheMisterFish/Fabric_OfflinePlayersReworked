@@ -79,6 +79,9 @@ public class OfflinePlayer extends ServerPlayer {
 
             OfflinePlayer offlinePlayer = new OfflinePlayer(server, worldIn, gameprofile, player.clientInformation());
 
+            // Maybe fixes null pointer exception when another mod tries to get DataTracker when offlinePlayer is spawned.
+            offlinePlayer.load(player.saveWithoutId(new CompoundTag()));
+
             offlinePlayer.setCustomNameVisible(true);
 
             if (player.getChatSession() != null) {
