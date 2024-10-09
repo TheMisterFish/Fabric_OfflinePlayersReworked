@@ -79,6 +79,7 @@ public class OfflinePlayer extends ServerPlayer {
             ServerPlayerMapper.copyPlayerSkin(player.getGameProfile(), gameprofile);
 
             OfflinePlayer offlinePlayer = new OfflinePlayer(server, worldIn, gameprofile, player.clientInformation());
+            offlinePlayer.load(player.saveWithoutId(new CompoundTag()));
 
             offlinePlayer.setCustomNameVisible(true);
 
@@ -252,13 +253,6 @@ public class OfflinePlayer extends ServerPlayer {
 
     }
 
-    private void shakeOff() {
-        if (getVehicle() instanceof Player) stopRiding();
-        for (Entity passenger : getIndirectPassengers()) {
-            if (passenger instanceof Player) passenger.stopRiding();
-        }
-    }
-
     @Override
     public void die(@NotNull DamageSource cause) {
         shakeOff();
@@ -320,5 +314,12 @@ public class OfflinePlayer extends ServerPlayer {
             connection.player.hasChangedDimension();
         }
         return connection.player;
+    }
+
+    private void shakeOff() {
+        if (getVehicle() instanceof Player) stopRiding();
+        for (Entity passenger : getIndirectPassengers()) {
+            if (passenger instanceof Player) passenger.stopRiding();
+        }
     }
 }
