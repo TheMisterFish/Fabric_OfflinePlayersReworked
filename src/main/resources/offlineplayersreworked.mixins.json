@@ -3,7 +3,6 @@
   "package": "com.misterfish.mixin",
   "compatibilityLevel": "JAVA_21",
   "mixins": [
-    "ClientPacketListener_chatSessionMixin",
     "KickCommand_offlinePlayerMixin",
     "PlayerList_offlinePlayersMixin",
     "ServerPlayer_actionPackMixin",
