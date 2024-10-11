@@ -5,8 +5,8 @@ on: [ workflow_dispatch ]
 env:                                              
   MINECRAFT_VERSION: 1.21.1
   JAVA_VERSION: 21
-  VERSION: 1.0.8-mc.1.21.1
-  RELEASE_NAME: OfflinePlayers-Reworked 1.0.8 for Minecraft 1.21.1
+  VERSION: 1.1.0-mc.1.21.1
+  RELEASE_NAME: OfflinePlayers-Reworked 1.1.0 for Minecraft 1.21.1
   GITHUB_TOKEN: ${{ secrets.PUBLISH_GITHUB_TOKEN }}
 
 permissions:
