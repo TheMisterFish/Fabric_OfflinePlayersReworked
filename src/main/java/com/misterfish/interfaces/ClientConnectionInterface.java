@@ -1,4 +1,4 @@
-package com.misterfish.fakes;
+package com.misterfish.interfaces;
 
 import io.netty.channel.Channel;
 

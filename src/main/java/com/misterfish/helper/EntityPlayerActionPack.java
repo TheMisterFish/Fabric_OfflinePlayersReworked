@@ -1,8 +1,8 @@
 package com.misterfish.helper;
 
-import com.misterfish.fakes.ServerPlayerInterface;
+import com.misterfish.interfaces.ServerPlayerInterface;
 import com.misterfish.patch.OfflinePlayer;
-import com.misterfish.utils.ActionTypeMapper;
+import com.misterfish.utils.ActionMapper;
 import com.misterfish.utils.Tracer;
 import it.unimi.dsi.fastutil.Pair;
 import net.minecraft.commands.arguments.EntityAnchorArgument;
@@ -312,7 +312,6 @@ public class EntityPlayerActionPack {
                                     return true;
                                 }
                             }
-                            break;
                         }
                         case ENTITY -> {
                             player.resetLastActionTime();
@@ -330,7 +329,6 @@ public class EntityPlayerActionPack {
                                 ap.itemUseCooldown = 3;
                                 return true;
                             }
-                            break;
                         }
                     }
                     ItemStack handItem = player.getItemInHand(hand);
@@ -650,7 +648,7 @@ public class EntityPlayerActionPack {
             actionInterval = Action.continuous();
         }
 
-        ActionType actionType = ActionTypeMapper.getActionType(actionString);
+        ActionType actionType = ActionMapper.getActionType(actionString);
         actionInterval.isBreakAction = actionString.equalsIgnoreCase("break");
 
         return Pair.of(actionType, actionInterval);
