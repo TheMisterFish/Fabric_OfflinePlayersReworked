@@ -111,6 +111,7 @@ public class PlayerJoined {
                 try {
                     Files.delete(playerDataFileOld);
                 } catch (Exception ignored) {
+                    // Old file might not been created yet, not a issue.
                 }
 
                 LOGGER.debug("Deleted player data for player with id {}", id);

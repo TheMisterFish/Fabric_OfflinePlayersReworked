@@ -2,6 +2,10 @@ package com.misterfish.commands;
 
 import com.misterfish.OfflinePlayersReworked;
 import com.misterfish.config.ModConfigs;
+import com.misterfish.exception.InvalidActionException;
+import com.misterfish.exception.InvalidIntervalException;
+import com.misterfish.exception.InvalidOffsetException;
+import com.misterfish.exception.UnavailableActionException;
 import com.misterfish.helper.EntityPlayerActionPack;
 import com.misterfish.patch.OfflinePlayer;
 import com.misterfish.utils.ActionMapper;
@@ -90,8 +94,14 @@ public class OfflinePlayerCommands {
         ArrayList<Pair<EntityPlayerActionPack.ActionType, EntityPlayerActionPack.Action>> actionList;
 
         try {
-            actionList = getActionPackList(pairs, source);
+            actionList = getActionPackList(pairs);
+        } catch (InvalidActionException | UnavailableActionException | InvalidIntervalException |
+                 InvalidOffsetException e) {
+            source.sendFailure(Component.literal( e.getMessage()));
+            return 0;
         } catch (Exception e) {
+            LOGGER.error("Unexcpeted exception", e);
+            source.sendFailure(Component.literal("Something went wrong while spawning a offline player."));
             return 0;
         }
 
