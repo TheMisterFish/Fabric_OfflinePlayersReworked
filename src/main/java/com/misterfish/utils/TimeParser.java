@@ -17,7 +17,8 @@ public class TimeParser {
                 case "s" -> (int) Math.round(number * 20);  // 20 ticks per second
                 case "m" -> (int) Math.round(number * 20 * 60);  // 20 ticks * 60 seconds
                 case "h" -> (int) Math.round(number * 20 * 60 * 60);  // 20 ticks * 60 minutes * 60 seconds
-                case "d" -> (int) Math.round(number * 20 * 60 * 60 * 24);  // 20 ticks * 60 minutes * 60 seconds * 24 hours
+                case "d" ->
+                        (int) Math.round(number * 20 * 60 * 60 * 24);  // 20 ticks * 60 minutes * 60 seconds * 24 hours
                 default -> throw new IllegalArgumentException("Invalid time unit: " + unit);
             };
         }

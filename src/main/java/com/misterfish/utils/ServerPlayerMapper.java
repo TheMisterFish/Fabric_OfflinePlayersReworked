@@ -1,6 +1,6 @@
 package com.misterfish.utils;
 
-import com.misterfish.config.Config;
+import com.misterfish.config.ModConfigs;
 import com.mojang.authlib.GameProfile;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerPlayer;
@@ -11,7 +11,6 @@ import org.slf4j.LoggerFactory;
 import static com.misterfish.OfflinePlayersReworked.MOD_ID;
 
 public class ServerPlayerMapper {
-
     private static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
 
     public static void copyPlayerData(ServerPlayer source, ServerPlayer target) {
@@ -28,18 +27,18 @@ public class ServerPlayerMapper {
 
         var playerList = target.getServer().getPlayerList();
 
-        if (Config.autoWhitelist && playerList.isUsingWhitelist() && playerList.isWhiteListed(source.getGameProfile())) {
+        if (ModConfigs.AUTO_WHITELIST && playerList.isUsingWhitelist() && playerList.isWhiteListed(source.getGameProfile())) {
             UserWhiteListEntry whitelistEntry = new UserWhiteListEntry(target.getGameProfile());
             playerList.getWhiteList().add(whitelistEntry);
         }
 
-        if (Config.autoOp && playerList.isOp(source.getGameProfile())) {
+        if (ModConfigs.AUTO_OP && playerList.isOp(source.getGameProfile())) {
             playerList.op(target.getGameProfile());
         }
     }
 
     public static void copyPlayerSkin(GameProfile sourceGameProfile, GameProfile targetGameProfile) {
-        if (Config.copySkin) {
+        if (ModConfigs.COPY_SKIN) {
             sourceGameProfile.getProperties().get("textures")
                     .forEach(property -> targetGameProfile.getProperties().put("textures", property));
         }

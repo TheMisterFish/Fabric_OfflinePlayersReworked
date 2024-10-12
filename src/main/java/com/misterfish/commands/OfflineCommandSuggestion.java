@@ -1,6 +1,7 @@
-package com.misterfish.utils;
+package com.misterfish.commands;
 
-import com.misterfish.config.Config;
+import com.misterfish.config.ModConfigs;
+import com.misterfish.utils.ActionMapper;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
@@ -13,7 +14,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 public class OfflineCommandSuggestion {
-
     private static final List<String> TIME_UNITS = Arrays.asList("d", "h", "m", "s", "ms");
 
     public static CompletableFuture<Suggestions> suggestArguments(CommandContext<CommandSourceStack> context, SuggestionsBuilder builder) {
@@ -27,8 +27,8 @@ public class OfflineCommandSuggestion {
                 .map(arg -> arg.split(":")[0])
                 .collect(Collectors.toSet());
 
-        List<String> filteredOptions = Config.availableOptions.stream()
-                .filter(option -> ActionTypeMapper.getActionType(option) != null)
+        List<String> filteredOptions = ModConfigs.AVAILABLE_OPTIONS.stream()
+                .filter(option -> ActionMapper.getActionType(option) != null)
                 .filter(option -> !usedOptions.contains(option))
                 .toList();
 
