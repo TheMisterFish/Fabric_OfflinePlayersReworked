@@ -1,7 +1,7 @@
 package com.misterfish.patch;
 
-import com.misterfish.config.Config;
-import com.misterfish.fakes.ServerPlayerInterface;
+import com.misterfish.config.ModConfigs;
+import com.misterfish.interfaces.ServerPlayerInterface;
 import com.misterfish.utils.DamageSourceSerializer;
 import com.misterfish.utils.ServerPlayerMapper;
 import com.mojang.authlib.GameProfile;
@@ -56,13 +56,12 @@ import java.util.Objects;
 import java.util.UUID;
 
 import static com.misterfish.OfflinePlayersReworked.MOD_ID;
-import static com.misterfish.OfflinePlayersReworked.STORAGE;
+import static com.misterfish.OfflinePlayersReworked.getStorage;
 
 public class OfflinePlayer extends ServerPlayer {
     private static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
 
-    public Runnable fixStartingPosition = () -> {
-    };
+    public Runnable fixStartingPosition = () -> { };
 
     public OfflinePlayer(MinecraftServer server, ServerLevel worldIn, GameProfile profile, ClientInformation cli) {
         super(server, worldIn, profile, cli);
@@ -72,13 +71,15 @@ public class OfflinePlayer extends ServerPlayer {
         try {
             ServerLevel worldIn = player.serverLevel();
             var gameProfileUUID = UUID.fromString(StringUtils.reverse(player.getUUID().toString()));
-            var gameProfileName = StringUtils.truncate(Config.offlinePlayerPrefix + player.getName().getString(), 0, 15);
+            var gameProfileName = StringUtils.truncate(ModConfigs.OFFLINE_PLAYER_PREFIX + player.getName().getString(), 0, 15);
 
             GameProfile gameprofile = new GameProfile(gameProfileUUID, gameProfileName);
 
             ServerPlayerMapper.copyPlayerSkin(player.getGameProfile(), gameprofile);
 
             OfflinePlayer offlinePlayer = new OfflinePlayer(server, worldIn, gameprofile, player.clientInformation());
+
+            // Maybe fixes null pointer exception when another mod tries to get DataTracker when offlinePlayer is spawned.
             offlinePlayer.load(player.saveWithoutId(new CompoundTag()));
 
             offlinePlayer.setCustomNameVisible(true);
@@ -228,11 +229,10 @@ public class OfflinePlayer extends ServerPlayer {
         } else {
             this.server.tell(new TickTask(this.server.getTickCount(), () -> this.connection.onDisconnect(new DisconnectionDetails(reason))));
         }
-
     }
 
     public void kickOfflinePlayer(Component reason) {
-        STORAGE.kicked(this.uuid);
+        getStorage().kicked(this.uuid);
         this.connection.onDisconnect(new DisconnectionDetails(reason));
     }
 
@@ -249,14 +249,19 @@ public class OfflinePlayer extends ServerPlayer {
             // happens with that paper port thingy - not sure what that would fix, but hey
             // the game not gonna crash violently.
         }
+    }
 
-
+    private void shakeOff() {
+        if (getVehicle() instanceof Player) stopRiding();
+        for (Entity passenger : getIndirectPassengers()) {
+            if (passenger instanceof Player) passenger.stopRiding();
+        }
     }
 
     @Override
     public void die(@NotNull DamageSource cause) {
         shakeOff();
-        STORAGE.killByIdWithDeathMessage(this.getGameProfile().getId(), this.getPosition(1f), DamageSourceSerializer.serializeDamageSource(cause));
+        getStorage().killByIdWithDeathMessage(this.getGameProfile().getId(), this.getPosition(1f), DamageSourceSerializer.serializeDamageSource(cause));
 
         // Only send out death message (from the super.die()) method, without actually killing the offline player.
         boolean bl = this.level().getGameRules().getBoolean(GameRules.RULE_SHOWDEATHMESSAGES);
@@ -314,12 +319,5 @@ public class OfflinePlayer extends ServerPlayer {
             connection.player.hasChangedDimension();
         }
         return connection.player;
-    }
-
-    private void shakeOff() {
-        if (getVehicle() instanceof Player) stopRiding();
-        for (Entity passenger : getIndirectPassengers()) {
-            if (passenger instanceof Player) passenger.stopRiding();
-        }
     }
 }

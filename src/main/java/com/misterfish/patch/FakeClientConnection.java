@@ -1,6 +1,6 @@
 package com.misterfish.patch;
 
-import com.misterfish.fakes.ClientConnectionInterface;
+import com.misterfish.interfaces.ClientConnectionInterface;
 import io.netty.channel.Channel;
 import io.netty.channel.embedded.EmbeddedChannel;
 import net.minecraft.network.Connection;

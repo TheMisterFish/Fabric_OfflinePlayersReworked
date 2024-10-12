@@ -1,6 +1,7 @@
 package com.misterfish.exception;
 
 public class InvalidActionException extends IllegalArgumentException {
-    public InvalidActionException() {
+    public InvalidActionException(String s) {
+        super(s);
     }
 }

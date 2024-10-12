@@ -1,7 +1,7 @@
 package com.misterfish.mixin;
 
-import com.misterfish.fakes.ServerPlayerInterface;
 import com.misterfish.helper.EntityPlayerActionPack;
+import com.misterfish.interfaces.ServerPlayerInterface;
 import com.mojang.authlib.GameProfile;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ClientInformation;
@@ -14,25 +14,22 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(ServerPlayer.class)
-public abstract class ServerPlayer_actionPackMixin implements ServerPlayerInterface
-{
+public abstract class ServerPlayer_actionPackMixin implements ServerPlayerInterface {
     @Unique
     public EntityPlayerActionPack actionPack;
+
     @Override
-    public EntityPlayerActionPack getActionPack()
-    {
+    public EntityPlayerActionPack getActionPack() {
         return actionPack;
     }
 
     @Inject(method = "<init>", at = @At(value = "RETURN"))
-    private void onServerPlayerEntityContructor(MinecraftServer minecraftServer, ServerLevel serverLevel, GameProfile gameProfile, ClientInformation cli, CallbackInfo ci)
-    {
+    private void onServerPlayerEntityContructor(MinecraftServer minecraftServer, ServerLevel serverLevel, GameProfile gameProfile, ClientInformation cli, CallbackInfo ci) {
         this.actionPack = new EntityPlayerActionPack((ServerPlayer) (Object) this);
     }
 
     @Inject(method = "tick", at = @At(value = "HEAD"))
-    private void onTick(CallbackInfo ci)
-    {
+    private void onTick(CallbackInfo ci) {
         actionPack.onUpdate();
     }
 }
