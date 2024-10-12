@@ -249,8 +249,6 @@ public class OfflinePlayer extends ServerPlayer {
             // happens with that paper port thingy - not sure what that would fix, but hey
             // the game not gonna crash violently.
         }
-
-
     }
 
     private void shakeOff() {

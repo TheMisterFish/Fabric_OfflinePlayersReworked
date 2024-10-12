@@ -89,7 +89,7 @@ public class OfflinePlayersReworked implements DedicatedServerModInitializer {
                         offlinePlayerModel -> {
                             var offlinePlayer = OfflinePlayer.respawnOfflinePlayer(getServer(), offlinePlayerModel.getId(), offlinePlayerModel.getPlayer());
                             if (offlinePlayer != null) {
-                                var actionList = getActionPackList(offlinePlayerModel.getActions(), null);
+                                var actionList = getActionPackList(offlinePlayerModel.getActions());
                                 actionList.forEach(actionTypeActionPair -> manipulate(offlinePlayer, ap -> ap.start(
                                         actionTypeActionPair.first(),
                                         actionTypeActionPair.second()

@@ -7,8 +7,6 @@ import com.misterfish.exception.InvalidOffsetException;
 import com.misterfish.exception.UnavailableActionException;
 import com.misterfish.helper.EntityPlayerActionPack;
 import it.unimi.dsi.fastutil.Pair;
-import net.minecraft.commands.CommandSourceStack;
-import net.minecraft.network.chat.Component;
 
 import java.util.AbstractMap;
 import java.util.ArrayList;
@@ -26,56 +24,44 @@ public class ActionMapper {
                 .orElse(null);
     }
 
-    public static ArrayList<Pair<EntityPlayerActionPack.ActionType, EntityPlayerActionPack.Action>> getActionPackList(String[] pairs, CommandSourceStack source) {
+    public static ArrayList<Pair<EntityPlayerActionPack.ActionType, EntityPlayerActionPack.Action>> getActionPackList(String[] pairs) {
         ArrayList<Pair<EntityPlayerActionPack.ActionType, EntityPlayerActionPack.Action>> actionList = new ArrayList<>();
 
         IntStream.range(0, pairs.length).forEach(index -> {
             String pair = pairs[index];
             String[] actionInterval = pair.split(":");
             if (actionInterval.length != 1 && actionInterval.length != 2 && actionInterval.length != 3) {
-                if (source != null) {
-                    source.sendFailure(Component.literal("Invalid format. Use action, action:interval or action:interval:offset."));
-                    throw new InvalidActionException();
-                }
+                throw new InvalidActionException("Invalid format. Use action, action:interval or action:interval:offset.");
             }
 
             String action = actionInterval[0];
 
-            boolean validOption = ModConfigs.AVAILABLE_OPTIONS.stream()
-                    .filter(option -> getActionType(option) != null)
-                    .anyMatch(option -> option.equals(action));
-
-            if (!validOption && source != null) {
-                source.sendFailure(Component.literal("Invalid action. " + action + " Is not a valid action."));
-                throw new UnavailableActionException();
-            }
+            ModConfigs.AVAILABLE_OPTIONS.stream()
+                    .filter(option -> option.equals(action) && getActionType(option) != null)
+                    .findAny()
+                    .orElseThrow(() -> {
+                        throw new UnavailableActionException("Invalid action: " + action + " Is not a valid action.");
+                    });
 
             int interval = Objects.equals(action, "break") ? 0 : 20; // by default break should be continuously
 
             if (actionInterval.length > 1) {
                 try {
                     interval = TimeParser.parse(actionInterval[1]);
-                } catch (IllegalArgumentException e) {
-                    if (source != null) {
-                        source.sendFailure(Component.literal("Invalid interval format: " + e.getMessage()));
-                    }
-                    throw new InvalidIntervalException("Invalid interval: " + actionInterval[1]);
+                } catch(IllegalArgumentException e) {
+                    throw new InvalidIntervalException("Invalid interval format: " + e.getMessage());
                 }
             }
 
             Pair<EntityPlayerActionPack.ActionType, EntityPlayerActionPack.Action> actionPair;
 
             if (actionInterval.length > 2) {
-                int offset;
                 try {
-                    offset = TimeParser.parse(actionInterval[2]);
-                } catch (IllegalArgumentException e) {
-                    if (source != null) {
-                        source.sendFailure(Component.literal("Invalid offset format: " + e.getMessage()));
-                    }
-                    throw new InvalidOffsetException("Invalid offset: " + actionInterval[2]);
+                    int offset = TimeParser.parse(actionInterval[2]);
+                    actionPair = EntityPlayerActionPack.getActionPair(action, interval, offset);
+                } catch(IllegalArgumentException e) {
+                    throw new InvalidOffsetException("Invalid offset format: " + e.getMessage());
                 }
-                actionPair = EntityPlayerActionPack.getActionPair(action, interval, offset);
             } else {
                 actionPair = EntityPlayerActionPack.getActionPair(action, interval, index);
             }
