@@ -34,34 +34,8 @@ dependencies {
 	mappings loom.officialMojangMappings()
 	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
 
+	// Fabric API. This is technically optional, but you probably want it anyway.
 	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
-
-	//	Midnightlib Config dependency
-	modImplementation include("maven.modrinth:midnightlib:${project.midnightlib_version}")
-
-	// Include jsondb-core and its dependencies
-	implementation include("io.jsondb:jsondb-core:${project.jsondb_version}")
-	implementation include("commons-logging:commons-logging:${project.commonslogging_version}")
-	implementation include("com.google.guava:guava:${project.guava_version}")
-
-	// Add Jackson dependencies
-	implementation include("com.fasterxml.jackson.core:jackson-core:${project.jackson_version}")
-	implementation include("com.fasterxml.jackson.core:jackson-databind:${project.jackson_version}")
-	implementation include("com.fasterxml.jackson.module:jackson-module-parameter-names:${project.jackson_version}")
-	implementation include("com.fasterxml.jackson.datatype:jackson-datatype-jdk8:${project.jackson_version}")
-	implementation include("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:${project.jackson_version}")
-	implementation include("com.fasterxml.jackson.core:jackson-annotations:${project.jackson_version}")
-
-	// Include Reflections 0.9.10 explicitly
-	implementation include("org.reflections:reflections:${project.reflections_version}")
-
-	// Include other JsonDB Dependencies.
-	implementation include("org.javassist:javassist:${project.javassist_version}")
-	implementation include("com.google.guava:guava:${project.guava_version}")
-	implementation include("commons-beanutils:commons-beanutils:${project.commonsbeanutils_version}")
-	implementation include("commons-jxpath:commons-jxpath:${project.commonsjxpath_version}")
-	implementation include("org.slf4j:slf4j-api:${project.slf4j_version}")
-	implementation include("commons-logging:commons-logging:${project.commonslogging_version}")
 }
 
 processResources {
@@ -90,7 +64,6 @@ jar {
 	from("LICENSE") {
 		rename { "${it}_${project.base.archivesName.get()}"}
 	}
-
 	duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
 

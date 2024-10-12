@@ -14,7 +14,6 @@ import java.util.Collection;
 
 @Mixin(KickCommand.class)
 public class KickCommand_offlinePlayerMixin {
-
     @Inject(method = "kickPlayers", at = @At("TAIL"))
     private static void onKickPlayers(CommandSourceStack commandSourceStack, Collection<ServerPlayer> collection, Component component, CallbackInfoReturnable<Integer> cir) {
         for (ServerPlayer player : collection) {
