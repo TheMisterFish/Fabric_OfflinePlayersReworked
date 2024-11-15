@@ -1,6 +1,6 @@
 package com.misterfish.utils;
 
-import com.misterfish.config.ModConfigs;
+import com.misterfish.offline_config.ModConfigs;
 import com.misterfish.exception.InvalidActionException;
 import com.misterfish.exception.InvalidIntervalException;
 import com.misterfish.exception.InvalidOffsetException;

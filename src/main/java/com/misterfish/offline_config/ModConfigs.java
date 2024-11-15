@@ -1,4 +1,4 @@
-package com.misterfish.config;
+package com.misterfish.offline_config;
 
 import com.mojang.datafixers.util.Pair;
 
@@ -21,6 +21,7 @@ public class ModConfigs {
     public static boolean COPY_SKIN;
     public static String OFFLINE_PLAYER_PREFIX;
     public static List<String> AVAILABLE_OPTIONS;
+    public static boolean IGNORE_SLEEPING_PERCENTAGE;
 
     public static void registerConfigs() {
         configs = new ModConfigProvider();
@@ -40,6 +41,7 @@ public class ModConfigs {
         configs.addKeyValuePair(new Pair<>("respawnKickedPlayers", true), "     - If true, offline players automatically respawn on server restart when kicked");
         configs.addKeyValuePair(new Pair<>("informAboutKickedPlayer", true), "  - If true, if offline player was kicked and player rejoins, player will be informed about offline player being kicked");
         configs.addKeyValuePair(new Pair<>("copySkin", true), "                 - If true, offline players copy the original player's skin.");
+        configs.addKeyValuePair(new Pair<>("ignoreSleepingPercentage", true), " - If true, offline players will not be counted towards the sleeping percentage rule.");
         configs.addKeyValuePair(new Pair<>("offlinePlayerPrefix", "[OFF]"), "      - Sets the prefix for the offline player.");
 
         configs.addEmptyLine();
@@ -57,6 +59,7 @@ public class ModConfigs {
         RESPAWN_KICKED_PLAYERS = CONFIG.getOrDefault("respawnKickedPlayers", true);
         INFORM_ABOUT_KICKED_PLAYER = CONFIG.getOrDefault("informAboutKickedPlayer", true);
         COPY_SKIN = CONFIG.getOrDefault("copySkin", true);
+        IGNORE_SLEEPING_PERCENTAGE = CONFIG.getOrDefault("ignoreSleepingPercentage", true);
         OFFLINE_PLAYER_PREFIX = CONFIG.getOrDefault("offlinePlayerPrefix", "[OFF]");
 
         String optionsString = CONFIG.getOrDefault("availableOptions", "attack,break,place,use,crouch,jump,eat,drop_item,drop_stack,move_forward,move_backward,disconnect");

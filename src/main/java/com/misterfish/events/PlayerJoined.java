@@ -1,6 +1,6 @@
 package com.misterfish.events;
 
-import com.misterfish.config.ModConfigs;
+import com.misterfish.offline_config.ModConfigs;
 import com.misterfish.patch.OfflinePlayer;
 import com.misterfish.utils.DamageSourceSerializer;
 import com.misterfish.utils.ServerPlayerMapper;
