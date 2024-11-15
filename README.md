@@ -16,7 +16,7 @@ This mod is built for Minecraft version 1.21 & 1.21.1 and is build using the fol
 
 ## Versions
 
-- **Current Version (1.21 & 1.21.1)**: [Download v1.1.0-mc.1.21.1](https://github.com/lilfish/Fabric_OfflinePlayersReworked/releases/tag/v1.1.0-mc.1.21.1)
+- **Current Version (1.21 & 1.21.1)**: [Download v1.1.1-mc.1.21.1](https://github.com/lilfish/Fabric_OfflinePlayersReworked/releases/tag/v1.1.1-mc.1.21.1)
     - Available on modrinth: [OfflinePlayers - Modrinth](https://modrinth.com/mod/offlineplayers)
 - **Legacy Version (1.18.2)**: [Download v0.1.6-mc.1.18.2](https://github.com/lilfish/Fabric_OfflinePlayersReworked/releases/tag/v0.1.6-mc.1.18.2)
     - This version is deprecated and will not be available on Modrinth.
@@ -92,6 +92,7 @@ killOnDeath=true #               - If true, players automatically die upon recon
 respawnKickedPlayers=true #      - If true, offline players automatically respawn on server restart when kicked | default: true
 informAboutKickedPlayer=true #   - If true, if offline player was kicked and player rejoins, player will be informed about offline player being kicked | default: true
 copySkin=true #                  - If true, offline players copy the original player's skin. | default: true
+ignoreSleepingPercentage=true #  - If true, offline players will not be counted towards the sleeping percentage rule. | default: true
 offlinePlayerPrefix=[OFF] #       - Sets the prefix for the offline player. | default: OFF_
 
 availableOptions=attack,break,place,use,crouch,jump,eat,drop_item,drop_stack,move_forward,move_backward,disconnect #  | default: attack,break,place,use,crouch,jump,eat,drop_item,drop_stack,move_forward,move_backward,disconnect

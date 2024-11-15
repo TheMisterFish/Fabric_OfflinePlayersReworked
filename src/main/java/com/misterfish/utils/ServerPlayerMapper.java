@@ -1,6 +1,6 @@
 package com.misterfish.utils;
 
-import com.misterfish.config.ModConfigs;
+import com.misterfish.offline_config.ModConfigs;
 import com.mojang.authlib.GameProfile;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerPlayer;

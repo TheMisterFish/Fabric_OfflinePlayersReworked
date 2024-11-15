@@ -6,7 +6,8 @@
     "KickCommand_offlinePlayerMixin",
     "PlayerList_offlinePlayersMixin",
     "ServerPlayer_actionPackMixin",
-    "ServerStatus_metaPingMixin"
+    "ServerStatus_metaPingMixin",
+    "SleepStatus_sleepersNeededMixin"
   ],
   "injectors": {
     "defaultRequire": 1
