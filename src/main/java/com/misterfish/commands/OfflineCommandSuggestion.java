@@ -1,6 +1,6 @@
 package com.misterfish.commands;
 
-import com.misterfish.config.ModConfigs;
+import com.misterfish.offline_config.ModConfigs;
 import com.misterfish.utils.ActionMapper;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.suggestion.Suggestions;
