@@ -1,7 +1,6 @@
-# OfflinePlayers-Reworked 1.1.0 (MC 1.21.1)
+# OfflinePlayers-Reworked 1.1.1 (MC 1.21.1)
 
 **Update:**
 
-- Removed "Other" dependencies
-  
-  OfflinePlayersReworked now doesn't work with a (JsonDB) database or MidnightLib. Instead it uses the Minecraft internal storage as well as SimpleConfig which has no dependencies.
+- Added option to ignore offline players when trying to sleep through the night and having playersSleepingPercentage gamerule on.
+- Added new config to enable/disable this new option called `ignoreSleepingPercentage` (default true).

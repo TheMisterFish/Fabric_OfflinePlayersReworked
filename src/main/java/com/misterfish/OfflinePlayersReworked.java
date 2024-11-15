@@ -1,7 +1,7 @@
 package com.misterfish;
 
 import com.misterfish.commands.OfflinePlayerCommands;
-import com.misterfish.config.ModConfigs;
+import com.misterfish.offline_config.ModConfigs;
 import com.misterfish.helper.EntityPlayerActionPack;
 import com.misterfish.interfaces.ServerPlayerInterface;
 import com.misterfish.patch.OfflinePlayer;
