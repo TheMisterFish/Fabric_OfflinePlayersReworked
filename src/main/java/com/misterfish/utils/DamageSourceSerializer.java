@@ -66,7 +66,6 @@ public class DamageSourceSerializer {
                 LOGGER.warn("Invalid damage type ID: {}. Using generic damage.", damageTypeId);
                 return level.damageSources().generic();
             }
-
             Holder<DamageType> damageTypeHolder = level.registryAccess()
                     .registryOrThrow(Registries.DAMAGE_TYPE)
                     .getHolder(ResourceKey.create(Registries.DAMAGE_TYPE, damageTypeLocation))

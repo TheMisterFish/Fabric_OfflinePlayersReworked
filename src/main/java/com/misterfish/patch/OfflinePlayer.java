@@ -27,6 +27,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.TickTask;
 import net.minecraft.server.level.ClientInformation;
+import net.minecraft.server.level.ParticleStatus;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.CommonListenerCookie;
@@ -41,7 +42,6 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.portal.DimensionTransition;
 import net.minecraft.world.level.storage.LevelResource;
 import net.minecraft.world.scores.Team;
 import org.apache.commons.lang3.StringUtils;
@@ -53,6 +53,7 @@ import org.slf4j.LoggerFactory;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 
 import static com.misterfish.OfflinePlayersReworked.MOD_ID;
@@ -95,7 +96,7 @@ public class OfflinePlayer extends ServerPlayer {
             ServerPlayerMapper.copyPlayerRights(player, offlinePlayer);
             ServerPlayerMapper.copyPlayerData(player, offlinePlayer);
 
-            offlinePlayer.teleportTo(player.serverLevel(), player.getX(), player.getY(), player.getZ(), player.getYRot(), player.getXRot());
+            offlinePlayer.teleportTo(player.serverLevel(), player.getX(), player.getY(), player.getZ(), Set.of(), player.getYRot(), player.getXRot(), true);
 
             //noinspection ConstantConditions
             ((ServerPlayerInterface) offlinePlayer).getActionPack().copyFrom(((ServerPlayerInterface) player).getActionPack());
@@ -192,7 +193,7 @@ public class OfflinePlayer extends ServerPlayer {
         OfflinePlayer offlinePlayer = recreateOfflinePlayer(server, offlinePlayerUUID, playerUUID);
 
         if (offlinePlayer != null) {
-            var clientInformation = new ClientInformation("", 0, ChatVisiblity.FULL, true, 0, HumanoidArm.RIGHT, false, false);
+            var clientInformation = new ClientInformation("", 0, ChatVisiblity.FULL, true, 0, HumanoidArm.RIGHT, false, false, ParticleStatus.ALL);
             server.getPlayerList().placeNewPlayer(new FakeClientConnection(PacketFlow.SERVERBOUND), offlinePlayer, new CommonListenerCookie(offlinePlayer.getGameProfile(), 0, clientInformation, true));
 
             offlinePlayer.fixStartingPosition.run();
@@ -216,18 +217,13 @@ public class OfflinePlayer extends ServerPlayer {
         if (!isUsingItem()) super.onEquipItem(slot, previous, stack);
     }
 
-    @Override
-    public void kill() {
-        kill(Component.literal("Killed"));
-    }
-
     public void kill(Component reason) {
         shakeOff();
 
         if (reason.getContents() instanceof TranslatableContents text && text.getKey().equals("multiplayer.disconnect.duplicate_login")) {
             this.connection.onDisconnect(new DisconnectionDetails(reason));
         } else {
-            this.server.tell(new TickTask(this.server.getTickCount(), () -> this.connection.onDisconnect(new DisconnectionDetails(reason))));
+            this.server.schedule(new TickTask(this.server.getTickCount(), () -> this.connection.onDisconnect(new DisconnectionDetails(reason))));
         }
     }
 
@@ -264,7 +260,7 @@ public class OfflinePlayer extends ServerPlayer {
         getStorage().killByIdWithDeathMessage(this.getGameProfile().getId(), this.getPosition(1f), DamageSourceSerializer.serializeDamageSource(cause));
 
         // Only send out death message (from the super.die()) method, without actually killing the offline player.
-        boolean bl = this.level().getGameRules().getBoolean(GameRules.RULE_SHOWDEATHMESSAGES);
+        boolean bl = this.serverLevel().getGameRules().getBoolean(GameRules.RULE_SHOWDEATHMESSAGES);
         if (bl) {
             Component component = this.getCombatTracker().getDeathMessage();
             this.connection.send(new ClientboundPlayerCombatKillPacket(this.getId(), component), PacketSendListener.exceptionallySend(() -> {
@@ -305,19 +301,19 @@ public class OfflinePlayer extends ServerPlayer {
         doCheckFallDamage(0.0, y, 0.0, onGround);
     }
 
-    @Override
-    public Entity changeDimension(@NotNull DimensionTransition serverLevel) {
-        super.changeDimension(serverLevel);
-        if (wonGame) {
-            ServerboundClientCommandPacket p = new ServerboundClientCommandPacket(ServerboundClientCommandPacket.Action.PERFORM_RESPAWN);
-            connection.handleClientCommand(p);
-        }
-
-        // If above branch was taken, *this* has been removed and replaced, the new instance has been set
-        // on 'our' connection (which is now theirs, but we still have a ref).
-        if (connection.player.isChangingDimension()) {
-            connection.player.hasChangedDimension();
-        }
-        return connection.player;
-    }
+//    @Override
+//    public Entity changeDimension(@NotNull DimensionTransition serverLevel) {
+//        super.changeDimension(serverLevel);
+//        if (wonGame) {
+//            ServerboundClientCommandPacket p = new ServerboundClientCommandPacket(ServerboundClientCommandPacket.Action.PERFORM_RESPAWN);
+//            connection.handleClientCommand(p);
+//        }
+//
+//        // If above branch was taken, *this* has been removed and replaced, the new instance has been set
+//        // on 'our' connection (which is now theirs, but we still have a ref).
+//        if (connection.player.isChangingDimension()) {
+//            connection.player.hasChangedDimension();
+//        }
+//        return connection.player;
+//    }
 }
