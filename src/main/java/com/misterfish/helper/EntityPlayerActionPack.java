@@ -172,7 +172,7 @@ public class EntityPlayerActionPack {
         } else {
             entities = player.level().getEntities(player, player.getBoundingBox().inflate(3.0D, 1.0D, 3.0D));
         }
-        if (entities.size() == 0)
+        if (entities.isEmpty())
             return this;
         Entity closest = null;
         double distance = Double.POSITIVE_INFINITY;

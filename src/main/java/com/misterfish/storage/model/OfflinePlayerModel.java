@@ -9,34 +9,18 @@ import net.minecraft.nbt.StringTag;
 
 import java.util.UUID;
 
+@Setter
+@Getter
 @RequiredArgsConstructor
 public class OfflinePlayerModel {
-    @Getter
-    @Setter
     private UUID id;
-    @Getter
-    @Setter
     private UUID player;
-    @Getter
-    @Setter
     private String[] actions;
-    @Getter
-    @Setter
     private boolean kicked = false;
-    @Getter
-    @Setter
     private boolean died = false;
-    @Getter
-    @Setter
     private String deathMessage;
-    @Getter
-    @Setter
     private double x;
-    @Getter
-    @Setter
     private double y;
-    @Getter
-    @Setter
     private double z;
 
     public OfflinePlayerModel(UUID id, UUID player, String[] actions, double x, double y, double z) {

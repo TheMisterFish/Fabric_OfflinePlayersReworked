@@ -134,7 +134,7 @@ public class OfflinePlayerCommands {
         }
 
         String[] arguments = new String[0];
-        if (actionList.size() > 0) {
+        if (!actionList.isEmpty()) {
             arguments = getString(context, "arguments").split(" ");
         }
         OfflinePlayersReworked.getStorage().create(offlinePlayer.getUUID(), player.getUUID(), arguments, player.getX(), player.getY(), player.getZ());

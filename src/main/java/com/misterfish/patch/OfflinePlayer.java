@@ -141,11 +141,6 @@ public class OfflinePlayer extends ServerPlayer {
             return null;
         }
 
-        if (playerData == null) {
-            LOGGER.error("No player data found for {}", gameProfile.getName());
-            return null;
-        }
-
         ResourceKey<Level> dimensionKey;
 
         if (playerData.contains("Dimension")) {
@@ -287,7 +282,7 @@ public class OfflinePlayer extends ServerPlayer {
     }
 
     @Override
-    public String getIpAddress() {
+    public @NotNull String getIpAddress() {
         return "127.0.0.1";
     }
 

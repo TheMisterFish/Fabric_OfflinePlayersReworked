@@ -24,7 +24,7 @@ public abstract class ServerPlayer_actionPackMixin implements ServerPlayerInterf
     }
 
     @Inject(method = "<init>", at = @At(value = "RETURN"))
-    private void onServerPlayerEntityContructor(MinecraftServer minecraftServer, ServerLevel serverLevel, GameProfile gameProfile, ClientInformation cli, CallbackInfo ci) {
+    private void onServerPlayerEntityConstructor(MinecraftServer minecraftServer, ServerLevel serverLevel, GameProfile gameProfile, ClientInformation cli, CallbackInfo ci) {
         this.actionPack = new EntityPlayerActionPack((ServerPlayer) (Object) this);
     }
 

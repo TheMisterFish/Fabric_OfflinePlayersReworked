@@ -17,6 +17,7 @@ import java.util.List;
 public class SleepStatus_sleepersNeededMixin {
     @Shadow
     private int activePlayers;
+    @Shadow
     private int sleepingPlayers;
 
     @Inject(method = "update", at = @At("RETURN"), cancellable = true)
