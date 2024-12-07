@@ -19,7 +19,7 @@ public class SleepStatus_sleepersNeededMixin {
     private int activePlayers;
     private int sleepingPlayers;
 
-    @Inject(method = "update", at = @At("HEAD"), cancellable = true)
+    @Inject(method = "update", at = @At("RETURN"), cancellable = true)
     private void modifyUpdate(List<ServerPlayer> list, CallbackInfoReturnable<Boolean> cir) {
         if (ModConfigs.IGNORE_SLEEPING_PERCENTAGE) {
             int i = this.activePlayers;
