@@ -11,6 +11,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.damagesource.DamageType;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.player.Player;
 import org.slf4j.Logger;
@@ -31,8 +32,7 @@ public class DamageSourceSerializer {
             CompoundTag entityTag = new CompoundTag();
             Entity entity = damageSource.getEntity();
 
-            if (entity instanceof Player) {
-                Player player = (Player) entity;
+            if (entity instanceof Player player) {
                 entityTag.putString("playerName", player.getName().getString());
                 entityTag.putUUID("playerUUID", player.getUUID());
                 entityTag.putString("entityType", "player");
@@ -66,11 +66,13 @@ public class DamageSourceSerializer {
                 LOGGER.warn("Invalid damage type ID: {}. Using generic damage.", damageTypeId);
                 return level.damageSources().generic();
             }
-            Holder<DamageType> damageTypeHolder = level.registryAccess()
-                    .registryOrThrow(Registries.DAMAGE_TYPE)
-                    .getHolder(ResourceKey.create(Registries.DAMAGE_TYPE, damageTypeLocation))
+
+            DamageType damageType = level.registryAccess()
+                    .lookupOrThrow(Registries.DAMAGE_TYPE)
+                    .getOptional(damageTypeLocation)
                     .orElse(null);
-            if (damageTypeHolder == null) {
+
+            if (damageType == null) {
                 LOGGER.warn("Unknown damage type: {}. Using generic damage.", damageTypeId);
                 return level.damageSources().generic();
             }
@@ -81,18 +83,18 @@ public class DamageSourceSerializer {
                 if ("player".equals(sourceEntityTag.getString("entityType"))) {
                     sourceEntity = new DamageSourcePlayer(level, sourceEntityTag.getUUID("playerUUID"), sourceEntityTag.getString("playerName"));
                 } else {
-                    sourceEntity = EntityType.loadEntityRecursive(sourceEntityTag, level, entity -> entity);
+                    sourceEntity = EntityType.loadEntityRecursive(sourceEntityTag, level, EntitySpawnReason.NATURAL, entity -> entity);
                 }
             }
 
             Entity directEntity = null;
             if (tag.contains("directEntity")) {
-                directEntity = EntityType.loadEntityRecursive(tag.getCompound("directEntity"), level, entity -> entity);
+                directEntity = EntityType.loadEntityRecursive(tag.getCompound("directEntity"), level, EntitySpawnReason.NATURAL, entity -> entity);
             }
-
+            Holder<DamageType> damageTypeHolder = Holder.direct(damageType);
             return new DamageSource(damageTypeHolder, directEntity, sourceEntity);
         } catch (Exception e) {
-            LOGGER.error("Failed to deserialize DamageSource: " + serialized, e);
+            LOGGER.error("Failed to deserialize DamageSource: {}", serialized, e);
             return level.damageSources().generic(); // Fallback to generic damage source
         }
     }
