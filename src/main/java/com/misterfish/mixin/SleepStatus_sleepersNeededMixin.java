@@ -1,29 +1,43 @@
 package com.misterfish.mixin;
 
-import com.misterfish.OfflinePlayersReworked;
 import com.misterfish.offline_config.ModConfigs;
+import com.misterfish.patch.OfflinePlayer;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.players.SleepStatus;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
+import java.util.List;
+
 
 @Mixin(SleepStatus.class)
 public class SleepStatus_sleepersNeededMixin {
-    @Inject(method = "sleepersNeeded(I)I", at = @At("RETURN"), cancellable = true)
-    private void modifySleepersNeeded(int i, CallbackInfoReturnable<Integer> info) {
-        int result = info.getReturnValue();
+    @Shadow
+    private int activePlayers;
+    private int sleepingPlayers;
 
+    @Inject(method = "update", at = @At("RETURN"), cancellable = true)
+    private void modifyUpdate(List<ServerPlayer> list, CallbackInfoReturnable<Boolean> cir) {
         if (ModConfigs.IGNORE_SLEEPING_PERCENTAGE) {
-            var storage = OfflinePlayersReworked.getStorage();
-            int to_ignore = storage.findAll().stream()
-                    .filter(offlinePlayerModel -> !offlinePlayerModel.isDied() && !offlinePlayerModel.isKicked())
-                    .toList()
-                    .size();
-            result -= to_ignore;
-        }
+            int i = this.activePlayers;
+            int j = this.sleepingPlayers;
+            this.activePlayers = 0;
+            this.sleepingPlayers = 0;
 
-        info.setReturnValue(result);
+            for (ServerPlayer serverPlayer : list) {
+                if (!serverPlayer.isSpectator() && !(serverPlayer instanceof OfflinePlayer)) {
+                    ++this.activePlayers;
+                    if (serverPlayer.isSleeping()) {
+                        ++this.sleepingPlayers;
+                    }
+                }
+            }
+
+            cir.setReturnValue((j > 0 || this.sleepingPlayers > 0) &&
+                    (i != this.activePlayers || j != this.sleepingPlayers));
+        }
     }
 }
