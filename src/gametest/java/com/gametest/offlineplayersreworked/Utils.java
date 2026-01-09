@@ -93,4 +93,28 @@ public class Utils {
             return matches() ? "Players match" : String.join("\n", differences);
         }
     }
+
+    public static void assignInventory(ServerPlayer target, Inventory source) {
+        Inventory tgt = target.getInventory();
+
+        tgt.clearContent();
+
+        int slots = Math.min(tgt.getContainerSize(), source.getContainerSize());
+        for (int i = 0; i < slots; i++) {
+            ItemStack s = source.getItem(i);
+            tgt.setItem(i, s.isEmpty() ? ItemStack.EMPTY : s.copy());
+        }
+
+        int armorSize = Math.min(tgt.armor.size(), source.armor.size());
+        for (int i = 0; i < armorSize; i++) {
+            ItemStack s = source.armor.get(i);
+            tgt.armor.set(i, s.isEmpty() ? ItemStack.EMPTY : s.copy());
+        }
+
+        ItemStack off = source.offhand.getFirst();
+        tgt.offhand.set(0, off.isEmpty() ? ItemStack.EMPTY : off.copy());
+
+        tgt.selected = Math.max(0, Math.min(source.selected, tgt.getContainerSize() - 1));
+    }
+
 }
