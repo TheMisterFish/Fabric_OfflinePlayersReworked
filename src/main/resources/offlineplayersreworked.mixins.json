@@ -1,6 +1,6 @@
 {
   "required": true,
-  "package": "com.misterfish.mixin",
+  "package": "com.offlineplayersreworked.mixin",
   "compatibilityLevel": "JAVA_21",
   "mixins": [
     "KickCommand_offlinePlayerMixin",
