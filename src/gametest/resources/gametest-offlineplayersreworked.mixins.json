@@ -1,0 +1,12 @@
+{
+  "required": true,
+  "package": "com.gametest.offlineplayersreworked.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "mixins": [
+    "DeathCaptureMixin",
+    "DisconnectCaptureMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+	}
+}
