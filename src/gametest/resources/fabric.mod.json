@@ -6,7 +6,10 @@
   "environment": "*",
   "entrypoints": {
     "fabric-gametest": [
-      "com.gametest.offlineplayersreworked.test.OfflinePlayerCreationTests"
+      "com.gametest.offlineplayersreworked.test.OfflinePlayerCreationTests",
+      "com.gametest.offlineplayersreworked.test.OfflineCommandSuggestionTest",
+      "com.gametest.offlineplayersreworked.test.OfflinePlayerCommandsGameTest",
+      "com.gametest.offlineplayersreworked.test.EntityPlayerActionPackGameTest"
     ]
   },
   "mixins": [

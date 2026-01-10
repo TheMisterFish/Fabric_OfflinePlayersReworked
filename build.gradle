@@ -3,6 +3,7 @@ plugins {
     id 'maven-publish'
     id 'io.github.juuxel.loom-quiltflower' version '1.7.3'
     id 'io.freefair.lombok' version '8.6'
+    id 'jacoco'
 }
 
 version = project.mod_version
@@ -37,8 +38,8 @@ dependencies {
     // Fabric API. This is technically optional, but you probably want it anyway.
     modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
 
-    modImplementation "org.apache.logging.log4j:log4j-core:2.22.1"
-
+    // Jacoco test coverage
+    jacocoAgent "org.jacoco:org.jacoco.agent:${jacoco.toolVersion}:runtime"
 }
 
 processResources {
@@ -65,6 +66,29 @@ java {
 
 test {
     useJUnitPlatform()
+    finalizedBy jacocoTestReport
+}
+
+jacoco {
+    toolVersion = "0.8.14"
+}
+
+configurations { jacocoAgent }
+
+def mixinExclude = '**/offlineplayersreworked/mixin/**'
+
+jacocoTestReport {
+    reports {
+        xml.required = false
+        csv.required = false
+        html.outputLocation = layout.buildDirectory.dir('jacocoHtml')
+    }
+
+    afterEvaluate {
+        classDirectories.setFrom(files(classDirectories.files.collect {
+            fileTree(dir: it, exclude: mixinExclude)
+        }))
+    }
 }
 
 fabricApi {
@@ -74,6 +98,49 @@ fabricApi {
         eula = true
     }
 }
+
+def runGameTestExec = file("$buildDir/jacoco/runGameTest.exec")
+
+tasks.matching { it.name == 'runGameTest' && it instanceof JavaExec }.configureEach {
+    doFirst {
+        def agentFile = configurations.jacocoAgent.singleFile
+        if (!agentFile.exists()) {
+            throw new GradleException("JaCoCo agent not found in configuration 'jacocoAgent'")
+        }
+        // append the agent arg; append=false overwrites previous runs
+        jvmArgs += "-javaagent:${agentFile}=destfile=${runGameTestExec},append=false"
+        logger.lifecycle("JaCoCo agent attached to runGameTest -> ${runGameTestExec}")
+    }
+}
+
+tasks.register('jacocoRunGameTestReport', JacocoReport) {
+    group = 'verification'
+    description = 'Generates JaCoCo report for runGameTest execution'
+
+    executionData.setFrom(files(runGameTestExec))
+    def mainOutput = project.sourceSets.main.output
+
+    classDirectories.setFrom(files(mainOutput.classesDirs.files.collect { dir ->
+        fileTree(dir: dir, exclude: mixinExclude)
+    }))
+
+    sourceDirectories.setFrom(project.sourceSets.main.allSource.srcDirs)
+
+    reports {
+        html.required.set(true)
+        xml.required.set(false)
+        csv.required.set(false)
+        html.outputLocation.set(layout.buildDirectory.dir('jacocoRunGameTestHtml'))
+    }
+}
+
+tasks.register('runGameTestWithCoverage') {
+    group = 'verification'
+    description = 'Runs runGameTest with JaCoCo agent and generates coverage report'
+    dependsOn 'runGameTest'
+    finalizedBy 'jacocoRunGameTestReport'
+}
+
 
 jar {
     from("LICENSE") {
