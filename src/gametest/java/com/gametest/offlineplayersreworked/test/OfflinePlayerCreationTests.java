@@ -191,8 +191,13 @@ public class OfflinePlayerCreationTests {
                 .thenWaitUntil(() -> DeathTracker.hasReason(playerName))
                 .thenExecute(() -> {
                     ServerPlayer rejoinedPlayer = server.getPlayerList().getPlayerByName(playerName);
+                    String reason = DeathTracker.getReason(playerName);
+                    if(reason == null){
+                        helper.fail("No death reason found for player");
+                        return;
+                    }
 
-                    helper.assertTrue(DeathTracker.getReason(playerName).equals(playerName + " was slain by Zombie"),
+                    helper.assertTrue(reason.equals(playerName + " was slain by Zombie"),
                             "Correct disconnect reason for player rejoin");
                     helper.assertTrue(server.getPlayerList().getPlayerByName("[OFF]" + playerName) == null,
                             "Offline player is not online");

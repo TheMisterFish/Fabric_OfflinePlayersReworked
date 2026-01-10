@@ -29,6 +29,8 @@ repositories {
     }
 }
 
+configurations { jacocoAgent }
+
 dependencies {
     // To change the versions see the gradle.properties file
     minecraft "com.mojang:minecraft:${project.minecraft_version}"
@@ -38,8 +40,8 @@ dependencies {
     // Fabric API. This is technically optional, but you probably want it anyway.
     modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
 
-    // Jacoco test coverage
-    jacocoAgent "org.jacoco:org.jacoco.agent:${jacoco.toolVersion}:runtime"
+    // Junit
+    testImplementation "net.fabricmc:fabric-loader-junit:${project.loader_version}"
 }
 
 processResources {
@@ -66,14 +68,17 @@ java {
 
 test {
     useJUnitPlatform()
+    testLogging {
+        events "started", "passed", "skipped", "failed"
+        exceptionFormat "full"
+        showStandardStreams = true
+    }
     finalizedBy jacocoTestReport
 }
 
 jacoco {
-    toolVersion = "0.8.14"
+    toolVersion = "${project.jacoco_version}"
 }
-
-configurations { jacocoAgent }
 
 def mixinExclude = '**/offlineplayersreworked/mixin/**'
 
@@ -81,7 +86,7 @@ jacocoTestReport {
     reports {
         xml.required = false
         csv.required = false
-        html.outputLocation = layout.buildDirectory.dir('jacocoHtml')
+        html.outputLocation = layout.buildDirectory.dir('reports/jacocoRunUnitTestHtml')
     }
 
     afterEvaluate {
@@ -100,14 +105,19 @@ fabricApi {
 }
 
 def runGameTestExec = file("$buildDir/jacoco/runGameTest.exec")
+def unitTestExec = file("$buildDir/jacoco/test.exec")
 
 tasks.matching { it.name == 'runGameTest' && it instanceof JavaExec }.configureEach {
     doFirst {
-        def agentFile = configurations.jacocoAgent.singleFile
+        // create a detached configuration for the agent and resolve it only now
+        def agentDep = dependencies.create("org.jacoco:org.jacoco.agent:${project.jacoco_version}:runtime@jar")
+        def agentConfig = configurations.detachedConfiguration(agentDep)
+        def agentFile = agentConfig.singleFile
+
         if (!agentFile.exists()) {
-            throw new GradleException("JaCoCo agent not found in configuration 'jacocoAgent'")
+            throw new GradleException("JaCoCo agent not found: ${agentFile}")
         }
-        // append the agent arg; append=false overwrites previous runs
+
         jvmArgs += "-javaagent:${agentFile}=destfile=${runGameTestExec},append=false"
         logger.lifecycle("JaCoCo agent attached to runGameTest -> ${runGameTestExec}")
     }
@@ -130,7 +140,7 @@ tasks.register('jacocoRunGameTestReport', JacocoReport) {
         html.required.set(true)
         xml.required.set(false)
         csv.required.set(false)
-        html.outputLocation.set(layout.buildDirectory.dir('jacocoRunGameTestHtml'))
+        html.outputLocation.set(layout.buildDirectory.dir('reports/jacocoRunGameTestHtml'))
     }
 }
 
@@ -139,6 +149,56 @@ tasks.register('runGameTestWithCoverage') {
     description = 'Runs runGameTest with JaCoCo agent and generates coverage report'
     dependsOn 'runGameTest'
     finalizedBy 'jacocoRunGameTestReport'
+}
+
+tasks.register('jacocoCombinedReport', JacocoReport) {
+    group = 'verification'
+    description = 'Combine JaCoCo exec files from unit tests and gametests and generate a single report.'
+
+    // only include exec files that actually exist to avoid errors
+    def execFiles = files(unitTestExec, runGameTestExec).filter { it.exists() }
+    executionData.setFrom(execFiles)
+
+    def mainOutput = project.sourceSets.main.output
+    classDirectories.setFrom(files(mainOutput.classesDirs.files.collect { dir ->
+        fileTree(dir: dir, exclude: '**/offlineplayersreworked/mixin/**')
+    }))
+    sourceDirectories.setFrom(project.sourceSets.main.allSource.srcDirs)
+
+    reports {
+        html.required.set(true)
+        xml.required.set(false)
+        csv.required.set(false)
+        html.outputLocation.set(layout.buildDirectory.dir('reports/jacocoCombinedHtml'))
+    }
+}
+
+tasks.register('runAllTests') {
+    group = 'verification'
+    description = 'Run unit tests and gametests.'
+    dependsOn 'clean', 'test', 'runGameTest'
+}
+
+tasks.register('runAllTestsWithCoverage') {
+    group = 'verification'
+    description = 'Run unit tests and gametests.'
+    dependsOn 'clean', 'test', 'runGameTestWithCoverage'
+    finalizedBy 'jacocoCombinedReport'
+}
+
+tasks.named('runGameTest') {
+    onlyIf {
+        gradle.startParameter.taskNames.any {
+            it == 'runGameTest' ||
+                    it.endsWith(':runGameTest') ||
+                    it == 'build' ||
+                    it.endsWith(':build') ||
+                    it == 'runAllTestsWithCoverage' ||
+                    it.endsWith(':runAllTestsWithCoverage') ||
+                    it == 'runAllTests' ||
+                    it.endsWith(':runAllTests')
+        }
+    }
 }
 
 
@@ -169,9 +229,7 @@ publishing {
 
     // See https://docs.gradle.org/current/userguide/publishing_maven.html for information on how to set up publishing.
     repositories {
-        // Add repositories to publish to here.
-        // Notice: This block does NOT have the same function as the block in the top level.
-        // The repositories here will be used for publishing your artifact, not for
-        // retrieving dependencies.
+        mavenCentral()
+        maven { url = "https://api.modrinth.com/maven" }
     }
 }
