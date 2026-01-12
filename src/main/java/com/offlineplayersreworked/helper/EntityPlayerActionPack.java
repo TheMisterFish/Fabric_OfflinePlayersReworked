@@ -105,49 +105,11 @@ public class EntityPlayerActionPack {
         return this;
     }
 
-    public EntityPlayerActionPack setForward(float value) {
-        forward = value;
-        return this;
-    }
-
-    public EntityPlayerActionPack setStrafing(float value) {
-        strafing = value;
-        return this;
-    }
-
-    public EntityPlayerActionPack look(Direction direction) {
-        return switch (direction) {
-            case NORTH -> look(180, 0);
-            case SOUTH -> look(0, 0);
-            case EAST -> look(-90, 0);
-            case WEST -> look(90, 0);
-            case UP -> look(player.getYRot(), -90);
-            case DOWN -> look(player.getYRot(), 90);
-        };
-    }
-
-    public EntityPlayerActionPack look(Vec2 rotation) {
-        return look(rotation.x, rotation.y);
-    }
-
     public EntityPlayerActionPack look(float yaw, float pitch) {
         player.setYRot(yaw % 360); //setYaw
         player.setXRot(Mth.clamp(pitch, -90, 90)); // setPitch
         // maybe player.moveTo(player.getX(), player.getY(), player.getZ(), yaw, Mth.clamp(pitch,-90.0F, 90.0F));
         return this;
-    }
-
-    public EntityPlayerActionPack lookAt(Vec3 position) {
-        player.lookAt(EntityAnchorArgument.Anchor.EYES, position);
-        return this;
-    }
-
-    public EntityPlayerActionPack turn(float yaw, float pitch) {
-        return look(player.getYRot() + yaw, player.getXRot() + pitch);
-    }
-
-    public EntityPlayerActionPack turn(Vec2 rotation) {
-        return turn(rotation.x, rotation.y);
     }
 
     public EntityPlayerActionPack stopMovement() {
@@ -163,42 +125,6 @@ public class EntityPlayerActionPack {
         for (ActionType type : actions.keySet()) type.stop(player, actions.get(type));
         actions.clear();
         return stopMovement();
-    }
-
-    public EntityPlayerActionPack mount(boolean onlyRideables) {
-        //test what happens
-        List<Entity> entities;
-        if (onlyRideables) {
-            entities = player.level().getEntities(player, player.getBoundingBox().inflate(3.0D, 1.0D, 3.0D),
-                    e -> e instanceof Minecart || e instanceof Boat || e instanceof AbstractHorse);
-        } else {
-            entities = player.level().getEntities(player, player.getBoundingBox().inflate(3.0D, 1.0D, 3.0D));
-        }
-        if (entities.size() == 0)
-            return this;
-        Entity closest = null;
-        double distance = Double.POSITIVE_INFINITY;
-        Entity currentVehicle = player.getVehicle();
-        for (Entity e : entities) {
-            if (e == player || (currentVehicle == e))
-                continue;
-            double dd = player.distanceToSqr(e);
-            if (dd < distance) {
-                distance = dd;
-                closest = e;
-            }
-        }
-        if (closest == null) return this;
-        if (closest instanceof AbstractHorse && onlyRideables)
-            ((AbstractHorse) closest).mobInteract(player, InteractionHand.MAIN_HAND);
-        else
-            player.startRiding(closest, true);
-        return this;
-    }
-
-    public EntityPlayerActionPack dismount() {
-        player.stopRiding();
-        return this;
     }
 
     public void onUpdate() {
@@ -254,33 +180,6 @@ public class EntityPlayerActionPack {
     static HitResult getTarget(ServerPlayer player) {
         double reach = player.gameMode.isCreative() ? 5 : 4.5f;
         return Tracer.rayTrace(player, 1, reach, false);
-    }
-
-    private void dropItemFromSlot(int slot, boolean dropAll) {
-        Inventory inv = player.getInventory(); // getInventory;
-        if (!inv.getItem(slot).isEmpty())
-            player.drop(inv.removeItem(slot,
-                    dropAll ? inv.getItem(slot).getCount() : 1
-            ), false, true); // scatter, keep owner
-    }
-
-    public void drop(int selectedSlot, boolean dropAll) {
-        Inventory inv = player.getInventory(); // getInventory;
-        if (selectedSlot == -2) // all
-        {
-            for (int i = inv.getContainerSize(); i >= 0; i--)
-                dropItemFromSlot(i, dropAll);
-        } else // one slot
-        {
-            if (selectedSlot == -1)
-                selectedSlot = inv.selected;
-            dropItemFromSlot(selectedSlot, dropAll);
-        }
-    }
-
-    public void setSlot(int slot) {
-        player.getInventory().selected = slot - 1;
-        player.connection.send(new ClientboundSetCarriedItemPacket(slot - 1));
     }
 
     public enum ActionType {
@@ -457,9 +356,13 @@ public class EntityPlayerActionPack {
                 ItemStack offHandItemStack = player.getOffhandItem();
 
                 if (canConsumeItem(player, mainHandItemStack)) {
-                    player.startUsingItem(InteractionHand.MAIN_HAND);
+                    if (!player.isUsingItem()) {
+                        player.startUsingItem(InteractionHand.MAIN_HAND);
+                    }
                 } else if (canConsumeItem(player, offHandItemStack)) {
-                    player.startUsingItem(InteractionHand.OFF_HAND);
+                    if (!player.isUsingItem()) {
+                        player.startUsingItem(InteractionHand.OFF_HAND);
+                    }
                 }
 
                 player.resetLastActionTime();

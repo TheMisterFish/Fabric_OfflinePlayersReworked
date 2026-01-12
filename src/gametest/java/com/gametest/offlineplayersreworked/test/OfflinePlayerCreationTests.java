@@ -4,7 +4,6 @@ import com.gametest.offlineplayersreworked.TestPlayerBuilder;
 import com.gametest.offlineplayersreworked.Utils;
 import com.gametest.offlineplayersreworked.tracker.DeathTracker;
 import com.gametest.offlineplayersreworked.tracker.DisconnectTracker;
-import net.fabricmc.fabric.api.entity.FakePlayer;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.Registries;
@@ -39,7 +38,7 @@ public class OfflinePlayerCreationTests {
                 .generateRandomInventory()
                 .randomArmorAndWeapons();
 
-        FakePlayer testPlayer = testPlayerBuilder.place(server);
+        ServerPlayer testPlayer = testPlayerBuilder.placeFakePlayer(server);
 
         CommandSourceStack source = testPlayer.createCommandSourceStack()
                 .withLevel(level)
@@ -60,7 +59,7 @@ public class OfflinePlayerCreationTests {
                     helper.assertTrue(offlinePlayer.getDisplayName().getString().equals("[OFF]" + playerName),
                             "OfflinePlayer name is correct");
 
-                    testPlayerBuilder.place(server);
+                    testPlayerBuilder.placeFakePlayer(server);
                 })
                 .thenExecuteAfter(5, () -> {
                     ServerPlayer rejoinedPlayer = server.getPlayerList().getPlayerByName(playerName);
@@ -91,7 +90,7 @@ public class OfflinePlayerCreationTests {
                 .generateRandomInventory()
                 .randomArmorAndWeapons();
 
-        FakePlayer testPlayer = testPlayerBuilder.place(server);
+        ServerPlayer testPlayer = testPlayerBuilder.placeFakePlayer(server);
 
         CommandSourceStack source = testPlayer.createCommandSourceStack()
                 .withLevel(level)
@@ -112,9 +111,9 @@ public class OfflinePlayerCreationTests {
                     helper.assertTrue(offlinePlayer.getDisplayName().getString().equals("[OFF]" + playerName),
                             "OfflinePlayer name is correct");
 
-                    Inventory newInventory = new TestPlayerBuilder().generateRandomInventory().build(server).getInventory();
+                    Inventory newInventory = new TestPlayerBuilder().generateRandomInventory().buildFakePlayer(server).getInventory();
                     Utils.assignInventory(offlinePlayer, newInventory);
-                    testPlayerBuilder.place(server);
+                    testPlayerBuilder.placeFakePlayer(server);
                 })
                 .thenExecuteAfter(5, () -> {
                     ServerPlayer rejoinedPlayer = server.getPlayerList().getPlayerByName(playerName);
@@ -145,7 +144,7 @@ public class OfflinePlayerCreationTests {
                 .setGamemode(GameType.SURVIVAL);
 
         server.getWorldData().setGameType(GameType.SURVIVAL);
-        FakePlayer testPlayer = testPlayerBuilder.place(server);
+        ServerPlayer testPlayer = testPlayerBuilder.placeFakePlayer(server);
 
         CommandSourceStack source = testPlayer.createCommandSourceStack()
                 .withLevel(level)
@@ -185,7 +184,7 @@ public class OfflinePlayerCreationTests {
                 .thenExecute(() -> zombie.remove(Entity.RemovalReason.DISCARDED))
                 .thenIdle(5)
                 .thenExecute(() -> {
-                    testPlayerBuilder.place(server);
+                    testPlayerBuilder.placeFakePlayer(server);
                 })
                 .thenIdle(5)
                 .thenWaitUntil(() -> DeathTracker.hasReason(playerName))
