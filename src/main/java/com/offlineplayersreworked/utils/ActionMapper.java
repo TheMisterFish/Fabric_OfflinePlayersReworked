@@ -39,9 +39,7 @@ public class ActionMapper {
             ModConfigs.AVAILABLE_OPTIONS.stream()
                     .filter(option -> option.equals(action) && getActionType(option) != null)
                     .findAny()
-                    .orElseThrow(() -> {
-                        throw new UnavailableActionException("Invalid action: " + action + " Is not a valid action.");
-                    });
+                    .orElseThrow(() -> new UnavailableActionException("Invalid action: " + action + " Is not a valid action."));
 
             int interval = Objects.equals(action, "break") ? 0 : 20; // by default break should be continuously
 

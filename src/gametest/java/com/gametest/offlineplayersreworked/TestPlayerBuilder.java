@@ -1,6 +1,7 @@
 package com.gametest.offlineplayersreworked;
 
 import com.mojang.authlib.GameProfile;
+import com.offlineplayersreworked.patch.OfflinePlayer;
 import io.netty.channel.embedded.EmbeddedChannel;
 import net.fabricmc.fabric.api.entity.FakePlayer;
 import net.minecraft.core.Holder;
@@ -10,6 +11,7 @@ import net.minecraft.network.protocol.PacketFlow;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ClientInformation;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.CommonListenerCookie;
 import net.minecraft.server.network.ServerGamePacketListenerImpl;
 import net.minecraft.util.RandomSource;
@@ -35,7 +37,7 @@ public class TestPlayerBuilder {
     public TestClientConnection connection = new TestClientConnection(PacketFlow.SERVERBOUND);
     public CommonListenerCookie cookie = new CommonListenerCookie(gameProfile, 0, ClientInformation.createDefault(), false);
     public ResourceKey<Level> dimension = OVERWORLD;
-    public List<Consumer<FakePlayer>> inventoryOps = new ArrayList<>();
+    public List<Consumer<ServerPlayer>> inventoryOps = new ArrayList<>();
     public int randomItemCount = 10; // default amount
     public List<MobEffectInstance> effects = new ArrayList<>();
     public Map<Integer, Map<Holder<Enchantment>, Integer>> enchantments = new HashMap<>();
@@ -83,7 +85,7 @@ public class TestPlayerBuilder {
         return this;
     }
 
-    public TestPlayerBuilder setInventoryOps(List<Consumer<FakePlayer>> inventoryOps) {
+    public TestPlayerBuilder setInventoryOps(List<Consumer<ServerPlayer>> inventoryOps) {
         this.inventoryOps = inventoryOps;
         return this;
     }
@@ -217,7 +219,7 @@ public class TestPlayerBuilder {
         return this;
     }
 
-    public FakePlayer build(MinecraftServer server) {
+    public FakePlayer buildFakePlayer(MinecraftServer server) {
         FakePlayer fake = FakePlayer.get(Objects.requireNonNull(server.getLevel(dimension)), gameProfile);
         fake.connection = new ServerGamePacketListenerImpl(server, connection, fake, cookie);
         applyInventory(fake);
@@ -231,25 +233,45 @@ public class TestPlayerBuilder {
         return fake;
     }
 
-    public FakePlayer place(MinecraftServer server) {
-        FakePlayer fake = this.build(server);
-
+    public FakePlayer placeFakePlayer(MinecraftServer server) {
+        FakePlayer fake = this.buildFakePlayer(server);
         server.getPlayerList().placeNewPlayer(connection, fake, cookie);
 
         return fake;
     }
 
-    private void applyInventory(FakePlayer fake) {
+    public OfflinePlayer buildOfflinePlayer(MinecraftServer server) {
+        OfflinePlayer fake = new OfflinePlayer(server, server.getLevel(dimension), gameProfile, ClientInformation.createDefault());
+        fake.connection = new ServerGamePacketListenerImpl(server, connection, fake, cookie);
+        applyInventory(fake);
+        applyEffects(fake);
+        applyEnchantments(fake);
+
+        fake.setHealth(health);
+        fake.getFoodData().setFoodLevel(food);
+        fake.setGameMode(gamemode);
+
+        return fake;
+    }
+
+    public OfflinePlayer placeOfflinePlayer(MinecraftServer server) {
+        OfflinePlayer fake = this.buildOfflinePlayer(server);
+        server.getPlayerList().placeNewPlayer(connection, fake, cookie);
+
+        return fake;
+    }
+
+    private void applyInventory(ServerPlayer fake) {
         for (var op : inventoryOps) op.accept(fake);
     }
 
-    private void applyEffects(FakePlayer fake) {
+    private void applyEffects(ServerPlayer fake) {
         for (MobEffectInstance effect : effects) {
             fake.addEffect(effect);
         }
     }
 
-    private void applyEnchantments(FakePlayer fake) {
+    private void applyEnchantments(ServerPlayer fake) {
         Inventory inv = fake.getInventory();
 
         for (var entry : enchantments.entrySet()) {

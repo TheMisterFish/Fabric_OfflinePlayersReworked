@@ -49,7 +49,7 @@ public class OfflinePlayersStorage extends SavedData {
     }
 
     @Override
-    public CompoundTag save(@NotNull CompoundTag compoundTag, HolderLookup.@NotNull Provider provider) {
+    public @NotNull CompoundTag save(@NotNull CompoundTag compoundTag, HolderLookup.@NotNull Provider provider) {
         ListTag playerList = new ListTag();
         for (OfflinePlayerModel player : offlinePlayers) {
             playerList.add(player.toTag());

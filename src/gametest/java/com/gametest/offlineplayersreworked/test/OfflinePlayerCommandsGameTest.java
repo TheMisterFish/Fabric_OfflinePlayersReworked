@@ -19,7 +19,7 @@ public class OfflinePlayerCommandsGameTest {
     public static void registerAndExampleSendsMessage(GameTestHelper helper) throws CommandSyntaxException {
         MinecraftServer server = helper.getLevel().getServer();
         OfflinePlayerCommands.register(server.getCommands().getDispatcher());
-        ServerPlayer testPlayer = new TestPlayerBuilder().build(server);
+        ServerPlayer testPlayer = new TestPlayerBuilder().buildFakePlayer(server);
 
         CommandSourceStack source = testPlayer.createCommandSourceStack();
 
@@ -40,7 +40,7 @@ public class OfflinePlayerCommandsGameTest {
         ServerLevel level = helper.getLevel();
         MinecraftServer server = level.getServer();
 
-        ServerPlayer testPlayer = new TestPlayerBuilder().build(server);
+        ServerPlayer testPlayer = new TestPlayerBuilder().buildFakePlayer(server);
 
         boolean prevOpRequired = ModConfigs.OP_REQUIRED;
         ModConfigs.OP_REQUIRED = false;
@@ -73,7 +73,7 @@ public class OfflinePlayerCommandsGameTest {
         ServerLevel level = helper.getLevel();
         MinecraftServer server = level.getServer();
 
-        ServerPlayer testPlayer = new TestPlayerBuilder().build(server);
+        ServerPlayer testPlayer = new TestPlayerBuilder().buildFakePlayer(server);
 
         boolean prevOpRequired = ModConfigs.OP_REQUIRED;
         ModConfigs.OP_REQUIRED = true;
