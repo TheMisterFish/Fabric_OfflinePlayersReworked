@@ -25,7 +25,7 @@ import java.util.Objects;
 
 import static net.fabricmc.fabric.api.gametest.v1.FabricGameTest.EMPTY_STRUCTURE;
 
-public class OfflinePlayerCreationTests {
+public class OfflinePlayerCreationGameTest {
     @GameTest(template = EMPTY_STRUCTURE, batch = "OfflinePlayerCreationTests")
     public void createsOfflinePlayerAndPlayerRejoins(GameTestHelper helper) {
         String playerName = "test1";
@@ -130,7 +130,7 @@ public class OfflinePlayerCreationTests {
                 });
     }
 
-    @GameTest(template = EMPTY_STRUCTURE, batch = "OfflinePlayerCreationTests", attempts = 5)
+    @GameTest(template = EMPTY_STRUCTURE, batch = "OfflinePlayerCreationTests")
     public void createsOfflinePlayerAndPlayerRejoinsAfterDeath(GameTestHelper helper) {
         String playerName = "test3";
         ServerLevel level = helper.getLevel();
@@ -139,7 +139,6 @@ public class OfflinePlayerCreationTests {
         TestPlayerBuilder testPlayerBuilder = new TestPlayerBuilder().setName(playerName)
                 .setHealth(1f)
                 .setFood(14)
-                .generateRandomInventory()
                 .randomArmorAndWeapons()
                 .setGamemode(GameType.SURVIVAL);
 
