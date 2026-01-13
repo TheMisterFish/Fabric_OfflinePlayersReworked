@@ -198,9 +198,6 @@ public class OfflinePlayer extends ServerPlayer {
             offlinePlayer.fixStartingPosition.run();
 
             LOGGER.info("Respawned offline player: {}", offlinePlayer.getGameProfile().getName());
-
-        } else {
-            LOGGER.error("Could not respawn offline player with UUID '{}'", offlinePlayerUUID);
         }
 
         return offlinePlayer;

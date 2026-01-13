@@ -7,6 +7,7 @@ import com.gametest.offlineplayersreworked.tracker.DisconnectTracker;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.gametest.framework.AfterBatch;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.server.MinecraftServer;
@@ -26,7 +27,13 @@ import java.util.Objects;
 import static net.fabricmc.fabric.api.gametest.v1.FabricGameTest.EMPTY_STRUCTURE;
 
 public class OfflinePlayerCreationGameTest {
-    @GameTest(template = EMPTY_STRUCTURE, batch = "OfflinePlayerCreationTests")
+
+    @AfterBatch(batch = "OfflinePlayerCreationGameTest")
+    public static void deletePlayerData(ServerLevel serverLevel){
+        Utils.clearOfflinePlayerStorage(serverLevel);
+    }
+
+    @GameTest(template = EMPTY_STRUCTURE, batch = "OfflinePlayerCreationGameTest")
     public void createsOfflinePlayerAndPlayerRejoins(GameTestHelper helper) {
         String playerName = "test1";
         ServerLevel level = helper.getLevel();
@@ -78,7 +85,7 @@ public class OfflinePlayerCreationGameTest {
                 });
     }
 
-    @GameTest(template = EMPTY_STRUCTURE, batch = "OfflinePlayerCreationTests")
+    @GameTest(template = EMPTY_STRUCTURE, batch = "OfflinePlayerCreationGameTest")
     public void createsOfflinePlayerAndPlayerRejoinsNewInventory(GameTestHelper helper) {
         String playerName = "test2";
         ServerLevel level = helper.getLevel();
@@ -112,7 +119,7 @@ public class OfflinePlayerCreationGameTest {
                             "OfflinePlayer name is correct");
 
                     Inventory newInventory = new TestPlayerBuilder().generateRandomInventory().buildFakePlayer(server).getInventory();
-                    Utils.assignInventory(offlinePlayer, newInventory);
+                    Utils.cloneInventory(offlinePlayer, newInventory);
                     testPlayerBuilder.placeFakePlayer(server);
                 })
                 .thenExecuteAfter(5, () -> {
@@ -130,7 +137,7 @@ public class OfflinePlayerCreationGameTest {
                 });
     }
 
-    @GameTest(template = EMPTY_STRUCTURE, batch = "OfflinePlayerCreationTests")
+    @GameTest(template = EMPTY_STRUCTURE, batch = "OfflinePlayerCreationGameTest", attempts = 5)
     public void createsOfflinePlayerAndPlayerRejoinsAfterDeath(GameTestHelper helper) {
         String playerName = "test3";
         ServerLevel level = helper.getLevel();
@@ -190,7 +197,7 @@ public class OfflinePlayerCreationGameTest {
                 .thenExecute(() -> {
                     ServerPlayer rejoinedPlayer = server.getPlayerList().getPlayerByName(playerName);
                     String reason = DeathTracker.getReason(playerName);
-                    if(reason == null){
+                    if (reason == null) {
                         helper.fail("No death reason found for player");
                         return;
                     }

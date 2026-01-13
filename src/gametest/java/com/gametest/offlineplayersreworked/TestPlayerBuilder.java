@@ -43,6 +43,7 @@ public class TestPlayerBuilder {
     public Map<Integer, Map<Holder<Enchantment>, Integer>> enchantments = new HashMap<>();
     public Float health = 20.0f;
     public Integer food = 20;
+    public Integer experience = 0;
     public GameType gamemode = GameType.SURVIVAL;
 
     public TestPlayerBuilder setUuid(UUID uuid) {
@@ -214,6 +215,11 @@ public class TestPlayerBuilder {
         return this;
     }
 
+    public TestPlayerBuilder setExperience(Integer experience) {
+        this.experience = experience;
+        return this;
+    }
+
     public TestPlayerBuilder setGamemode(GameType gamemode) {
         this.gamemode = gamemode;
         return this;
@@ -228,6 +234,7 @@ public class TestPlayerBuilder {
 
         fake.setHealth(health);
         fake.getFoodData().setFoodLevel(food);
+        fake.setExperienceLevels(experience);
         fake.setGameMode(gamemode);
 
         return fake;
@@ -249,6 +256,7 @@ public class TestPlayerBuilder {
 
         fake.setHealth(health);
         fake.getFoodData().setFoodLevel(food);
+        fake.setExperienceLevels(experience);
         fake.setGameMode(gamemode);
 
         return fake;
