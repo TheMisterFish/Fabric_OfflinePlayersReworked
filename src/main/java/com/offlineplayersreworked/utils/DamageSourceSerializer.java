@@ -51,8 +51,6 @@ public class DamageSourceSerializer {
             tag.put("directEntity", directEntityTag);
         }
 
-        LOGGER.info(tag.toString());
-
         return tag.toString();
     }
 

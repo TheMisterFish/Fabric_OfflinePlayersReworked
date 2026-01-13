@@ -1,10 +1,12 @@
 package com.gametest.offlineplayersreworked.test;
 
 import com.gametest.offlineplayersreworked.TestPlayerBuilder;
+import com.gametest.offlineplayersreworked.Utils;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.offlineplayersreworked.command.OfflinePlayerCommands;
 import com.offlineplayersreworked.offline_config.ModConfigs;
 import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.gametest.framework.AfterBatch;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.server.MinecraftServer;
@@ -14,6 +16,11 @@ import net.minecraft.server.level.ServerPlayer;
 import static net.fabricmc.fabric.api.gametest.v1.FabricGameTest.EMPTY_STRUCTURE;
 
 public class OfflinePlayerCommandsGameTest {
+
+    @AfterBatch(batch = "OfflinePlayerCommandsGameTest")
+    public static void deletePlayerData(ServerLevel serverLevel){
+        Utils.clearOfflinePlayerStorage(serverLevel);
+    }
 
     @GameTest(template = EMPTY_STRUCTURE, batch = "OfflinePlayerCommandsGameTest")
     public static void registerAndExampleSendsMessage(GameTestHelper helper) throws CommandSyntaxException {

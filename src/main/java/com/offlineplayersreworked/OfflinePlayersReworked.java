@@ -14,6 +14,7 @@ import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import org.jetbrains.annotations.TestOnly;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -101,5 +102,10 @@ public class OfflinePlayersReworked implements DedicatedServerModInitializer {
 
     public static void manipulate(ServerPlayer player, Consumer<EntityPlayerActionPack> action) {
         action.accept(((ServerPlayerInterface) player).getActionPack());
+    }
+
+    @TestOnly
+    public void respawnActiveOfflinePlayersForTest(){
+        respawnActiveOfflinePlayers();
     }
 }

@@ -1,12 +1,15 @@
 package com.gametest.offlineplayersreworked.test;
 
 import com.gametest.offlineplayersreworked.TestPlayerBuilder;
+import com.gametest.offlineplayersreworked.Utils;
 import com.gametest.offlineplayersreworked.tracker.DisconnectTracker;
 import com.offlineplayersreworked.helper.EntityPlayerActionPack;
 import com.offlineplayersreworked.helper.EntityPlayerActionPack.Action;
 import com.offlineplayersreworked.helper.EntityPlayerActionPack.ActionType;
 import com.offlineplayersreworked.interfaces.ServerPlayerInterface;
+import net.minecraft.commands.arguments.EntityAnchorArgument;
 import net.minecraft.core.BlockPos;
+import net.minecraft.gametest.framework.AfterBatch;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.server.MinecraftServer;
@@ -21,7 +24,10 @@ import net.minecraft.world.entity.monster.Zombie;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.GameType;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.ComposterBlock;
+import net.minecraft.world.level.block.LeverBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 
@@ -31,6 +37,11 @@ import static net.fabricmc.fabric.api.gametest.v1.FabricGameTest.EMPTY_STRUCTURE
 
 public class EntityPlayerActionPackGameTest {
     private static final Vec3 CENTER = new Vec3(16, 0, 16);
+
+    @AfterBatch(batch = "EntityPlayerActionPackGameTest")
+    public static void deletePlayerData(ServerLevel serverLevel){
+        Utils.clearOfflinePlayerStorage(serverLevel);
+    }
 
     @GameTest(template = EMPTY_STRUCTURE, batch = "EntityPlayerActionPackGameTest")
     public static void sneakingAndSprintingAreExclusive(GameTestHelper helper) {
@@ -317,11 +328,9 @@ public class EntityPlayerActionPackGameTest {
                 .setName("BlockTestCreative")
                 .placeOfflinePlayer(server);
         testPlayer.setGameMode(GameType.CREATIVE);
-        testPlayer.moveTo(helper.absoluteVec(CENTER), 0.0f, 0.0f);
 
         BlockPos targetPos = helper.absolutePos(new BlockPos(16, 1, 18));
-        BlockState stone = Blocks.STONE.defaultBlockState();
-        level.setBlock(targetPos, stone, 3);
+        createBlockScenario(helper, targetPos, testPlayer, Blocks.STONE);
 
         helper.assertTrue(!level.getBlockState(targetPos).isAir(), "Block should be present before ATTACK");
 
@@ -329,7 +338,8 @@ public class EntityPlayerActionPackGameTest {
         ap.start(ActionType.ATTACK, Action.continuous());
 
         helper.startSequence()
-                .thenExecuteFor(5, testPlayer::tick).thenExecute(() -> {
+                .thenExecuteFor(5, testPlayer::tick)
+                .thenExecute(() -> {
                     helper.assertTrue(level.getBlockState(targetPos).isAir(), "Block should be broken by ATTACK action in creative mode");
 
                     testPlayer.disconnect();
@@ -347,11 +357,9 @@ public class EntityPlayerActionPackGameTest {
                 .placeOfflinePlayer(server);
         testPlayer.getInventory().selected = 0;
         testPlayer.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(Items.DIAMOND_PICKAXE));
-        testPlayer.moveTo(helper.absoluteVec(CENTER), 0.0f, 0.0f);
 
         BlockPos targetPos = helper.absolutePos(new BlockPos(16, 1, 18));
-        BlockState stone = Blocks.STONE.defaultBlockState();
-        level.setBlock(targetPos, stone, 3);
+        createBlockScenario(helper, targetPos, testPlayer, Blocks.STONE);
 
         helper.assertTrue(!level.getBlockState(targetPos).isAir(), "Block should be present before ATTACK");
 
@@ -359,11 +367,113 @@ public class EntityPlayerActionPackGameTest {
         ap.start(ActionType.ATTACK, Action.continuous());
 
         helper.startSequence()
-                .thenExecuteFor(80, testPlayer::tick).thenExecute(() -> {
+                .thenExecuteFor(80, testPlayer::tick)
+                .thenExecute(() -> {
                     helper.assertTrue(level.getBlockState(targetPos).isAir(), "Block should be broken by ATTACK action in survival mode");
 
                     testPlayer.disconnect();
                     helper.succeed();
                 });
+    }
+
+    @GameTest(template = EMPTY_STRUCTURE, batch = "EntityPlayerActionPackGameTest")
+    public static void useDifferentObjects(GameTestHelper helper) {
+        ServerLevel level = helper.getLevel();
+        MinecraftServer server = level.getServer();
+
+        ServerPlayer testPlayer = new TestPlayerBuilder()
+                .setName("UseTest")
+                .placeOfflinePlayer(server);
+        testPlayer.getInventory().selected = 0;
+
+        BlockPos targetPos = helper.absolutePos(new BlockPos(16, 0, 18));
+
+        EntityPlayerActionPack ap = ((ServerPlayerInterface) testPlayer).getActionPack();
+        ap.start(ActionType.USE, Action.interval(4));
+
+        helper.startSequence()
+                .thenExecute(() -> createBlockScenario(helper, targetPos, testPlayer, Blocks.LEVER))
+                .thenExecuteFor(4, testPlayer::tick)
+                .thenExecute(() -> {
+                    BlockState state = level.getBlockState(targetPos);
+                    if (state.getBlock() instanceof LeverBlock) {
+                        helper.assertTrue(state.getValue(LeverBlock.POWERED), "Lever should be triggered");
+                    } else {
+                        helper.fail("Lever not found");
+                    }
+
+                    level.removeBlock(targetPos, false);
+                    helper.assertTrue(level.getBlockState(targetPos).isAir(), "Lever should be removed");
+                })
+                .thenExecute(() -> createVehicleScenario(helper, testPlayer, EntityType.BOAT))
+                .thenExecuteFor(4, testPlayer::tick)
+                .thenExecute(() -> assertVehicleScenario(helper, testPlayer, EntityType.BOAT))
+                .thenExecute(() -> createVehicleScenario(helper, testPlayer, EntityType.MINECART))
+                .thenExecuteFor(4, testPlayer::tick)
+                .thenExecute(() -> assertVehicleScenario(helper, testPlayer, EntityType.MINECART))
+                .thenExecute(() -> createBlockScenario(helper, targetPos, testPlayer, Blocks.COMPOSTER))
+                .thenExecute(() -> testPlayer.getInventory().setItem(0, new ItemStack(Items.WHEAT_SEEDS, 1)))
+                .thenExecuteFor(4, testPlayer::tick)
+                .thenExecute(() -> {
+                    BlockState state = level.getBlockState(targetPos);
+                    if (state.getBlock() instanceof ComposterBlock) {
+                        helper.assertTrue(state.getValue(ComposterBlock.LEVEL) >= 1, "Composter should be filled");
+                    } else {
+                        helper.fail("Composter not found");
+                    }
+                    helper.assertTrue(testPlayer.getInventory().countItem(Items.WHEAT_SEEDS) == 0, "Wheat seeds should be used");
+
+                    level.removeBlock(targetPos, false);
+                    helper.assertTrue(level.getBlockState(targetPos).isAir(), "Composter should be removed");
+                })
+                .thenExecute(() -> {
+                    testPlayer.getInventory().setItem(0, new ItemStack(Items.STONE, 1));
+
+                    BlockPos placeTargetPos = helper.absolutePos(new BlockPos(16, 0, 18));
+                    testPlayer.moveTo(helper.absoluteVec(CENTER), 0, 0);
+                    testPlayer.lookAt(EntityAnchorArgument.Anchor.EYES, placeTargetPos.getBottomCenter());
+
+                    helper.assertTrue(level.getBlockState(targetPos).isAir(), "Stone should not have been placed yet");
+                })
+                .thenExecuteFor(20, testPlayer::tick)
+                .thenExecute(() -> {
+                    helper.assertTrue(testPlayer.getInventory().countItem(Items.STONE) == 0, "Stone block should be used");
+                    helper.assertTrue(level.getBlockState(targetPos).is(Blocks.STONE), "Stone should have been placed");
+
+                    level.removeBlock(targetPos, false);
+                    helper.assertTrue(level.getBlockState(targetPos).isAir(), "Stone should be removed");
+                })
+                .thenSucceed();
+
+    }
+
+    private static void createBlockScenario(GameTestHelper helper, BlockPos targetPos, ServerPlayer testPlayer, Block block) {
+        ServerLevel level = helper.getLevel();
+        BlockState blockstate = block.defaultBlockState();
+
+        level.setBlock(targetPos, blockstate, 3);
+        helper.assertTrue(!level.getBlockState(targetPos).isAir(), "Block should be present before USE");
+        helper.assertTrue(level.getBlockState(targetPos).getBlock().equals(block), "block before USE should be " + block.getDescriptionId());
+
+        testPlayer.moveTo(helper.absoluteVec(CENTER), 0, 0);
+        testPlayer.lookAt(EntityAnchorArgument.Anchor.EYES, targetPos.getCenter());
+    }
+
+    private static void createVehicleScenario(GameTestHelper helper, ServerPlayer testPlayer, EntityType<?> entityType) {
+        ServerLevel level = helper.getLevel();
+        Entity target = entityType.create(level);
+        assert target != null;
+        level.addFreshEntity(target);
+        target.moveTo(helper.absoluteVec(CENTER).add(0, 0, 2));
+
+        testPlayer.moveTo(helper.absoluteVec(CENTER), 0, 0);
+        testPlayer.lookAt(EntityAnchorArgument.Anchor.EYES, target.position());
+    }
+
+    private static void assertVehicleScenario(GameTestHelper helper, ServerPlayer testPlayer, EntityType<?> entityType) {
+        helper.assertTrue(testPlayer.getVehicle() != null, "TestPlayer should be in a vehicle (" + entityType.getDescriptionId() + ")");
+        helper.assertTrue(testPlayer.getVehicle().getType().equals(entityType), "Vehicle should be of type " + entityType.getDescriptionId());
+
+        testPlayer.getVehicle().discard();
     }
 }

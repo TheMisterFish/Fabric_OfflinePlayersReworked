@@ -5,13 +5,11 @@ import com.offlineplayersreworked.patch.OfflinePlayer;
 import com.offlineplayersreworked.utils.ActionMapper;
 import com.offlineplayersreworked.utils.Tracer;
 import it.unimi.dsi.fastutil.Pair;
-import net.minecraft.commands.arguments.EntityAnchorArgument;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.DisconnectionDetails;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.protocol.game.ClientboundSetCarriedItemPacket;
 import net.minecraft.network.protocol.game.ServerboundPlayerActionPacket;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -21,11 +19,7 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.MoverType;
-import net.minecraft.world.entity.animal.horse.AbstractHorse;
 import net.minecraft.world.entity.decoration.ItemFrame;
-import net.minecraft.world.entity.player.Inventory;
-import net.minecraft.world.entity.vehicle.Boat;
-import net.minecraft.world.entity.vehicle.Minecart;
 import net.minecraft.world.food.FoodProperties;
 import net.minecraft.world.item.HoneyBottleItem;
 import net.minecraft.world.item.Item;
@@ -38,12 +32,11 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
-import net.minecraft.world.phys.Vec2;
 import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.EnumMap;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 public class EntityPlayerActionPack {
@@ -555,5 +548,10 @@ public class EntityPlayerActionPack {
         actionInterval.isBreakAction = actionString.equalsIgnoreCase("break");
 
         return Pair.of(actionType, actionInterval);
+    }
+
+    @TestOnly
+    public Map<ActionType, Action> getActions(){
+        return actions;
     }
 }

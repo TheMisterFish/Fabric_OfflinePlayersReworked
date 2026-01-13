@@ -1,5 +1,8 @@
 package com.gametest.offlineplayersreworked;
 
+import com.offlineplayersreworked.storage.OfflinePlayersStorage;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.player.Inventory;
@@ -17,6 +20,10 @@ public class Utils {
 
         if (a.getFoodData().getFoodLevel() != b.getFoodData().getFoodLevel()) {
             result.add("Food differs: " + a.getFoodData().getFoodLevel() + " vs " + b.getFoodData().getFoodLevel());
+        }
+
+        if (a.experienceLevel != b.experienceLevel) {
+            result.add("Experience differs: " + a.experienceLevel + " vs " + b.experienceLevel);
         }
 
         if (a.gameMode.getGameModeForPlayer() != b.gameMode.getGameModeForPlayer()) {
@@ -94,7 +101,7 @@ public class Utils {
         }
     }
 
-    public static void assignInventory(ServerPlayer target, Inventory source) {
+    public static void cloneInventory(ServerPlayer target, Inventory source) {
         Inventory tgt = target.getInventory();
 
         tgt.clearContent();
@@ -115,6 +122,14 @@ public class Utils {
         tgt.offhand.set(0, off.isEmpty() ? ItemStack.EMPTY : off.copy());
 
         tgt.selected = Math.max(0, Math.min(source.selected, tgt.getContainerSize() - 1));
+    }
+
+    public static void clearOfflinePlayerStorage(ServerLevel serverLevel) {
+        MinecraftServer server = serverLevel.getServer();
+        OfflinePlayersStorage storage = OfflinePlayersStorage.getStorage(server);
+        storage.findAll().forEach(offlinePlayerModel -> {
+            storage.remove(offlinePlayerModel.getId());
+        });
     }
 
 }

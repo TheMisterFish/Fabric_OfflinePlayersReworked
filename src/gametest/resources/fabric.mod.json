@@ -8,7 +8,10 @@
     "fabric-gametest": [
       "com.gametest.offlineplayersreworked.test.OfflinePlayerCreationGameTest",
       "com.gametest.offlineplayersreworked.test.OfflinePlayerCommandsGameTest",
-      "com.gametest.offlineplayersreworked.test.EntityPlayerActionPackGameTest"
+      "com.gametest.offlineplayersreworked.test.EntityPlayerActionPackGameTest",
+      "com.gametest.offlineplayersreworked.test.DamageSourceSerializerGameTest",
+      "com.gametest.offlineplayersreworked.test.ServerPlayerMapperGameTest",
+      "com.gametest.offlineplayersreworked.test.RespawnOfflinePlayersGameTest"
     ]
   },
   "mixins": [
