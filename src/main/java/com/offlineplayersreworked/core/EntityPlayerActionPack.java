@@ -1,7 +1,6 @@
-package com.offlineplayersreworked.helper;
+package com.offlineplayersreworked.core;
 
-import com.offlineplayersreworked.interfaces.ServerPlayerInterface;
-import com.offlineplayersreworked.patch.OfflinePlayer;
+import com.offlineplayersreworked.core.interfaces.ServerPlayerInterface;
 import com.offlineplayersreworked.utils.ActionMapper;
 import com.offlineplayersreworked.utils.Tracer;
 import it.unimi.dsi.fastutil.Pair;

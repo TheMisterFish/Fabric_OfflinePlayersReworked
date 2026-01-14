@@ -1,4 +1,4 @@
-package com.offlineplayersreworked.offline_config;
+package com.offlineplayersreworked.config;
 
 import com.mojang.datafixers.util.Pair;
 

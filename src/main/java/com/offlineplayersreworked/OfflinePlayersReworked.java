@@ -1,10 +1,11 @@
 package com.offlineplayersreworked;
 
 import com.offlineplayersreworked.command.OfflinePlayerCommands;
-import com.offlineplayersreworked.offline_config.ModConfigs;
-import com.offlineplayersreworked.helper.EntityPlayerActionPack;
-import com.offlineplayersreworked.interfaces.ServerPlayerInterface;
-import com.offlineplayersreworked.patch.OfflinePlayer;
+import com.offlineplayersreworked.config.ModConfigs;
+import com.offlineplayersreworked.core.EntityPlayerActionPack;
+import com.offlineplayersreworked.core.OfflinePlayerBuilder;
+import com.offlineplayersreworked.core.interfaces.ServerPlayerInterface;
+import com.offlineplayersreworked.core.OfflinePlayer;
 import com.offlineplayersreworked.storage.OfflinePlayersStorage;
 import net.fabricmc.api.DedicatedServerModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
@@ -84,11 +85,13 @@ public class OfflinePlayersReworked implements DedicatedServerModInitializer {
     private static void respawnActiveOfflinePlayers() {
         storage.findAll().stream()
                 .filter(offlinePlayerModel -> !offlinePlayerModel.isDied())
-                .filter(offlinePlayerModel -> ModConfigs.RESPAWN_KICKED_PLAYERS || !offlinePlayerModel.isKicked())
+                .filter(offlinePlayerModel -> ModConfigs.RESPAWN_KICKED_PLAYERS || !offlinePlayerModel.isKicked() )
+                .filter(offlinePlayerModel -> getServer().getPlayerList().getPlayer(offlinePlayerModel.getId()) == null)
                 .toList()
                 .forEach(
                         offlinePlayerModel -> {
-                            var offlinePlayer = OfflinePlayer.respawnOfflinePlayer(getServer(), offlinePlayerModel.getId(), offlinePlayerModel.getPlayer());
+                            OfflinePlayer offlinePlayer = OfflinePlayer.respawnOfflinePlayer(getServer(), offlinePlayerModel.getId(), offlinePlayerModel.getPlayer());
+
                             if (offlinePlayer != null) {
                                 var actionList = getActionPackList(offlinePlayerModel.getActions());
                                 actionList.forEach(actionTypeActionPair -> manipulate(offlinePlayer, ap -> ap.start(

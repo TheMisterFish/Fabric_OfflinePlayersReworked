@@ -1,7 +1,7 @@
 package com.offlineplayersreworked.mixin;
 
 import com.offlineplayersreworked.OfflinePlayersReworked;
-import com.offlineplayersreworked.patch.OfflinePlayer;
+import com.offlineplayersreworked.core.OfflinePlayer;
 import net.minecraft.network.protocol.status.ServerStatus;
 import net.minecraft.server.level.ServerPlayer;
 import org.spongepowered.asm.mixin.Mixin;

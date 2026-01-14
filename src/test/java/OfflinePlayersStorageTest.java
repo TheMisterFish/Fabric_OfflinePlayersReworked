@@ -75,7 +75,7 @@ public class OfflinePlayersStorageTest {
     }
 
     @Test
-    public void kicked_marksModelKicked() {
+    public void kicked_marksModelKick() {
         OfflinePlayersStorage storage = new OfflinePlayersStorage();
 
         UUID offlineId = UUID.randomUUID();
@@ -83,7 +83,7 @@ public class OfflinePlayersStorageTest {
 
         storage.create(offlineId, playerId, sampleActions(), 0.0, 0.0, 0.0);
 
-        storage.kicked(offlineId);
+        storage.kick(offlineId);
 
         OfflinePlayerModel model = storage.findByPlayerUUID(playerId);
         assertNotNull(model);
@@ -103,7 +103,7 @@ public class OfflinePlayersStorageTest {
         storage.create(offlineId2, playerId2, new String[] { "x" }, -1.0, -2.0, -3.0);
 
         storage.killByIdWithDeathMessage(offlineId1, new Vec3(5, 6, 7), "boom");
-        storage.kicked(offlineId2);
+        storage.kick(offlineId2);
 
         CompoundTag tag = new CompoundTag();
         storage.save(tag, null); // provider is not used by save implementation

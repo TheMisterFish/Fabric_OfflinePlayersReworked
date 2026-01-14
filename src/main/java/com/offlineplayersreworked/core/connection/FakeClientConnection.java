@@ -1,6 +1,6 @@
-package com.offlineplayersreworked.patch;
+package com.offlineplayersreworked.core.connection;
 
-import com.offlineplayersreworked.interfaces.ClientConnectionInterface;
+import com.offlineplayersreworked.core.interfaces.ClientConnectionInterface;
 import io.netty.channel.Channel;
 import io.netty.channel.embedded.EmbeddedChannel;
 import net.minecraft.network.Connection;

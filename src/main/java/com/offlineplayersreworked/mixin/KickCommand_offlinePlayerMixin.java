@@ -1,6 +1,6 @@
 package com.offlineplayersreworked.mixin;
 
-import com.offlineplayersreworked.patch.OfflinePlayer;
+import com.offlineplayersreworked.core.OfflinePlayer;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.commands.KickCommand;

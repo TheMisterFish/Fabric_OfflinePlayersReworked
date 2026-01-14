@@ -1,7 +1,7 @@
 package com.offlineplayersreworked.mixin;
 
-import com.offlineplayersreworked.offline_config.ModConfigs;
-import com.offlineplayersreworked.patch.OfflinePlayer;
+import com.offlineplayersreworked.config.ModConfigs;
+import com.offlineplayersreworked.core.OfflinePlayer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.players.SleepStatus;
 import org.spongepowered.asm.mixin.Mixin;

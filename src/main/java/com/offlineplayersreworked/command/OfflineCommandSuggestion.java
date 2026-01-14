@@ -1,6 +1,6 @@
 package com.offlineplayersreworked.command;
 
-import com.offlineplayersreworked.offline_config.ModConfigs;
+import com.offlineplayersreworked.config.ModConfigs;
 import com.offlineplayersreworked.utils.ActionMapper;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.suggestion.Suggestions;

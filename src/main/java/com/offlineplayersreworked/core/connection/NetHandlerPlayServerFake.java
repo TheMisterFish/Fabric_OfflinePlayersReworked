@@ -1,5 +1,6 @@
-package com.offlineplayersreworked.patch;
+package com.offlineplayersreworked.core.connection;
 
+import com.offlineplayersreworked.core.OfflinePlayer;
 import net.minecraft.network.Connection;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.contents.TranslatableContents;

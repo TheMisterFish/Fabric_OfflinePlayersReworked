@@ -1,4 +1,4 @@
-package com.offlineplayersreworked.interfaces;
+package com.offlineplayersreworked.core.interfaces;
 
 import io.netty.channel.Channel;
 

@@ -85,7 +85,7 @@ public class OfflinePlayerCreationGameTest {
                 });
     }
 
-    @GameTest(template = EMPTY_STRUCTURE, batch = "OfflinePlayerCreationGameTest")
+    @GameTest(template = EMPTY_STRUCTURE, batch = "OfflinePlayerCreationGameTest", setupTicks = 6)
     public void createsOfflinePlayerAndPlayerRejoinsNewInventory(GameTestHelper helper) {
         String playerName = "test2";
         ServerLevel level = helper.getLevel();
@@ -137,7 +137,7 @@ public class OfflinePlayerCreationGameTest {
                 });
     }
 
-    @GameTest(template = EMPTY_STRUCTURE, batch = "OfflinePlayerCreationGameTest", attempts = 5)
+    @GameTest(template = EMPTY_STRUCTURE, batch = "OfflinePlayerCreationGameTest", attempts = 5, setupTicks = 12)
     public void createsOfflinePlayerAndPlayerRejoinsAfterDeath(GameTestHelper helper) {
         String playerName = "test3";
         ServerLevel level = helper.getLevel();
