@@ -5,6 +5,7 @@ import com.offlineplayersreworked.core.OfflinePlayer;
 import com.offlineplayersreworked.storage.model.OfflinePlayerModel;
 import com.offlineplayersreworked.utils.DamageSourceSerializer;
 import com.offlineplayersreworked.utils.ServerPlayerMapper;
+import lombok.extern.slf4j.Slf4j;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtAccounter;
 import net.minecraft.nbt.NbtIo;
@@ -26,9 +27,9 @@ import java.util.UUID;
 
 import static com.offlineplayersreworked.OfflinePlayersReworked.*;
 
+@Slf4j
 public class PlayerJoined {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
     private static final List<GameType> KILL_MODES =
             List.of(GameType.SURVIVAL, GameType.DEFAULT_MODE, GameType.ADVENTURE);
 
@@ -37,7 +38,7 @@ public class PlayerJoined {
         if (model == null) return;
 
         if (player.getServer() == null) {
-            LOGGER.error("Could not get offline player for {}: getServer() returned null",
+            log.error("Could not get offline player for {}: getServer() returned null",
                     player.getName().getString());
             return;
         }
@@ -105,7 +106,7 @@ public class PlayerJoined {
             broadcastDeathMessage(player, source);
 
         } catch (Exception e) {
-            LOGGER.error("Failed to kill player {}: {}", player.getName().getString(), e.getMessage(), e);
+            log.error("Failed to kill player {}: {}", player.getName().getString(), e.getMessage(), e);
         }
     }
 
@@ -127,7 +128,7 @@ public class PlayerJoined {
         ));
 
         if (!player.isDeadOrDying()) {
-            LOGGER.debug("Player {} still alive after killing him", player.getName().getString());
+            log.debug("Player {} still alive after killing him", player.getName().getString());
         }
     }
 
@@ -138,12 +139,12 @@ public class PlayerJoined {
 
             if (Files.deleteIfExists(file)) {
                 Files.deleteIfExists(dir.resolve(id + ".dat_old"));
-                LOGGER.debug("Deleted player data for {}", id);
+                log.debug("Deleted player data for {}", id);
             } else {
-                LOGGER.debug("No player data found to delete for {}", id);
+                log.debug("No player data found to delete for {}", id);
             }
         } catch (Exception e) {
-            LOGGER.error("Failed to delete offline player data for {}: {}", id, e.getMessage(), e);
+            log.error("Failed to delete offline player data for {}: {}", id, e.getMessage(), e);
         }
 
         getStorage().remove(id);
@@ -163,7 +164,7 @@ public class PlayerJoined {
                     : null;
 
         } catch (Exception e) {
-            LOGGER.error("Failed to load offline player data for {}: {}", id, e.getMessage(), e);
+            log.error("Failed to load offline player data for {}: {}", id, e.getMessage(), e);
             return null;
         }
     }

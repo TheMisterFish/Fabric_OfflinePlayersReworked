@@ -1,18 +1,14 @@
 package com.offlineplayersreworked.utils;
 
-import com.offlineplayersreworked.config.ModConfigs;
 import com.mojang.authlib.GameProfile;
+import com.offlineplayersreworked.config.ModConfigs;
+import lombok.extern.slf4j.Slf4j;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.players.UserWhiteListEntry;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import static com.offlineplayersreworked.OfflinePlayersReworked.MOD_ID;
-
+@Slf4j
 public class ServerPlayerMapper {
-    private static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
-
     public static void copyPlayerData(ServerPlayer source, ServerPlayer target) {
         CompoundTag sourceNbt = new CompoundTag();
         source.saveWithoutId(sourceNbt);
@@ -21,7 +17,7 @@ public class ServerPlayerMapper {
 
     public static void copyPlayerRights(ServerPlayer source, ServerPlayer target) {
         if (target.getServer() == null) {
-            LOGGER.error("Could not copy player rights to `{}` as the target ({}) getServer() returned null", source.getName().getString(), target.getName().getString());
+            log.error("Could not copy player rights to `{}` as the target ({}) getServer() returned null", source.getName().getString(), target.getName().getString());
             return;
         }
 

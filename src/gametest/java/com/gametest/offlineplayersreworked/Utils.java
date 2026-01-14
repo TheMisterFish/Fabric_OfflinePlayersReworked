@@ -1,6 +1,7 @@
 package com.gametest.offlineplayersreworked;
 
 import com.offlineplayersreworked.storage.OfflinePlayersStorage;
+import lombok.extern.slf4j.Slf4j;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -10,6 +11,7 @@ import net.minecraft.world.item.ItemStack;
 
 import java.util.*;
 
+@Slf4j
 public class Utils {
     public static ComparisonResult compare(ServerPlayer a, ServerPlayer b) {
         ComparisonResult result = new ComparisonResult();
@@ -124,12 +126,18 @@ public class Utils {
         tgt.selected = Math.max(0, Math.min(source.selected, tgt.getContainerSize() - 1));
     }
 
-    public static void clearOfflinePlayerStorage(ServerLevel serverLevel) {
+    public static void clearOfflinePlayerStorageAndDisconnectPlayers(ServerLevel serverLevel) {
         MinecraftServer server = serverLevel.getServer();
         OfflinePlayersStorage storage = OfflinePlayersStorage.getStorage(server);
         storage.findAll().forEach(offlinePlayerModel -> {
             storage.remove(offlinePlayerModel.getId());
         });
+
+        server.getPlayerList().getPlayers().forEach(player -> {
+            Objects.requireNonNull(server.getPlayerList().getPlayer(player.getUUID())).disconnect();
+        });
+
+        log.info("Cleared OfflinePlayers storage & Disconnected all players");
     }
 
 }
