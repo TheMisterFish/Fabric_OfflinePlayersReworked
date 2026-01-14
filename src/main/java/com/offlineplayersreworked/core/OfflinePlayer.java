@@ -1,8 +1,9 @@
 package com.offlineplayersreworked.core;
 
+import com.mojang.authlib.GameProfile;
 import com.offlineplayersreworked.core.connection.FakeClientConnection;
 import com.offlineplayersreworked.utils.DamageSourceSerializer;
-import com.mojang.authlib.GameProfile;
+import lombok.extern.slf4j.Slf4j;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -34,18 +35,14 @@ import net.minecraft.world.level.portal.DimensionTransition;
 import net.minecraft.world.scores.Team;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Objects;
 import java.util.UUID;
 
-import static com.offlineplayersreworked.OfflinePlayersReworked.MOD_ID;
 import static com.offlineplayersreworked.OfflinePlayersReworked.getStorage;
 
+@Slf4j
 public class OfflinePlayer extends ServerPlayer {
-    private static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
-
     public Runnable fixStartingPosition = () -> { };
 
     public OfflinePlayer(MinecraftServer server, ServerLevel worldIn, GameProfile profile, ClientInformation cli) {
@@ -84,7 +81,7 @@ public class OfflinePlayer extends ServerPlayer {
 
             offlinePlayer.fixStartingPosition.run();
 
-            LOGGER.info("Respawned offline player: {}", offlinePlayer.getGameProfile().getName());
+            log.info("Respawned offline player: {}", offlinePlayer.getGameProfile().getName());
         }
 
         return offlinePlayer;

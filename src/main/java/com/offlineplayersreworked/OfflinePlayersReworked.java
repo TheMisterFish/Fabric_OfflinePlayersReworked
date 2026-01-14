@@ -3,10 +3,10 @@ package com.offlineplayersreworked;
 import com.offlineplayersreworked.command.OfflinePlayerCommands;
 import com.offlineplayersreworked.config.ModConfigs;
 import com.offlineplayersreworked.core.EntityPlayerActionPack;
-import com.offlineplayersreworked.core.OfflinePlayerBuilder;
-import com.offlineplayersreworked.core.interfaces.ServerPlayerInterface;
 import com.offlineplayersreworked.core.OfflinePlayer;
+import com.offlineplayersreworked.core.interfaces.ServerPlayerInterface;
 import com.offlineplayersreworked.storage.OfflinePlayersStorage;
+import lombok.extern.slf4j.Slf4j;
 import net.fabricmc.api.DedicatedServerModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
@@ -16,14 +16,13 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import org.jetbrains.annotations.TestOnly;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.function.Consumer;
 
 import static com.offlineplayersreworked.utils.ActionMapper.getActionPackList;
 import static net.minecraft.world.level.Level.OVERWORLD;
 
+@Slf4j
 public class OfflinePlayersReworked implements DedicatedServerModInitializer {
     private static OfflinePlayersStorage storage;
     private static MinecraftServer server;
@@ -32,7 +31,6 @@ public class OfflinePlayersReworked implements DedicatedServerModInitializer {
             .getModContainer(MOD_ID.toLowerCase())
             .map(modContainer -> modContainer.getMetadata().getVersion().getFriendlyString())
             .orElse("Unknown");
-    private static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
 
     @Override
     public void onInitializeServer() {
@@ -42,14 +40,14 @@ public class OfflinePlayersReworked implements DedicatedServerModInitializer {
             try {
                 OfflinePlayerCommands.register(dispatcher);
             } catch (Exception exception) {
-                LOGGER.error("Exception while generating offline player:", exception);
+                log.error("Exception while generating offline player:", exception);
             }
         });
 
         ServerLifecycleEvents.SERVER_STARTING.register(this::onServerStarting);
         ServerLifecycleEvents.SERVER_STOPPED.register(this::onServerStopped);
         ServerWorldEvents.LOAD.register(this::onWorldLoad);
-        LOGGER.info("Hello from OfflinePlayersReworked!");
+        log.info("Hello from OfflinePlayersReworked!");
     }
 
     private void onServerStarting(MinecraftServer server) {

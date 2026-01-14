@@ -1,6 +1,7 @@
 package com.offlineplayersreworked.utils;
 
 import com.mojang.authlib.GameProfile;
+import lombok.extern.slf4j.Slf4j;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
@@ -13,15 +14,11 @@ import net.minecraft.world.damagesource.DamageType;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.player.Player;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.UUID;
 
-import static com.offlineplayersreworked.OfflinePlayersReworked.MOD_ID;
-
+@Slf4j
 public class DamageSourceSerializer {
-    private static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
 
     public static String serializeDamageSource(DamageSource damageSource) {
         CompoundTag tag = new CompoundTag();
@@ -61,7 +58,7 @@ public class DamageSourceSerializer {
 
             ResourceLocation damageTypeLocation = ResourceLocation.tryParse(damageTypeId);
             if (damageTypeLocation == null) {
-                LOGGER.warn("Invalid damage type ID: {}. Using generic damage.", damageTypeId);
+                log.warn("Invalid damage type ID: {}. Using generic damage.", damageTypeId);
                 return level.damageSources().generic();
             }
 
@@ -70,7 +67,7 @@ public class DamageSourceSerializer {
                     .getHolder(ResourceKey.create(Registries.DAMAGE_TYPE, damageTypeLocation))
                     .orElse(null);
             if (damageTypeHolder == null) {
-                LOGGER.warn("Unknown damage type: {}. Using generic damage.", damageTypeId);
+                log.warn("Unknown damage type: {}. Using generic damage.", damageTypeId);
                 return level.damageSources().generic();
             }
 
@@ -91,7 +88,7 @@ public class DamageSourceSerializer {
 
             return new DamageSource(damageTypeHolder, directEntity, sourceEntity);
         } catch (Exception e) {
-            LOGGER.error("Failed to deserialize DamageSource: " + serialized, e);
+            log.error("Failed to deserialize DamageSource: " + serialized, e);
             return level.damageSources().generic(); // Fallback to generic damage source
         }
     }

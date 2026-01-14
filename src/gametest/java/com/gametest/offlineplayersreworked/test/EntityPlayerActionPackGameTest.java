@@ -39,8 +39,8 @@ public class EntityPlayerActionPackGameTest {
     private static final Vec3 CENTER = new Vec3(16, 0, 16);
 
     @AfterBatch(batch = "EntityPlayerActionPackGameTest")
-    public static void deletePlayerData(ServerLevel serverLevel){
-        Utils.clearOfflinePlayerStorage(serverLevel);
+    public static void deletePlayerData(ServerLevel serverLevel) {
+        Utils.clearOfflinePlayerStorageAndDisconnectPlayers(serverLevel);
     }
 
     @GameTest(template = EMPTY_STRUCTURE, batch = "EntityPlayerActionPackGameTest")
@@ -393,7 +393,7 @@ public class EntityPlayerActionPackGameTest {
 
         helper.startSequence()
                 .thenExecute(() -> createBlockScenario(helper, targetPos, testPlayer, Blocks.LEVER))
-                .thenExecuteFor(6, testPlayer::tick)
+                .thenExecuteFor(7, testPlayer::tick)
                 .thenExecute(() -> {
                     BlockState state = level.getBlockState(targetPos);
                     if (state.getBlock() instanceof LeverBlock) {

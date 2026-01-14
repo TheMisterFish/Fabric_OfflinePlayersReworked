@@ -26,7 +26,7 @@ public class RespawnOfflinePlayersGameTest {
 
     @AfterBatch(batch = "RespawnOfflinePlayersGameTest")
     public static void deletePlayerData(ServerLevel serverLevel) {
-        Utils.clearOfflinePlayerStorage(serverLevel);
+        Utils.clearOfflinePlayerStorageAndDisconnectPlayers(serverLevel);
         serverLevel.players().forEach(serverPlayer -> {
             MinecraftServer server = serverPlayer.getServer();
             server.getPlayerList().getPlayer(serverPlayer.getUUID()).disconnect();

@@ -22,9 +22,8 @@ package com.offlineplayersreworked.config;
  * THE SOFTWARE.
  */
 
+import lombok.extern.slf4j.Slf4j;
 import net.fabricmc.loader.api.FabricLoader;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -34,11 +33,9 @@ import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Scanner;
 
-import static com.offlineplayersreworked.OfflinePlayersReworked.MOD_ID;
-
+@Slf4j
 public class SimpleConfig {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
     private final HashMap<String, String> config = new HashMap<>();
     private final ConfigRequest request;
     private boolean broken = false;
@@ -142,12 +139,12 @@ public class SimpleConfig {
         String identifier = "Config '" + request.filename + "'";
 
         if (!request.file.exists()) {
-            LOGGER.info(identifier + " is missing, generating default one...");
+            log.info(identifier + " is missing, generating default one...");
 
             try {
                 createConfig();
             } catch (IOException e) {
-                LOGGER.error(identifier + " failed to generate!", e);
+                log.error(identifier + " failed to generate!", e);
                 broken = true;
             }
         }
@@ -156,7 +153,7 @@ public class SimpleConfig {
             try {
                 loadConfig();
             } catch (Exception e) {
-                LOGGER.error(identifier + " failed to load!", e);
+                log.error(identifier + " failed to load!", e);
                 broken = true;
             }
         }
@@ -246,7 +243,7 @@ public class SimpleConfig {
      * @return true if the operation was successful
      */
     public boolean delete() {
-        LOGGER.warn("Config '" + request.filename + "' was removed from existence! Restart the game to regenerate it.");
+        log.warn("Config '" + request.filename + "' was removed from existence! Restart the game to regenerate it.");
         return request.file.delete();
     }
 

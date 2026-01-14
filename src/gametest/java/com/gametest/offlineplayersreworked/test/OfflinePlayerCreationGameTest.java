@@ -29,8 +29,8 @@ import static net.fabricmc.fabric.api.gametest.v1.FabricGameTest.EMPTY_STRUCTURE
 public class OfflinePlayerCreationGameTest {
 
     @AfterBatch(batch = "OfflinePlayerCreationGameTest")
-    public static void deletePlayerData(ServerLevel serverLevel){
-        Utils.clearOfflinePlayerStorage(serverLevel);
+    public static void deletePlayerData(ServerLevel serverLevel) {
+        Utils.clearOfflinePlayerStorageAndDisconnectPlayers(serverLevel);
     }
 
     @GameTest(template = EMPTY_STRUCTURE, batch = "OfflinePlayerCreationGameTest")

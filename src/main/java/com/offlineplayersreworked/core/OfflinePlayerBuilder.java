@@ -5,6 +5,7 @@ import com.offlineplayersreworked.config.ModConfigs;
 import com.offlineplayersreworked.core.connection.FakeClientConnection;
 import com.offlineplayersreworked.core.interfaces.ServerPlayerInterface;
 import com.offlineplayersreworked.utils.ServerPlayerMapper;
+import lombok.extern.slf4j.Slf4j;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -24,18 +25,14 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.storage.LevelResource;
 import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.Objects;
 import java.util.UUID;
 
-import static com.offlineplayersreworked.OfflinePlayersReworked.MOD_ID;
-
+@Slf4j
 public class OfflinePlayerBuilder {
-    private static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
 
     private final MinecraftServer server;
 
@@ -62,7 +59,7 @@ public class OfflinePlayerBuilder {
     }
 
     private void fail(String msg) {
-        LOGGER.error(msg);
+        log.error(msg);
         this.error = msg;
     }
 
@@ -209,7 +206,7 @@ public class OfflinePlayerBuilder {
         if (sourcePlayer.getChatSession() != null) {
             offlinePlayer.setChatSession(sourcePlayer.getChatSession());
         } else {
-            LOGGER.warn("Chat session was null for '{}', not setting chat session for '{}'",
+            log.warn("Chat session was null for '{}', not setting chat session for '{}'",
                     sourcePlayer.getName().getString(),
                     offlinePlayer.getName().getString());
         }
@@ -235,7 +232,7 @@ public class OfflinePlayerBuilder {
         ((ServerPlayerInterface) offlinePlayer).getActionPack()
                 .copyFrom(((ServerPlayerInterface) sourcePlayer).getActionPack());
 
-        if(offlinePlayer.getAttribute(Attributes.STEP_HEIGHT) != null)
+        if (offlinePlayer.getAttribute(Attributes.STEP_HEIGHT) != null)
             Objects.requireNonNull(offlinePlayer.getAttribute(Attributes.STEP_HEIGHT)).setBaseValue(0.6F);
 
         server.getPlayerList().broadcastAll(

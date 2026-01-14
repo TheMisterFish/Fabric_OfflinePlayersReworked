@@ -1,37 +1,36 @@
 package com.offlineplayersreworked.command;
 
+import com.mojang.brigadier.CommandDispatcher;
+import com.mojang.brigadier.arguments.StringArgumentType;
+import com.mojang.brigadier.context.CommandContext;
 import com.offlineplayersreworked.OfflinePlayersReworked;
 import com.offlineplayersreworked.config.ModConfigs;
+import com.offlineplayersreworked.core.EntityPlayerActionPack;
+import com.offlineplayersreworked.core.OfflinePlayer;
 import com.offlineplayersreworked.exception.InvalidActionException;
 import com.offlineplayersreworked.exception.InvalidIntervalException;
 import com.offlineplayersreworked.exception.InvalidOffsetException;
 import com.offlineplayersreworked.exception.UnavailableActionException;
-import com.offlineplayersreworked.core.EntityPlayerActionPack;
-import com.offlineplayersreworked.core.OfflinePlayer;
 import com.offlineplayersreworked.utils.ActionMapper;
-import com.mojang.brigadier.CommandDispatcher;
-import com.mojang.brigadier.arguments.StringArgumentType;
-import com.mojang.brigadier.context.CommandContext;
 import it.unimi.dsi.fastutil.Pair;
+import lombok.extern.slf4j.Slf4j;
 import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static com.mojang.brigadier.arguments.StringArgumentType.getString;
 import static com.offlineplayersreworked.OfflinePlayersReworked.*;
 import static com.offlineplayersreworked.utils.ActionMapper.getActionPackList;
-import static com.mojang.brigadier.arguments.StringArgumentType.getString;
 import static net.minecraft.commands.Commands.argument;
 import static net.minecraft.commands.Commands.literal;
 
+@Slf4j
 public class OfflinePlayerCommands {
-    private static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(literal("offline")
@@ -97,10 +96,10 @@ public class OfflinePlayerCommands {
             actionList = getActionPackList(pairs);
         } catch (InvalidActionException | UnavailableActionException | InvalidIntervalException |
                  InvalidOffsetException e) {
-            source.sendFailure(Component.literal( e.getMessage()));
+            source.sendFailure(Component.literal(e.getMessage()));
             return 0;
         } catch (Exception e) {
-            LOGGER.error("Unexcpeted exception", e);
+            log.error("Unexcpeted exception", e);
             source.sendFailure(Component.literal("Something went wrong while spawning a offline player."));
             return 0;
         }
@@ -115,7 +114,7 @@ public class OfflinePlayerCommands {
         ServerPlayer player = source.getPlayer();
 
         if (player == null) {
-            LOGGER.error("Could not create offline player as source player is null");
+            log.error("Could not create offline player as source player is null");
             return 0;
         }
 
@@ -124,7 +123,7 @@ public class OfflinePlayerCommands {
             return 0;
         }
 
-        LOGGER.debug("Adding new offline player");
+        log.debug("Adding new offline player");
 
         var offlinePlayer = OfflinePlayer.createAndSpawnNewOfflinePlayer(player.getServer(), player);
 

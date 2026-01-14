@@ -19,8 +19,8 @@ import java.util.UUID;
 public class ServerPlayerMapperGameTest {
 
     @AfterBatch(batch = "ServerPlayerMapperGameTest")
-    public static void deletePlayerData(ServerLevel serverLevel){
-        Utils.clearOfflinePlayerStorage(serverLevel);
+    public static void deletePlayerData(ServerLevel serverLevel) {
+        Utils.clearOfflinePlayerStorageAndDisconnectPlayers(serverLevel);
     }
 
     @GameTest(template = FabricGameTest.EMPTY_STRUCTURE, batch = "ServerPlayerMapperGameTest")
