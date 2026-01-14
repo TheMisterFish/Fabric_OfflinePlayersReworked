@@ -1,7 +1,7 @@
 package com.gametest.offlineplayersreworked;
 
 import com.mojang.authlib.GameProfile;
-import com.offlineplayersreworked.patch.OfflinePlayer;
+import com.offlineplayersreworked.core.OfflinePlayer;
 import io.netty.channel.embedded.EmbeddedChannel;
 import net.fabricmc.fabric.api.entity.FakePlayer;
 import net.minecraft.core.Holder;

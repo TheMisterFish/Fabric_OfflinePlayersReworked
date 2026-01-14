@@ -94,7 +94,7 @@ public class OfflinePlayersStorage extends SavedData {
                 });
     }
 
-    public void kicked(UUID uuid) {
+    public void kick(UUID uuid) {
         offlinePlayers.stream()
                 .filter(player -> player.getId().equals(uuid))
                 .findFirst()

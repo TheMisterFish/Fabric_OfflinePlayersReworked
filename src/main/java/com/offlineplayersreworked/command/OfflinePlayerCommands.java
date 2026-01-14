@@ -1,13 +1,13 @@
 package com.offlineplayersreworked.command;
 
 import com.offlineplayersreworked.OfflinePlayersReworked;
-import com.offlineplayersreworked.offline_config.ModConfigs;
+import com.offlineplayersreworked.config.ModConfigs;
 import com.offlineplayersreworked.exception.InvalidActionException;
 import com.offlineplayersreworked.exception.InvalidIntervalException;
 import com.offlineplayersreworked.exception.InvalidOffsetException;
 import com.offlineplayersreworked.exception.UnavailableActionException;
-import com.offlineplayersreworked.helper.EntityPlayerActionPack;
-import com.offlineplayersreworked.patch.OfflinePlayer;
+import com.offlineplayersreworked.core.EntityPlayerActionPack;
+import com.offlineplayersreworked.core.OfflinePlayer;
 import com.offlineplayersreworked.utils.ActionMapper;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;

@@ -3,7 +3,7 @@ package com.gametest.offlineplayersreworked.test;
 import com.gametest.offlineplayersreworked.TestPlayerBuilder;
 import com.gametest.offlineplayersreworked.Utils;
 import com.mojang.authlib.GameProfile;
-import com.offlineplayersreworked.offline_config.ModConfigs;
+import com.offlineplayersreworked.config.ModConfigs;
 import com.offlineplayersreworked.utils.ServerPlayerMapper;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.gametest.framework.AfterBatch;

@@ -3,11 +3,7 @@ package com.offlineplayersreworked.utils;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.phys.AABB;
-import net.minecraft.world.phys.BlockHitResult;
-import net.minecraft.world.phys.EntityHitResult;
-import net.minecraft.world.phys.HitResult;
-import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.phys.*;
 
 import java.util.Optional;
 import java.util.function.Predicate;
@@ -15,10 +11,7 @@ import java.util.function.Predicate;
 public class Tracer {
     public static HitResult rayTrace(Entity source, float partialTicks, double reach, boolean fluids) {
         BlockHitResult blockHit = rayTraceBlocks(source, partialTicks, reach, fluids);
-        double maxSqDist = reach * reach;
-        if (blockHit != null) {
-            maxSqDist = blockHit.getLocation().distanceToSqr(source.getEyePosition(partialTicks));
-        }
+        double maxSqDist = blockHit.getLocation().distanceToSqr(source.getEyePosition(partialTicks));
         EntityHitResult entityHit = rayTraceEntities(source, partialTicks, reach, maxSqDist);
         return entityHit == null ? blockHit : entityHit;
     }

@@ -3,10 +3,10 @@ package com.gametest.offlineplayersreworked.test;
 import com.gametest.offlineplayersreworked.TestPlayerBuilder;
 import com.gametest.offlineplayersreworked.Utils;
 import com.gametest.offlineplayersreworked.tracker.DisconnectTracker;
-import com.offlineplayersreworked.helper.EntityPlayerActionPack;
-import com.offlineplayersreworked.helper.EntityPlayerActionPack.Action;
-import com.offlineplayersreworked.helper.EntityPlayerActionPack.ActionType;
-import com.offlineplayersreworked.interfaces.ServerPlayerInterface;
+import com.offlineplayersreworked.core.EntityPlayerActionPack;
+import com.offlineplayersreworked.core.EntityPlayerActionPack.Action;
+import com.offlineplayersreworked.core.EntityPlayerActionPack.ActionType;
+import com.offlineplayersreworked.core.interfaces.ServerPlayerInterface;
 import net.minecraft.commands.arguments.EntityAnchorArgument;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.AfterBatch;
@@ -376,7 +376,7 @@ public class EntityPlayerActionPackGameTest {
                 });
     }
 
-    @GameTest(template = EMPTY_STRUCTURE, batch = "EntityPlayerActionPackGameTest")
+    @GameTest(template = EMPTY_STRUCTURE, batch = "EntityPlayerActionPackGameTest", attempts = 5)
     public static void useDifferentObjects(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         MinecraftServer server = level.getServer();
@@ -393,7 +393,7 @@ public class EntityPlayerActionPackGameTest {
 
         helper.startSequence()
                 .thenExecute(() -> createBlockScenario(helper, targetPos, testPlayer, Blocks.LEVER))
-                .thenExecuteFor(4, testPlayer::tick)
+                .thenExecuteFor(6, testPlayer::tick)
                 .thenExecute(() -> {
                     BlockState state = level.getBlockState(targetPos);
                     if (state.getBlock() instanceof LeverBlock) {

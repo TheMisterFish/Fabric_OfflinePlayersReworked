@@ -1,7 +1,8 @@
 package com.offlineplayersreworked.mixin;
 
-import com.offlineplayersreworked.patch.NetHandlerPlayServerFake;
-import com.offlineplayersreworked.patch.OfflinePlayer;
+import com.offlineplayersreworked.core.OfflinePlayer;
+import com.offlineplayersreworked.core.connection.NetHandlerPlayServerFake;
+import com.offlineplayersreworked.core.event.PlayerJoined;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.Connection;
 import net.minecraft.server.MinecraftServer;
@@ -15,8 +16,6 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
-
-import static com.offlineplayersreworked.event.PlayerJoined.playerJoined;
 
 @Mixin(value = PlayerList.class, priority = 900)
 public abstract class PlayerList_offlinePlayersMixin {
@@ -37,7 +36,7 @@ public abstract class PlayerList_offlinePlayersMixin {
             // Replace the network manager with our custom one
             playerIn.connection = new NetHandlerPlayServerFake(this.server, clientConnection, fake, cookie);
         } else {
-            playerJoined(playerIn);
+            PlayerJoined.playerJoined(playerIn);
         }
     }
 }

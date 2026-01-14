@@ -1,6 +1,6 @@
 package com.offlineplayersreworked.utils;
 
-import com.offlineplayersreworked.offline_config.ModConfigs;
+import com.offlineplayersreworked.config.ModConfigs;
 import com.mojang.authlib.GameProfile;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerPlayer;

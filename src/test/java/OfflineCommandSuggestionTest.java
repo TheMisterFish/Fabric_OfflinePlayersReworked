@@ -1,7 +1,7 @@
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import com.offlineplayersreworked.command.OfflineCommandSuggestion;
-import com.offlineplayersreworked.offline_config.ModConfigs;
+import com.offlineplayersreworked.config.ModConfigs;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
