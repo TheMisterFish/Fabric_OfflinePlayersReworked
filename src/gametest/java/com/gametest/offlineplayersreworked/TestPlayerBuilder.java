@@ -24,6 +24,7 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.Vec3;
 
 import java.util.*;
 import java.util.function.Consumer;
@@ -45,6 +46,7 @@ public class TestPlayerBuilder {
     public Integer food = 20;
     public Integer experience = 0;
     public GameType gamemode = GameType.SURVIVAL;
+    public Vec3 pos = null;
 
     public TestPlayerBuilder setUuid(UUID uuid) {
         this.uuid = uuid;
@@ -225,6 +227,11 @@ public class TestPlayerBuilder {
         return this;
     }
 
+    public TestPlayerBuilder setMoveTo(Vec3 pos) {
+        this.pos = pos;
+        return this;
+    }
+
     public FakePlayer buildFakePlayer(MinecraftServer server) {
         FakePlayer fake = FakePlayer.get(Objects.requireNonNull(server.getLevel(dimension)), gameProfile);
         fake.connection = new ServerGamePacketListenerImpl(server, connection, fake, cookie);
@@ -243,6 +250,10 @@ public class TestPlayerBuilder {
     public FakePlayer placeFakePlayer(MinecraftServer server) {
         FakePlayer fake = this.buildFakePlayer(server);
         server.getPlayerList().placeNewPlayer(connection, fake, cookie);
+
+        if (pos != null) {
+            fake.moveTo(pos);
+        }
 
         return fake;
     }
@@ -265,6 +276,10 @@ public class TestPlayerBuilder {
     public OfflinePlayer placeOfflinePlayer(MinecraftServer server) {
         OfflinePlayer fake = this.buildOfflinePlayer(server);
         server.getPlayerList().placeNewPlayer(connection, fake, cookie);
+
+        if (pos != null) {
+            fake.moveTo(pos);
+        }
 
         return fake;
     }

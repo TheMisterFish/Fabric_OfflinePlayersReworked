@@ -19,7 +19,6 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.util.function.Consumer;
 
-import static com.offlineplayersreworked.utils.ActionMapper.getActionPackList;
 import static net.minecraft.world.level.Level.OVERWORLD;
 
 @Slf4j
@@ -83,22 +82,9 @@ public class OfflinePlayersReworked implements DedicatedServerModInitializer {
     private static void respawnActiveOfflinePlayers() {
         storage.findAll().stream()
                 .filter(offlinePlayerModel -> !offlinePlayerModel.isDied())
-                .filter(offlinePlayerModel -> ModConfigs.RESPAWN_KICKED_PLAYERS || !offlinePlayerModel.isKicked() )
+                .filter(offlinePlayerModel -> ModConfigs.RESPAWN_KICKED_PLAYERS || !offlinePlayerModel.isKicked())
                 .filter(offlinePlayerModel -> getServer().getPlayerList().getPlayer(offlinePlayerModel.getId()) == null)
-                .toList()
-                .forEach(
-                        offlinePlayerModel -> {
-                            OfflinePlayer offlinePlayer = OfflinePlayer.respawnOfflinePlayer(getServer(), offlinePlayerModel.getId(), offlinePlayerModel.getPlayer());
-
-                            if (offlinePlayer != null) {
-                                var actionList = getActionPackList(offlinePlayerModel.getActions());
-                                actionList.forEach(actionTypeActionPair -> manipulate(offlinePlayer, ap -> ap.start(
-                                        actionTypeActionPair.first(),
-                                        actionTypeActionPair.second()
-                                )));
-                            }
-                        }
-                );
+                .forEach(offlinePlayerModel -> OfflinePlayer.recreateOfflinePlayer(getServer(), offlinePlayerModel));
     }
 
     public static void manipulate(ServerPlayer player, Consumer<EntityPlayerActionPack> action) {
@@ -106,7 +92,7 @@ public class OfflinePlayersReworked implements DedicatedServerModInitializer {
     }
 
     @TestOnly
-    public void respawnActiveOfflinePlayersForTest(){
+    public void respawnActiveOfflinePlayersForTest() {
         respawnActiveOfflinePlayers();
     }
 }

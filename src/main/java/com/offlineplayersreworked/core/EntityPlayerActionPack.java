@@ -20,13 +20,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.entity.decoration.ItemFrame;
 import net.minecraft.world.food.FoodProperties;
-import net.minecraft.world.item.HoneyBottleItem;
-import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.MilkBucketItem;
-import net.minecraft.world.item.OminousBottleItem;
-import net.minecraft.world.item.PotionItem;
-import net.minecraft.world.item.SplashPotionItem;
+import net.minecraft.world.item.*;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
@@ -322,9 +316,10 @@ public class EntityPlayerActionPack {
         JUMP(true) {
             @Override
             boolean execute(ServerPlayer player, Action action) {
-                player.jumpFromGround(); // onGround
-                player.setJumping(true);
-
+                if (player.onGround()) {
+                    player.jumpFromGround(); // onGround
+                    player.setJumping(true);
+                }
                 return false;
             }
 
@@ -550,7 +545,7 @@ public class EntityPlayerActionPack {
     }
 
     @TestOnly
-    public Map<ActionType, Action> getActions(){
+    public Map<ActionType, Action> getActions() {
         return actions;
     }
 }

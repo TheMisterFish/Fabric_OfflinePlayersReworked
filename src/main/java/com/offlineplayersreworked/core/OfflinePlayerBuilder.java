@@ -4,6 +4,7 @@ import com.mojang.authlib.GameProfile;
 import com.offlineplayersreworked.config.ModConfigs;
 import com.offlineplayersreworked.core.connection.FakeClientConnection;
 import com.offlineplayersreworked.core.interfaces.ServerPlayerInterface;
+import com.offlineplayersreworked.storage.model.OfflinePlayerModel;
 import com.offlineplayersreworked.utils.ServerPlayerMapper;
 import lombok.extern.slf4j.Slf4j;
 import net.minecraft.core.registries.Registries;
@@ -21,7 +22,9 @@ import net.minecraft.server.level.ClientInformation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.CommonListenerCookie;
+import net.minecraft.world.entity.HumanoidArm;
 import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.player.ChatVisiblity;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.storage.LevelResource;
 import org.apache.commons.lang3.StringUtils;
@@ -30,6 +33,9 @@ import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.Objects;
 import java.util.UUID;
+
+import static com.offlineplayersreworked.OfflinePlayersReworked.manipulate;
+import static com.offlineplayersreworked.utils.ActionMapper.getActionPackList;
 
 @Slf4j
 public class OfflinePlayerBuilder {
@@ -197,7 +203,7 @@ public class OfflinePlayerBuilder {
         return this;
     }
 
-    public OfflinePlayerBuilder spawn() {
+    public OfflinePlayerBuilder spawnFromSourcePlayer() {
         if (failed() || sourcePlayer == null) return this;
 
         offlinePlayer.load(sourcePlayer.saveWithoutId(new CompoundTag()));
@@ -255,6 +261,25 @@ public class OfflinePlayerBuilder {
 
     public OfflinePlayer build() {
         return failed() ? null : offlinePlayer;
+    }
+
+    public OfflinePlayerBuilder spawn() {
+        if (failed()) return this;
+
+        var clientInformation = new ClientInformation("", 0, ChatVisiblity.FULL, true, 0, HumanoidArm.RIGHT, false, false);
+        server.getPlayerList().placeNewPlayer(new FakeClientConnection(PacketFlow.SERVERBOUND), offlinePlayer, new CommonListenerCookie(offlinePlayer.getGameProfile(), 0, clientInformation, true));
+
+        offlinePlayer.fixStartingPosition.run();
+        return this;
+    }
+
+    public OfflinePlayerBuilder startActions(OfflinePlayerModel offlinePlayerModel) {
+        var actionList = getActionPackList(offlinePlayerModel.getActions());
+        actionList.forEach(actionTypeActionPair -> manipulate(offlinePlayer, ap -> ap.start(
+                actionTypeActionPair.first(),
+                actionTypeActionPair.second()
+        )));
+        return this;
     }
 }
 
