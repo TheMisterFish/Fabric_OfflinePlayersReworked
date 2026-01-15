@@ -1,7 +1,7 @@
 package com.offlineplayersreworked.core;
 
 import com.mojang.authlib.GameProfile;
-import com.offlineplayersreworked.core.connection.FakeClientConnection;
+import com.offlineplayersreworked.storage.model.OfflinePlayerModel;
 import com.offlineplayersreworked.utils.DamageSourceSerializer;
 import lombok.extern.slf4j.Slf4j;
 import net.minecraft.ChatFormatting;
@@ -13,7 +13,6 @@ import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.network.chat.contents.TranslatableContents;
-import net.minecraft.network.protocol.PacketFlow;
 import net.minecraft.network.protocol.game.ClientboundPlayerCombatKillPacket;
 import net.minecraft.network.protocol.game.ServerboundClientCommandPacket;
 import net.minecraft.server.MinecraftServer;
@@ -21,12 +20,9 @@ import net.minecraft.server.TickTask;
 import net.minecraft.server.level.ClientInformation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.server.network.CommonListenerCookie;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
-import net.minecraft.world.entity.HumanoidArm;
-import net.minecraft.world.entity.player.ChatVisiblity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.GameRules;
@@ -34,16 +30,15 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.portal.DimensionTransition;
 import net.minecraft.world.scores.Team;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
-import java.util.UUID;
 
 import static com.offlineplayersreworked.OfflinePlayersReworked.getStorage;
 
 @Slf4j
 public class OfflinePlayer extends ServerPlayer {
-    public Runnable fixStartingPosition = () -> { };
+    public Runnable fixStartingPosition = () -> {
+    };
 
     public OfflinePlayer(MinecraftServer server, ServerLevel worldIn, GameProfile profile, ClientInformation cli) {
         super(server, worldIn, profile, cli);
@@ -55,36 +50,23 @@ public class OfflinePlayer extends ServerPlayer {
                 .loadProfile()
                 .resolveDimension()
                 .createOfflinePlayer()
-                .spawn()
+                .spawnFromSourcePlayer()
                 .build();
     }
 
-    public static OfflinePlayer recreateOfflinePlayer(MinecraftServer server, UUID offlinePlayerUUID, @Nullable UUID playerUUID) {
-        return OfflinePlayerBuilder.create(server)
-                .fromStoredData(offlinePlayerUUID)
-                .withSkinFrom(playerUUID)
+    public static void recreateOfflinePlayer(MinecraftServer server, OfflinePlayerModel offlinePlayerModel) {
+        OfflinePlayerBuilder.create(server)
+                .fromStoredData(offlinePlayerModel.getId())
+                .withSkinFrom(offlinePlayerModel.getPlayer())
                 .loadProfile()
                 .loadPlayerData()
                 .resolveDimension()
                 .createOfflinePlayer()
                 .applyStoredPosition()
                 .applySkinOverride()
+                .spawn()
+                .startActions(offlinePlayerModel)
                 .build();
-    }
-
-    public static OfflinePlayer respawnOfflinePlayer(MinecraftServer server, UUID offlinePlayerUUID, UUID playerUUID) {
-        OfflinePlayer offlinePlayer = recreateOfflinePlayer(server, offlinePlayerUUID, playerUUID);
-
-        if (offlinePlayer != null) {
-            var clientInformation = new ClientInformation("", 0, ChatVisiblity.FULL, true, 0, HumanoidArm.RIGHT, false, false);
-            server.getPlayerList().placeNewPlayer(new FakeClientConnection(PacketFlow.SERVERBOUND), offlinePlayer, new CommonListenerCookie(offlinePlayer.getGameProfile(), 0, clientInformation, true));
-
-            offlinePlayer.fixStartingPosition.run();
-
-            log.info("Respawned offline player: {}", offlinePlayer.getGameProfile().getName());
-        }
-
-        return offlinePlayer;
     }
 
     @Override
