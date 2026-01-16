@@ -14,6 +14,7 @@ import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.minecraft.gametest.framework.AfterBatch;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -64,7 +65,7 @@ public class RespawnOfflinePlayersGameTest {
                 .thenExecuteAfter(5, () -> {
                     new OfflinePlayersReworked().respawnActiveOfflinePlayersForTest();
                 })
-                .thenExecuteAfter(10, () -> {
+                .thenWaitUntil(() -> {
                     ServerPlayer found = server.getPlayerList().getPlayer(offlineId);
                     helper.assertTrue(found != null, "OfflinePlayer should have been respawned");
 
@@ -81,8 +82,8 @@ public class RespawnOfflinePlayersGameTest {
                     helper.assertTrue(compare.matches(),
                             "OfflinePlayer and online-player don't match");
 
-                    helper.succeed();
-                });
+                })
+                .thenSucceed();
     }
 
     @GameTest(template = FabricGameTest.EMPTY_STRUCTURE, batch = "RespawnOfflinePlayersGameTest", setupTicks = 16)
@@ -114,7 +115,7 @@ public class RespawnOfflinePlayersGameTest {
                 .thenExecuteAfter(5, () -> {
                     new OfflinePlayersReworked().respawnActiveOfflinePlayersForTest();
                 })
-                .thenExecuteAfter(10, () -> {
+                .thenWaitUntil(() -> {
                     helper.assertTrue(server.getPlayerList().getPlayer(offlineId) == null, "Dead OfflinePlayer should not have been respawned");
                     helper.succeed();
                 });
@@ -151,12 +152,12 @@ public class RespawnOfflinePlayersGameTest {
                     ModConfigs.RESPAWN_KICKED_PLAYERS = true;
                     new OfflinePlayersReworked().respawnActiveOfflinePlayersForTest();
                 })
-                .thenExecuteAfter(10, () -> {
+                .thenWaitUntil(() -> {
                     helper.assertTrue(server.getPlayerList().getPlayer(offlineId) != null, "Kicked OfflinePlayer should have been respawned");
 
                     ModConfigs.RESPAWN_KICKED_PLAYERS = oldRespawnKickedPlayers;
-                    helper.succeed();
-                });
+                })
+                .thenSucceed();
     }
 
     @GameTest(template = FabricGameTest.EMPTY_STRUCTURE, batch = "RespawnOfflinePlayersGameTest", setupTicks = 48)
@@ -179,10 +180,10 @@ public class RespawnOfflinePlayersGameTest {
         UUID offlineId = offlinePlayer.getUUID();
         UUID playerUUID = testPlayer.getUUID();
         storage.create(offlineId, playerUUID, new String[]{}, 0, 80, 0);
-        storage.kick(offlineId);
 
         helper.startSequence()
                 .thenExecute(() -> {
+                    offlinePlayer.kickOfflinePlayer(Component.empty());
                     server.getPlayerList().remove(offlinePlayer);
                     log.info("{} was disconnected", offlinePlayer.getName().getString());
                 })
@@ -190,11 +191,11 @@ public class RespawnOfflinePlayersGameTest {
                     ModConfigs.RESPAWN_KICKED_PLAYERS = false;
                     new OfflinePlayersReworked().respawnActiveOfflinePlayersForTest();
                 })
-                .thenExecuteAfter(10, () -> {
+                .thenWaitUntil(() -> {
                     helper.assertTrue(server.getPlayerList().getPlayer(offlineId) == null, "Kicked OfflinePlayer should not have been respawned");
 
                     ModConfigs.RESPAWN_KICKED_PLAYERS = oldRespawnKickedPlayers;
-                    helper.succeed();
-                });
+                })
+                .thenSucceed();
     }
 }

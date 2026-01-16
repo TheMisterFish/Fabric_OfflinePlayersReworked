@@ -80,9 +80,8 @@ public class OfflinePlayerCreationGameTest {
                             "rejoined-player name is correct");
 
                     rejoinedPlayer.disconnect();
-
-                    helper.succeed();
-                });
+                })
+                .thenSucceed();
     }
 
     @GameTest(template = EMPTY_STRUCTURE, batch = "OfflinePlayerCreationGameTest", setupTicks = 6)
@@ -133,11 +132,11 @@ public class OfflinePlayerCreationGameTest {
                     helper.assertTrue(rejoinedPlayer.getDisplayName().getString().equals(playerName),
                             "rejoined-player name is correct");
 
-                    helper.succeed();
-                });
+                })
+                .thenSucceed();
     }
 
-    @GameTest(template = EMPTY_STRUCTURE, batch = "OfflinePlayerCreationGameTest", attempts = 5, setupTicks = 12)
+    @GameTest(template = EMPTY_STRUCTURE, batch = "OfflinePlayerCreationGameTest", setupTicks = 12)
     public void createsOfflinePlayerAndPlayerRejoinsAfterDeath(GameTestHelper helper) {
         String playerName = "test3";
         ServerLevel level = helper.getLevel();
@@ -173,6 +172,7 @@ public class OfflinePlayerCreationGameTest {
             helper.fail("Could not create zombie");
             return;
         }
+        zombie.setNoAi(true);
         zombie.moveTo(offlinePlayer.getX(), offlinePlayer.getY(), offlinePlayer.getZ(), 0.0F, 0.0F);
         level.addFreshEntity(zombie);
         offlinePlayer.setLastHurtByMob(zombie);
@@ -181,19 +181,19 @@ public class OfflinePlayerCreationGameTest {
                 .getHolderOrThrow(DamageTypes.MOB_ATTACK);
 
         helper.startSequence()
-                .thenExecuteAfter(75, () -> {
+                .thenWaitUntil(() -> {
                     float damage = offlinePlayer.getHealth() + 1.0F;
                     offlinePlayer.invulnerableTime = 0;
                     offlinePlayer.hurt(new DamageSource(mobAttackType, zombie, zombie), damage);
+
+                    helper.assertTrue(offlinePlayer.isDeadOrDying(), "Player should be dead or dying");
                 })
-                .thenWaitUntil(offlinePlayer::isDeadOrDying)
                 .thenExecute(() -> zombie.remove(Entity.RemovalReason.DISCARDED))
                 .thenIdle(5)
-                .thenExecute(() -> {
-                    testPlayerBuilder.placeFakePlayer(server);
+                .thenExecute(() -> testPlayerBuilder.placeFakePlayer(server))
+                .thenWaitUntil(() -> {
+                    helper.assertTrue(DeathTracker.hasReason(playerName), "DeathTracker should have player death");
                 })
-                .thenIdle(5)
-                .thenWaitUntil(() -> DeathTracker.hasReason(playerName))
                 .thenExecute(() -> {
                     ServerPlayer rejoinedPlayer = server.getPlayerList().getPlayerByName(playerName);
                     String reason = DeathTracker.getReason(playerName);
@@ -210,8 +210,7 @@ public class OfflinePlayerCreationGameTest {
                             "rejoined-player name is correct");
 
                     rejoinedPlayer.disconnect();
-
-                    helper.succeed();
-                });
+                })
+                .thenSucceed();
     }
 }
