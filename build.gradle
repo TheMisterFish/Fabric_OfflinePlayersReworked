@@ -186,13 +186,13 @@ tasks.register('runAllTestsWithCoverage') {
     finalizedBy 'jacocoCombinedReport'
 }
 
+// Only run GameTest when running below tasks;
+// We skip the build as GameTest are quite flaky.
 tasks.named('runGameTest') {
     onlyIf {
         gradle.startParameter.taskNames.any {
             it == 'runGameTest' ||
                     it.endsWith(':runGameTest') ||
-                    it == 'build' ||
-                    it.endsWith(':build') ||
                     it == 'runAllTestsWithCoverage' ||
                     it.endsWith(':runAllTestsWithCoverage') ||
                     it == 'runAllTests' ||

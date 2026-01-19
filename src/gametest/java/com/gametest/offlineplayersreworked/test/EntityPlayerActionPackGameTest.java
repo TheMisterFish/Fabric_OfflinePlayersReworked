@@ -7,12 +7,10 @@ import com.offlineplayersreworked.core.EntityPlayerActionPack;
 import com.offlineplayersreworked.core.EntityPlayerActionPack.Action;
 import com.offlineplayersreworked.core.EntityPlayerActionPack.ActionType;
 import com.offlineplayersreworked.core.interfaces.ServerPlayerInterface;
-import com.offlineplayersreworked.utils.Tracer;
 import net.minecraft.commands.arguments.EntityAnchorArgument;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.AfterBatch;
 import net.minecraft.gametest.framework.GameTest;
-import net.minecraft.gametest.framework.GameTestAssertException;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
@@ -301,7 +299,7 @@ public class EntityPlayerActionPackGameTest {
                 .thenSucceed();
     }
 
-    @GameTest(template = EMPTY_STRUCTURE, batch = "EntityPlayerActionPackGameTest", timeoutTicks = 2000)
+    @GameTest(template = EMPTY_STRUCTURE, batch = "EntityPlayerActionPackGameTest")
     public static void attackEntityInFrontDealsDamage(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         MinecraftServer server = level.getServer();
@@ -324,18 +322,15 @@ public class EntityPlayerActionPackGameTest {
         float beforeHealth = target.getHealth();
         target.setInvulnerable(false);
 
+        target.moveTo(correctVec3.add(0, 0, 2));
+        testPlayer.lookAt( EntityAnchorArgument.Anchor.EYES, target.position().add(0, 0.5, 0) );
+
         EntityPlayerActionPack ap = ((ServerPlayerInterface) testPlayer).getActionPack();
-        ap.start(ActionType.ATTACK, Action.interval(15));
+        ap.start(ActionType.ATTACK, Action.interval(5));
 
         helper.startSequence()
                 .thenWaitUntil(() -> {
-                    if(!target.position().equals(correctVec3.add(0, 0, 2))){
-                        target.moveTo(correctVec3.add(0, 0, 2));
-                        testPlayer.lookAt( EntityAnchorArgument.Anchor.EYES, target.position().add(0, 0.5, 0) );
-                    }
-                    // This shouldn't do anything but seems to fix this test
-                    helper.getTick();
-
+                    testPlayer.tick();
                     helper.assertTrue(target.getHealth() < beforeHealth, "Target entity should have taken damage from ATTACK action");
                 })
                 .thenExecute(() -> {
@@ -367,9 +362,7 @@ public class EntityPlayerActionPackGameTest {
 
         helper.startSequence()
                 .thenWaitUntil(() -> helper.assertTrue(level.getBlockState(targetPos).isAir(), "Block should be broken by ATTACK action in creative mode"))
-                .thenExecute(() -> {
-                    testPlayer.disconnect();
-                })
+                .thenExecute(testPlayer::disconnect)
                 .thenSucceed();
     }
 
@@ -396,9 +389,7 @@ public class EntityPlayerActionPackGameTest {
 
         helper.startSequence()
                 .thenWaitUntil(() -> helper.assertTrue(level.getBlockState(targetPos).isAir(), "Block should be broken by ATTACK action in survival mode"))
-                .thenExecute(() -> {
-                    testPlayer.disconnect();
-                })
+                .thenExecute(testPlayer::disconnect)
                 .thenSucceed();
     }
 
@@ -426,6 +417,7 @@ public class EntityPlayerActionPackGameTest {
                 })
                 .thenWaitUntil(() -> {
                     lookAtBlockHitboxCenter(testPlayer, level, targetPos);
+                    testPlayer.tick();
                     BlockState state = level.getBlockState(targetPos);
                     helper.assertTrue(
                             state.getBlock() instanceof LeverBlock && state.getValue(LeverBlock.POWERED),
