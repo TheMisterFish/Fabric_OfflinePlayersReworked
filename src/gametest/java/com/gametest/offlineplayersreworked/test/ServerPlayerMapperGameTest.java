@@ -5,10 +5,9 @@ import com.gametest.offlineplayersreworked.Utils;
 import com.mojang.authlib.GameProfile;
 import com.offlineplayersreworked.config.ModConfigs;
 import com.offlineplayersreworked.utils.ServerPlayerMapper;
-import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
-import net.minecraft.gametest.framework.AfterBatch;
-import net.minecraft.gametest.framework.GameTest;
+import net.fabricmc.fabric.api.gametest.v1.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -18,12 +17,12 @@ import java.util.UUID;
 
 public class ServerPlayerMapperGameTest {
 
-    @AfterBatch(batch = "ServerPlayerMapperGameTest")
-    public static void deletePlayerData(ServerLevel serverLevel) {
-        Utils.clearOfflinePlayerStorageAndDisconnectPlayers(serverLevel);
-    }
+//    @AfterBatch(batch = "ServerPlayerMapperGameTest")
+//    public static void deletePlayerData(ServerLevel serverLevel) {
+//        Utils.clearOfflinePlayerStorageAndDisconnectPlayers(serverLevel);
+//    }
 
-    @GameTest(template = FabricGameTest.EMPTY_STRUCTURE, batch = "ServerPlayerMapperGameTest")
+    @GameTest
     public void testCopyPlayerData(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         MinecraftServer server = level.getServer();
@@ -43,23 +42,23 @@ public class ServerPlayerMapperGameTest {
 
         helper.assertTrue(
                 target.getHealth() == 5f,
-                "Target should have copied health"
+                Component.nullToEmpty("Target should have copied health")
         );
 
         helper.assertTrue(
                 target.getFoodData().getFoodLevel() == 7,
-                "Target should have copied food level"
+                Component.nullToEmpty("Target should have copied food level")
         );
 
         helper.assertTrue(
                 target.experienceLevel == 200,
-                "Target should have copied experience level"
+                Component.nullToEmpty("Target should have copied experience level")
         );
 
         helper.succeed();
     }
 
-    @GameTest(template = FabricGameTest.EMPTY_STRUCTURE, batch = "ServerPlayerMapperGameTest")
+    @GameTest
     public void testCopyPlayerRights(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         MinecraftServer server = level.getServer();
@@ -86,12 +85,12 @@ public class ServerPlayerMapperGameTest {
 
         helper.assertTrue(
                 playerList.isWhiteListed(target.getGameProfile()),
-                "Target should be whitelisted after copying"
+                Component.nullToEmpty("Target should be whitelisted after copying")
         );
 
         helper.assertTrue(
                 playerList.isOp(target.getGameProfile()),
-                "Target should be OP after copying"
+                Component.nullToEmpty("Target should be OP after copying")
         );
 
         ModConfigs.AUTO_WHITELIST = oldAutoWhitelist;
@@ -99,7 +98,7 @@ public class ServerPlayerMapperGameTest {
         helper.succeed();
     }
 
-    @GameTest(template = FabricGameTest.EMPTY_STRUCTURE, batch = "ServerPlayerMapperGameTest")
+    @GameTest
     public void testCopyPlayerSkin(GameTestHelper helper) {
         boolean oldCopySkin = ModConfigs.COPY_SKIN;
         ModConfigs.COPY_SKIN = true;
@@ -120,12 +119,12 @@ public class ServerPlayerMapperGameTest {
 
         helper.assertTrue(
                 target.getProperties().containsKey("textures"),
-                "Target should have textures property copied"
+                Component.nullToEmpty("Target should have textures property copied")
         );
 
         helper.assertTrue(
                 target.getProperties().get("textures").iterator().next().value().equals("FAKE_TEXTURE_DATA"),
-                "Texture data should match"
+                Component.nullToEmpty("Texture data should match")
         );
 
         ModConfigs.COPY_SKIN = oldCopySkin;

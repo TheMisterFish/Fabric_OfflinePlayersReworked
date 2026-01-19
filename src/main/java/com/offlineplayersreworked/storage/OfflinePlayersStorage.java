@@ -1,5 +1,7 @@
 package com.offlineplayersreworked.storage;
 
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
 import com.offlineplayersreworked.OfflinePlayersReworked;
 import com.offlineplayersreworked.storage.model.OfflinePlayerModel;
 import net.minecraft.core.HolderLookup;
@@ -8,12 +10,14 @@ import net.minecraft.nbt.ListTag;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.datafix.DataFixTypes;
 import net.minecraft.world.level.saveddata.SavedData;
+import net.minecraft.world.level.saveddata.SavedDataType;
 import net.minecraft.world.level.storage.DimensionDataStorage;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 public class OfflinePlayersStorage extends SavedData {
@@ -23,46 +27,66 @@ public class OfflinePlayersStorage extends SavedData {
         super();
     }
 
+    public static final Codec<OfflinePlayersStorage> CODEC =
+            RecordCodecBuilder.create(instance -> instance.group(
+                    OfflinePlayerModel.CODEC.listOf()
+                            .fieldOf("offline_players")
+                            .forGetter(storage -> storage.offlinePlayers)
+            ).apply(instance, OfflinePlayersStorage::newFromList));
+
+    private static OfflinePlayersStorage newFromList(List<OfflinePlayerModel> players) {
+        OfflinePlayersStorage storage = new OfflinePlayersStorage();
+        storage.offlinePlayers.addAll(players);
+        return storage;
+    }
+
+    public static final SavedDataType<OfflinePlayersStorage> TYPE =
+            new SavedDataType<>(
+                    OfflinePlayersReworked.MOD_ID + "_storage",
+                    ctx -> new OfflinePlayersStorage(),
+                    ctx -> OfflinePlayersStorage.CODEC,
+                    DataFixTypes.PLAYER
+            );
+
     public static OfflinePlayersStorage getStorage(MinecraftServer server) {
         DimensionDataStorage storage = server.overworld().getDataStorage();
-        return storage.computeIfAbsent(
-                new SavedData.Factory<>(
-                        OfflinePlayersStorage::new,
-                        OfflinePlayersStorage::load,
-                        DataFixTypes.PLAYER
-                ),
-                OfflinePlayersReworked.MOD_ID + "_storage"
-        );
+        return storage.computeIfAbsent(TYPE);
     }
+
+
 
     public static OfflinePlayersStorage load(CompoundTag tag, HolderLookup.Provider provider) {
         OfflinePlayersStorage storage = new OfflinePlayersStorage();
-        ListTag playerList = tag.getList("OfflinePlayers", 10);
+        Optional<ListTag> playerList = tag.getList("OfflinePlayers");
 
-        for (int i = 0; i < playerList.size(); i++) {
-            CompoundTag playerTag = playerList.getCompound(i);
-            OfflinePlayerModel player = OfflinePlayerModel.fromTag(playerTag);
-            storage.offlinePlayers.add(player);
+        if(playerList.isPresent()) {
+            for (int i = 0; i < playerList.get().size(); i++) {
+                Optional<CompoundTag> playerTag = playerList.get().getCompound(i);
+                if(playerTag.isPresent()){
+                    OfflinePlayerModel player = OfflinePlayerModel.fromTag(playerTag.get());
+                    storage.offlinePlayers.add(player);
+                }
+            }
         }
+
 
         return storage;
     }
 
-    @Override
-    public @NotNull CompoundTag save(@NotNull CompoundTag compoundTag, HolderLookup.@NotNull Provider provider) {
+    public CompoundTag save(CompoundTag tag, HolderLookup.Provider provider) {
         ListTag playerList = new ListTag();
         for (OfflinePlayerModel player : offlinePlayers) {
             playerList.add(player.toTag());
         }
-        compoundTag.put("OfflinePlayers", playerList);
-        return compoundTag;
+        tag.put("OfflinePlayers", playerList);
+        return tag;
     }
 
     public List<OfflinePlayerModel> findAll() {
         return new ArrayList<>(offlinePlayers);
     }
 
-    public void create(UUID offlinePlayerUUID, UUID playerUUID, String[] actions, double x, double y, double z) {
+    public void create(UUID offlinePlayerUUID, UUID playerUUID, List<String> actions, double x, double y, double z) {
         OfflinePlayerModel offlinePlayer = new OfflinePlayerModel(offlinePlayerUUID, playerUUID, actions, x, y, z);
         offlinePlayers.add(offlinePlayer);
         this.setDirty();
