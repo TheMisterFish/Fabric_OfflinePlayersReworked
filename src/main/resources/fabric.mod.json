@@ -16,7 +16,7 @@
 	"environment": "*",
 	"entrypoints": {
 		"server": [
-			"com.misterfish.OfflinePlayersReworked"
+			"com.offlineplayersreworked.OfflinePlayersReworked"
 		]
 	},
 	"mixins": [
