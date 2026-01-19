@@ -19,6 +19,7 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.item.ItemStack;
@@ -313,7 +314,7 @@ public class EntityPlayerActionPackGameTest {
                 .placeOfflinePlayer(server);
         testPlayer.getInventory().selected = 0;
 
-        Villager target = EntityType.VILLAGER.create(level);
+        Villager target = EntityType.VILLAGER.create(level, EntitySpawnReason.NATURAL);
         assert target != null;
 
         level.addFreshEntity(target);
@@ -380,7 +381,7 @@ public class EntityPlayerActionPackGameTest {
         testPlayer.getInventory().selected = 0;
         testPlayer.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(Items.DIAMOND_PICKAXE));
 
-        BlockPos targetPos = new BlockPos((int) startingPoint.x, (int) startingPoint.y(), (int) startingPoint.z);
+        BlockPos targetPos = new BlockPos((int) startingPoint.x, (int) startingPoint.y(), (int) startingPoint.z + 2);
         createBlockScenario(helper, targetPos, Blocks.STONE);
         testPlayer.lookAt(EntityAnchorArgument.Anchor.EYES, Vec3.atBottomCenterOf(targetPos));
 
@@ -428,8 +429,8 @@ public class EntityPlayerActionPackGameTest {
                     level.removeBlock(targetPos, false);
                     helper.assertTrue(level.getBlockState(targetPos).isAir(), "Lever should be removed");
                 })
-                .thenExecute(() -> createVehicleScenario(helper, testPlayer, EntityType.BOAT))
-                .thenWaitUntil(() -> assertVehicleScenario(helper, testPlayer, EntityType.BOAT))
+                .thenExecute(() -> createVehicleScenario(helper, testPlayer, EntityType.OAK_BOAT))
+                .thenWaitUntil(() -> assertVehicleScenario(helper, testPlayer, EntityType.OAK_BOAT))
                 .thenExecute(() -> Objects.requireNonNull(testPlayer.getVehicle()).discard())
                 .thenExecute(() -> createVehicleScenario(helper, testPlayer, EntityType.MINECART))
                 .thenWaitUntil(() -> assertVehicleScenario(helper, testPlayer, EntityType.MINECART))
@@ -456,7 +457,7 @@ public class EntityPlayerActionPackGameTest {
                     testPlayer.getInventory().setItem(0, new ItemStack(Items.STONE, 1));
                     testPlayer.getInventory().selected = 0;
 
-                    testPlayer.lookAt(EntityAnchorArgument.Anchor.EYES, Vec3.atCenterOf(targetPos).add(0, -0.5, 0));
+                    testPlayer.lookAt(EntityAnchorArgument.Anchor.EYES, Vec3.atCenterOf(targetPos));
                     helper.assertTrue(level.getBlockState(targetPos).isAir(), "Stone should not have been placed yet");
                 })
                 .thenWaitUntil(() -> {
@@ -487,7 +488,7 @@ public class EntityPlayerActionPackGameTest {
 
     private static void createVehicleScenario(GameTestHelper helper, ServerPlayer testPlayer, EntityType<?> entityType) {
         ServerLevel level = helper.getLevel();
-        Entity target = entityType.create(level);
+        Entity target = entityType.create(level, EntitySpawnReason.NATURAL);
         assert target != null;
         level.addFreshEntity(target);
         target.moveTo(testPlayer.position().add(0, 0, 2));
