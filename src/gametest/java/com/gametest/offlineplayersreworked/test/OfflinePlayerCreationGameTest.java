@@ -10,6 +10,8 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.gametest.framework.AfterBatch;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -17,9 +19,12 @@ import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.damagesource.DamageType;
 import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.monster.Zombie;
 import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.level.GameType;
 
 import java.util.Objects;
@@ -167,7 +172,7 @@ public class OfflinePlayerCreationGameTest {
         helper.assertTrue(offlinePlayer.getDisplayName().getString().equals("[OFF]" + playerName),
                 "OfflinePlayer name is correct");
 
-        Zombie zombie = EntityType.ZOMBIE.create(level);
+        Zombie zombie = EntityType.ZOMBIE.create(level, EntitySpawnReason.NATURAL);
         if (zombie == null) {
             helper.fail("Could not create zombie");
             return;
@@ -175,18 +180,24 @@ public class OfflinePlayerCreationGameTest {
         zombie.setNoAi(true);
         zombie.moveTo(offlinePlayer.getX(), offlinePlayer.getY(), offlinePlayer.getZ(), 0.0F, 0.0F);
         level.addFreshEntity(zombie);
-        offlinePlayer.setLastHurtByMob(zombie);
-        Holder<DamageType> mobAttackType = level.registryAccess()
-                .registryOrThrow(Registries.DAMAGE_TYPE)
-                .getHolderOrThrow(DamageTypes.MOB_ATTACK);
 
+        offlinePlayer.getInventory().selected = 0;
+        offlinePlayer.getInventory().setItem(0, new ItemStack(Items.AIR, 0));
+        offlinePlayer.getInventory().setItem(Inventory.SLOT_OFFHAND, new ItemStack(Items.AIR, 0));
+        offlinePlayer.setLastHurtByMob(zombie);
+
+        Holder<DamageType> mobAttackType = level.holderLookup(Registries.DAMAGE_TYPE)
+                .getOrThrow(DamageTypes.MOB_ATTACK);
+
+        offlinePlayer.invulnerableTime = 0;
         helper.startSequence()
+                .thenIdle(60)
                 .thenWaitUntil(() -> {
                     float damage = offlinePlayer.getHealth() + 1.0F;
                     offlinePlayer.invulnerableTime = 0;
-                    offlinePlayer.hurt(new DamageSource(mobAttackType, zombie, zombie), damage);
-
-                    helper.assertTrue(offlinePlayer.isDeadOrDying(), "Player should be dead or dying");
+                    offlinePlayer.hurtServer(level, new DamageSource(mobAttackType, zombie, zombie), damage);
+                    var isOnline = server.getPlayerList().getPlayerByName("[OFF]" + playerName);
+                    helper.assertTrue(isOnline == null, "Offlineplayer not be online");
                 })
                 .thenExecute(() -> zombie.remove(Entity.RemovalReason.DISCARDED))
                 .thenIdle(5)
