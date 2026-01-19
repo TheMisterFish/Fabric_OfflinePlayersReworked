@@ -1,95 +1,235 @@
 plugins {
-	id 'fabric-loom' version '1.7-SNAPSHOT'
-	id 'maven-publish'
-	id 'io.github.juuxel.loom-quiltflower' version '1.7.3'
-	id 'io.freefair.lombok' version '8.6'
+    id 'fabric-loom' version "${loom_version}"
+    id 'maven-publish'
+    id 'io.freefair.lombok' version "${lombok_version}"
+    id 'jacoco'
 }
 
 version = project.mod_version
 group = project.maven_group
 
 loom {
-	accessWidenerPath = file("src/main/resources/offlineplayersreworked.accesswidener")
-	runtimeOnlyLog4j = true
+    accessWidenerPath = file("src/main/resources/offlineplayersreworked.accesswidener")
+    runtimeOnlyLog4j = true
 }
 
 base {
-	archivesName = project.archives_base_name
+    archivesName = project.archives_base_name
 }
 
 repositories {
-	// Add repositories to retrieve artifacts from in here.
-	// You should only use this when depending on other mods because
-	// Loom adds the essential maven repositories to download Minecraft and libraries from automatically.
-	// See https://docs.gradle.org/current/userguide/declaring_repositories.html
-	// for more information about repositories.
-	maven {
-		url = "https://api.modrinth.com/maven"
-	}
+    // Add repositories to retrieve artifacts from in here.
+    // You should only use this when depending on other mods because
+    // Loom adds the essential maven repositories to download Minecraft and libraries from automatically.
+    // See https://docs.gradle.org/current/userguide/declaring_repositories.html
+    // for more information about repositories.
+    maven {
+        url = "https://api.modrinth.com/maven"
+    }
 }
 
-dependencies {
-	// To change the versions see the gradle.properties file
-	minecraft "com.mojang:minecraft:${project.minecraft_version}"
-	mappings loom.officialMojangMappings()
-	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
+configurations { jacocoAgent }
 
-	// Fabric API. This is technically optional, but you probably want it anyway.
-	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
+dependencies {
+    // To change the versions see the gradle.properties file
+    minecraft "com.mojang:minecraft:${project.minecraft_version}"
+    mappings loom.officialMojangMappings()
+    modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
+
+    // Fabric API. This is technically optional, but you probably want it anyway.
+    modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
+
+    // Unit testing
+    testImplementation "net.fabricmc:fabric-loader-junit:${project.loader_version}"
+    testImplementation("org.mockito:mockito-core:2.1.0")
 }
 
 processResources {
-	inputs.property "version", project.version
+    inputs.property "version", project.version
 
-	filesMatching("fabric.mod.json") {
-		expand "version": project.version
-	}
+    filesMatching("fabric.mod.json") {
+        expand "version": project.version
+    }
 }
 
 tasks.withType(JavaCompile).configureEach {
-	it.options.release = 21
+    it.options.release = 21
 }
 
 java {
-	// Loom will automatically attach sourcesJar to a RemapSourcesJar task and to the "build" task
-	// if it is present.
-	// If you remove this line, sources will not be generated.
-	withSourcesJar()
+    // Loom will automatically attach sourcesJar to a RemapSourcesJar task and to the "build" task
+    // if it is present.
+    // If you remove this line, sources will not be generated.
+    withSourcesJar()
 
-	sourceCompatibility = JavaVersion.VERSION_21
-	targetCompatibility = JavaVersion.VERSION_21
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
 }
 
+test {
+    useJUnitPlatform()
+    testLogging {
+        events "started", "passed", "skipped", "failed"
+        exceptionFormat "full"
+        showStandardStreams = true
+    }
+    finalizedBy jacocoTestReport
+}
+
+jacoco {
+    toolVersion = "${project.jacoco_version}"
+}
+
+def mixinExclude = '**/offlineplayersreworked/mixin/**'
+
+jacocoTestReport {
+    reports {
+        xml.required = false
+        csv.required = false
+        html.outputLocation = layout.buildDirectory.dir('reports/jacocoRunUnitTestHtml')
+    }
+
+    afterEvaluate {
+        classDirectories.setFrom(files(classDirectories.files.collect {
+            fileTree(dir: it, exclude: mixinExclude)
+        }))
+    }
+}
+
+fabricApi {
+    configureTests {
+        createSourceSet = true
+        modId = "gametest-${project.name}"
+        eula = true
+    }
+}
+
+def runGameTestExec = file("$buildDir/jacoco/runGameTest.exec")
+def unitTestExec = file("$buildDir/jacoco/test.exec")
+
+tasks.matching { it.name == 'runGameTest' && it instanceof JavaExec }.configureEach {
+    doFirst {
+        // create a detached configuration for the agent and resolve it only now
+        def agentDep = dependencies.create("org.jacoco:org.jacoco.agent:${project.jacoco_version}:runtime@jar")
+        def agentConfig = configurations.detachedConfiguration(agentDep)
+        def agentFile = agentConfig.singleFile
+
+        if (!agentFile.exists()) {
+            throw new GradleException("JaCoCo agent not found: ${agentFile}")
+        }
+
+        jvmArgs += "-javaagent:${agentFile}=destfile=${runGameTestExec},append=false"
+        logger.lifecycle("JaCoCo agent attached to runGameTest -> ${runGameTestExec}")
+    }
+}
+
+tasks.register('jacocoRunGameTestReport', JacocoReport) {
+    group = 'verification'
+    description = 'Generates JaCoCo report for runGameTest execution'
+
+    executionData.setFrom(files(runGameTestExec))
+    def mainOutput = project.sourceSets.main.output
+
+    classDirectories.setFrom(files(mainOutput.classesDirs.files.collect { dir ->
+        fileTree(dir: dir, exclude: mixinExclude)
+    }))
+
+    sourceDirectories.setFrom(project.sourceSets.main.allSource.srcDirs)
+
+    reports {
+        html.required.set(true)
+        xml.required.set(false)
+        csv.required.set(false)
+        html.outputLocation.set(layout.buildDirectory.dir('reports/jacocoRunGameTestHtml'))
+    }
+}
+
+tasks.register('runGameTestWithCoverage') {
+    group = 'verification'
+    description = 'Runs runGameTest with JaCoCo agent and generates coverage report'
+    dependsOn 'runGameTest'
+    finalizedBy 'jacocoRunGameTestReport'
+}
+
+tasks.register('jacocoCombinedReport', JacocoReport) {
+    group = 'verification'
+    description = 'Combine JaCoCo exec files from unit tests and gametests and generate a single report.'
+
+    // only include exec files that actually exist to avoid errors
+    def execFiles = files(unitTestExec, runGameTestExec).filter { it.exists() }
+    executionData.setFrom(execFiles)
+
+    def mainOutput = project.sourceSets.main.output
+    classDirectories.setFrom(files(mainOutput.classesDirs.files.collect { dir ->
+        fileTree(dir: dir, exclude: '**/offlineplayersreworked/mixin/**')
+    }))
+    sourceDirectories.setFrom(project.sourceSets.main.allSource.srcDirs)
+
+    reports {
+        html.required.set(true)
+        xml.required.set(false)
+        csv.required.set(false)
+        html.outputLocation.set(layout.buildDirectory.dir('reports/jacocoCombinedHtml'))
+    }
+}
+
+tasks.register('runAllTests') {
+    group = 'verification'
+    description = 'Run unit tests and gametests.'
+    dependsOn 'clean', 'test', 'runGameTest'
+}
+
+tasks.register('runAllTestsWithCoverage') {
+    group = 'verification'
+    description = 'Run unit tests and gametests.'
+    dependsOn 'clean', 'test', 'runGameTestWithCoverage'
+    finalizedBy 'jacocoCombinedReport'
+}
+
+// Only run GameTest when running below tasks;
+// We skip the build as GameTest are quite flaky.
+tasks.named('runGameTest') {
+    onlyIf {
+        gradle.startParameter.taskNames.any {
+            it == 'runGameTest' ||
+                    it.endsWith(':runGameTest') ||
+                    it == 'runAllTestsWithCoverage' ||
+                    it.endsWith(':runAllTestsWithCoverage') ||
+                    it == 'runAllTests' ||
+                    it.endsWith(':runAllTests')
+        }
+    }
+}
+
+
 jar {
-	from("LICENSE") {
-		rename { "${it}_${project.base.archivesName.get()}"}
-	}
-	duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    from("LICENSE") {
+        rename { "${it}_${project.base.archivesName.get()}" }
+    }
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
 
 // configure the maven publication
 publishing {
-	publications {
-		mavenJava(MavenPublication) {
-			artifactId = project.archives_base_name
+    publications {
+        mavenJava(MavenPublication) {
+            artifactId = project.archives_base_name
 
-			artifact(remapJar.archiveFile) {
-				builtBy remapJar
-				classifier null
-			}
+            artifact(remapJar.archiveFile) {
+                builtBy remapJar
+                classifier null
+            }
 
-			artifact(sourcesJar) {
-				builtBy remapSourcesJar
-				classifier "sources"
-			}
-		}
-	}
+            artifact(sourcesJar) {
+                builtBy remapSourcesJar
+                classifier "sources"
+            }
+        }
+    }
 
-	// See https://docs.gradle.org/current/userguide/publishing_maven.html for information on how to set up publishing.
-	repositories {
-		// Add repositories to publish to here.
-		// Notice: This block does NOT have the same function as the block in the top level.
-		// The repositories here will be used for publishing your artifact, not for
-		// retrieving dependencies.
-	}
+    // See https://docs.gradle.org/current/userguide/publishing_maven.html for information on how to set up publishing.
+    repositories {
+        mavenCentral()
+        maven { url = "https://api.modrinth.com/maven" }
+    }
 }
