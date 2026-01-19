@@ -19,6 +19,7 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ClientInformation;
+import net.minecraft.server.level.ParticleStatus;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.CommonListenerCookie;
@@ -32,6 +33,7 @@ import org.apache.commons.lang3.StringUtils;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 
 import static com.offlineplayersreworked.OfflinePlayersReworked.manipulate;
@@ -231,8 +233,10 @@ public class OfflinePlayerBuilder {
                 sourcePlayer.getX(),
                 sourcePlayer.getY(),
                 sourcePlayer.getZ(),
+                Set.of(),
                 sourcePlayer.getYRot(),
-                sourcePlayer.getXRot()
+                sourcePlayer.getXRot(),
+                false
         );
 
         ((ServerPlayerInterface) offlinePlayer).getActionPack()
@@ -266,7 +270,7 @@ public class OfflinePlayerBuilder {
     public OfflinePlayerBuilder spawn() {
         if (failed()) return this;
 
-        var clientInformation = new ClientInformation("", 0, ChatVisiblity.FULL, true, 0, HumanoidArm.RIGHT, false, false);
+        var clientInformation = new ClientInformation("", 0, ChatVisiblity.FULL, true, 0, HumanoidArm.RIGHT, false, false, ParticleStatus.ALL);
         server.getPlayerList().placeNewPlayer(new FakeClientConnection(PacketFlow.SERVERBOUND), offlinePlayer, new CommonListenerCookie(offlinePlayer.getGameProfile(), 0, clientInformation, true));
 
         offlinePlayer.fixStartingPosition.run();

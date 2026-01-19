@@ -11,7 +11,9 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.damagesource.DamageType;
+import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.monster.Zombie;
 import net.minecraft.world.phys.Vec3;
@@ -22,18 +24,13 @@ public class DamageSourceSerializerGameTest {
     public void testSerializeDeserializeDamageSource(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
 
-        Zombie zombie = EntityType.ZOMBIE.create(level);
+        Zombie zombie = EntityType.ZOMBIE.create(level, EntitySpawnReason.NATURAL);
         assert zombie != null;
         zombie.moveTo(helper.absoluteVec(new Vec3(1, 0, 1)));
         level.addFreshEntity(zombie);
 
-        Holder<DamageType> mobAttackHolder = level.registryAccess()
-                .registryOrThrow(Registries.DAMAGE_TYPE)
-                .getHolder(ResourceKey.create(
-                        Registries.DAMAGE_TYPE,
-                        ResourceLocation.tryParse("mob_attack")
-                ))
-                .orElseThrow(() -> new AssertionError("Missing damage type: mob_attack"));
+        Holder<DamageType> mobAttackHolder = level.holderLookup(Registries.DAMAGE_TYPE)
+                .getOrThrow(DamageTypes.MOB_ATTACK);
 
         DamageSource original = new DamageSource(mobAttackHolder, zombie, zombie);
 
