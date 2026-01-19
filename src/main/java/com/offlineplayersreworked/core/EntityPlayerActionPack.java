@@ -17,6 +17,7 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.entity.decoration.ItemFrame;
 import net.minecraft.world.food.FoodProperties;
@@ -236,15 +237,25 @@ public class EntityPlayerActionPack {
             @Override
             boolean execute(ServerPlayer player, Action action) {
                 HitResult hit = getTarget(player);
+
                 switch (hit.getType()) {
                     case ENTITY -> {
                         EntityHitResult entityHit = (EntityHitResult) hit;
+                        Entity target = entityHit.getEntity();
+
+                        LivingEntity living = (target instanceof LivingEntity le) ? le : null;
+                        float beforeHealth = (living != null) ? living.getHealth() : Float.NaN;
+
                         if (!action.isContinuous) {
-                            player.attack(entityHit.getEntity());
+                            player.attack(target);
                             player.swing(InteractionHand.MAIN_HAND);
                         }
-                        player.resetAttackStrengthTicker();
+
+                        if (living != null && living.getHealth() != beforeHealth) {
+                            player.resetAttackStrengthTicker();
+                        }
                         player.resetLastActionTime();
+
                         return true;
                     }
                     case BLOCK -> {
