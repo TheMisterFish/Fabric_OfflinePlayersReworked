@@ -12,6 +12,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.damagesource.DamageType;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.player.Player;
 
@@ -62,10 +63,10 @@ public class DamageSourceSerializer {
                 return level.damageSources().generic();
             }
 
-            Holder<DamageType> damageTypeHolder = level.registryAccess()
-                    .registryOrThrow(Registries.DAMAGE_TYPE)
-                    .getHolder(ResourceKey.create(Registries.DAMAGE_TYPE, damageTypeLocation))
+            Holder<DamageType> damageTypeHolder = level.holderLookup(Registries.DAMAGE_TYPE)
+                    .get(ResourceKey.create(Registries.DAMAGE_TYPE, damageTypeLocation))
                     .orElse(null);
+
             if (damageTypeHolder == null) {
                 log.warn("Unknown damage type: {}. Using generic damage.", damageTypeId);
                 return level.damageSources().generic();
@@ -77,13 +78,13 @@ public class DamageSourceSerializer {
                 if ("player".equals(sourceEntityTag.getString("entityType"))) {
                     sourceEntity = new DamageSourcePlayer(level, sourceEntityTag.getUUID("playerUUID"), sourceEntityTag.getString("playerName"));
                 } else {
-                    sourceEntity = EntityType.loadEntityRecursive(sourceEntityTag, level, entity -> entity);
+                    sourceEntity = EntityType.loadEntityRecursive(sourceEntityTag, level, EntitySpawnReason.NATURAL, entity -> entity);
                 }
             }
 
             Entity directEntity = null;
             if (tag.contains("directEntity")) {
-                directEntity = EntityType.loadEntityRecursive(tag.getCompound("directEntity"), level, entity -> entity);
+                directEntity = EntityType.loadEntityRecursive(tag.getCompound("directEntity"), level, EntitySpawnReason.NATURAL, entity -> entity);
             }
 
             return new DamageSource(damageTypeHolder, directEntity, sourceEntity);
