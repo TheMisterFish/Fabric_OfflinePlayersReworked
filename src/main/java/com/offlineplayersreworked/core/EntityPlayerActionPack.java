@@ -95,7 +95,6 @@ public class EntityPlayerActionPack {
     public EntityPlayerActionPack look(float yaw, float pitch) {
         player.setYRot(yaw % 360); //setYaw
         player.setXRot(Mth.clamp(pitch, -90, 90)); // setPitch
-        // maybe player.moveTo(player.getX(), player.getY(), player.getZ(), yaw, Mth.clamp(pitch,-90.0F, 90.0F));
         return this;
     }
 
@@ -442,14 +441,13 @@ public class EntityPlayerActionPack {
         }
 
         private static boolean isAlwaysConsumableItem(Item item, ServerPlayer player) {
-//            if (item instanceof PotionItem && !(item instanceof SplashPotionItem)) {
-//                return true;
-//            }
-//            if (item instanceof OminousBottleItem) {
-//                return !player.hasEffect(MobEffects.BAD_OMEN) && !player.hasEffect(MobEffects.RAID_OMEN);
-//            }
-//            return item instanceof MilkBucketItem || item instanceof HoneyBottleItem;
-            return true;
+            if (item instanceof PotionItem && !(item instanceof SplashPotionItem)) {
+                return true;
+            }
+            if (item.toString().equals("minecraft:ominous_bottle")) {
+                return !player.hasEffect(MobEffects.BAD_OMEN) && !player.hasEffect(MobEffects.RAID_OMEN);
+            }
+            return item.toString().equals("minecraft:honey_bottle") || item.toString().equals("minecraft:milk_bucket");
         }
 
     }

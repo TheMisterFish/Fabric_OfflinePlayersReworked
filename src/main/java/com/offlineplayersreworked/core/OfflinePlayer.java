@@ -23,12 +23,11 @@ import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.vehicle.AbstractBoat;
 import net.minecraft.world.food.FoodData;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.portal.TeleportTransition;
-import net.minecraft.world.scores.Team;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
@@ -62,9 +61,9 @@ public class OfflinePlayer extends ServerPlayer {
                 .loadPlayerData()
                 .resolveDimension()
                 .createOfflinePlayer()
-                .applyStoredPosition()
                 .applySkinOverride()
                 .spawn()
+                .applyStoredPosition()
                 .startActions(offlinePlayerModel)
                 .build();
     }
@@ -113,6 +112,21 @@ public class OfflinePlayer extends ServerPlayer {
         } catch (NullPointerException ignored) {
             // happens with that paper port thingy - not sure what that would fix, but hey
             // the game not gonna crash violently.
+        }
+    }
+
+    @Override
+    public boolean startRiding(Entity entityToRide, boolean force) {
+        if (super.startRiding(entityToRide, force)) {
+            // from ClientPacketListener.handleSetEntityPassengersPacket
+            if (entityToRide instanceof AbstractBoat) {
+                this.yRotO = entityToRide.getYRot();
+                this.setYRot(entityToRide.getYRot());
+                this.setYHeadRot(entityToRide.getYRot());
+            }
+            return true;
+        } else {
+            return false;
         }
     }
 

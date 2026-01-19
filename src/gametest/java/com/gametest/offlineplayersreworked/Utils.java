@@ -54,17 +54,18 @@ public class Utils {
             }
         }
 
-        for (int i = 0; i < invA.armor.size(); i++) {
-            ItemStack sA = invA.armor.get(i);
-            ItemStack sB = invB.armor.get(i);
+        for (int slot = 36; slot <= 39; slot++) {
+            ItemStack sA = invA.getItem(slot);
+            ItemStack sB = invB.getItem(slot);
 
             if (!ItemStack.matches(sA, sB)) {
-                result.add("Armor slot " + i + " differs: " + sA + " vs " + sB);
+                result.add("Armor slot " + slot + " differs: " + sA + " vs " + sB);
             }
         }
 
-        ItemStack offA = invA.offhand.getFirst();
-        ItemStack offB = invB.offhand.getFirst();
+
+        ItemStack offA = invA.getItem(40);
+        ItemStack offB = invB.getItem(40);
         if (!ItemStack.matches(offA, offB)) {
             result.add("Offhand differs: " + offA + " vs " + offB);
         }
@@ -114,16 +115,13 @@ public class Utils {
             tgt.setItem(i, s.isEmpty() ? ItemStack.EMPTY : s.copy());
         }
 
-        int armorSize = Math.min(tgt.armor.size(), source.armor.size());
-        for (int i = 0; i < armorSize; i++) {
-            ItemStack s = source.armor.get(i);
-            tgt.armor.set(i, s.isEmpty() ? ItemStack.EMPTY : s.copy());
+        for (int slot = 36; slot <= 39; slot++) {
+            ItemStack s = source.getItem(slot);
+            tgt.setItem(slot, s.isEmpty() ? ItemStack.EMPTY : s.copy());
         }
 
-        ItemStack off = source.offhand.getFirst();
-        tgt.offhand.set(0, off.isEmpty() ? ItemStack.EMPTY : off.copy());
-
-        tgt.selected = Math.max(0, Math.min(source.selected, tgt.getContainerSize() - 1));
+        ItemStack off = source.getItem(40);
+        tgt.setItem(40, off.isEmpty() ? ItemStack.EMPTY : off.copy());
     }
 
     public static void clearOfflinePlayerStorageAndDisconnectPlayers(ServerLevel serverLevel) {

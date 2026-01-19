@@ -1,6 +1,8 @@
 package com.gametest.offlineplayersreworked.mixin;
 
+import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.GameProfileRepository;
+import com.mojang.authlib.ProfileLookupCallback;
 import com.mojang.datafixers.DataFixer;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.Services;
@@ -23,6 +25,7 @@ import java.net.Proxy;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Optional;
 
 @Mixin(MinecraftServer.class)
 public abstract class MinecraftServerMixin {
@@ -73,9 +76,18 @@ public abstract class MinecraftServerMixin {
     @Inject(method = "getProfileCache", at = @At("HEAD"), cancellable = true)
     private void test(CallbackInfoReturnable<GameProfileCache> cir) {
         File dummyFile = new File("usercache.json");
-        GameProfileRepository repo = (names, callback) -> {
-            //no-op
+        GameProfileRepository repo = new GameProfileRepository() {
+            @Override
+            public void findProfilesByNames(String[] strings, ProfileLookupCallback profileLookupCallback) {
+                //no-op
+            }
+
+            @Override
+            public Optional<GameProfile> findProfileByName(String s) {
+                return Optional.empty();
+            }
         };
+
         GameProfileCache cache = new GameProfileCache(repo, dummyFile);
 
         cir.setReturnValue(cache);

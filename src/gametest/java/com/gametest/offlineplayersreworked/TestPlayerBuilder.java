@@ -165,15 +165,18 @@ public class TestPlayerBuilder {
 
             Inventory inv = player.getInventory();
 
-            inv.armor.set(3, new ItemStack(helmets.get(random.nextInt(helmets.size()))));
-            inv.armor.set(2, new ItemStack(chestplates.get(random.nextInt(chestplates.size()))));
-            inv.armor.set(1, new ItemStack(leggings.get(random.nextInt(leggings.size()))));
-            inv.armor.set(0, new ItemStack(boots.get(random.nextInt(boots.size()))));
+            inv.setItem(3, new ItemStack(helmets.get(random.nextInt(helmets.size()))));
 
-            int selected = Math.max(0, Math.min(inv.getContainerSize() - 1, inv.selected));
+            inv.setItem(39, new ItemStack(helmets.get(random.nextInt(helmets.size()))));
+            inv.setItem(38, new ItemStack(chestplates.get(random.nextInt(chestplates.size()))));
+            inv.setItem(37, new ItemStack(leggings.get(random.nextInt(leggings.size()))));
+            inv.setItem(36, new ItemStack(boots.get(random.nextInt(boots.size()))));
+
+            int selected = Math.max(0, Math.min(inv.getContainerSize() - 1, inv.getSelectedSlot()));
             inv.setItem(selected, new ItemStack(weapons.get(random.nextInt(weapons.size()))));
 
-            inv.offhand.set(0, new ItemStack(offhandItems.get(random.nextInt(offhandItems.size()))));
+            inv.setItem(40, new ItemStack(offhandItems.get(random.nextInt(offhandItems.size()))));
+
         });
 
         return this;
@@ -252,7 +255,7 @@ public class TestPlayerBuilder {
         server.getPlayerList().placeNewPlayer(connection, fake, cookie);
 
         if (pos != null) {
-            fake.moveTo(pos);
+            fake.teleportTo(pos.x, pos.y, pos.z);
         }
 
         return fake;
@@ -278,7 +281,7 @@ public class TestPlayerBuilder {
         server.getPlayerList().placeNewPlayer(connection, fake, cookie);
 
         if (pos != null) {
-            fake.moveTo(pos);
+            fake.teleportTo(pos.x, pos.y, pos.z);
         }
 
         return fake;

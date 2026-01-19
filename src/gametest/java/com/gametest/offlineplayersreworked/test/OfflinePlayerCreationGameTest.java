@@ -4,14 +4,12 @@ import com.gametest.offlineplayersreworked.TestPlayerBuilder;
 import com.gametest.offlineplayersreworked.Utils;
 import com.gametest.offlineplayersreworked.tracker.DeathTracker;
 import com.gametest.offlineplayersreworked.tracker.DisconnectTracker;
+import net.fabricmc.fabric.api.gametest.v1.GameTest;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.gametest.framework.AfterBatch;
-import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
-import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -29,16 +27,14 @@ import net.minecraft.world.level.GameType;
 
 import java.util.Objects;
 
-import static net.fabricmc.fabric.api.gametest.v1.FabricGameTest.EMPTY_STRUCTURE;
-
 public class OfflinePlayerCreationGameTest {
 
-    @AfterBatch(batch = "OfflinePlayerCreationGameTest")
-    public static void deletePlayerData(ServerLevel serverLevel) {
-        Utils.clearOfflinePlayerStorageAndDisconnectPlayers(serverLevel);
-    }
+//    @AfterBatch(batch = "OfflinePlayerCreationGameTest")
+//    public static void deletePlayerData(ServerLevel serverLevel) {
+//        Utils.clearOfflinePlayerStorageAndDisconnectPlayers(serverLevel);
+//    }
 
-    @GameTest(template = EMPTY_STRUCTURE, batch = "OfflinePlayerCreationGameTest")
+    @GameTest
     public void createsOfflinePlayerAndPlayerRejoins(GameTestHelper helper) {
         String playerName = "test1";
         ServerLevel level = helper.getLevel();
@@ -65,11 +61,11 @@ public class OfflinePlayerCreationGameTest {
                 .thenWaitUntil(() -> DisconnectTracker.hasReason(playerName))
                 .thenExecute(() -> {
                     helper.assertTrue(DisconnectTracker.getReason(playerName).equals("Offline player generated"),
-                            "Correct disconnect reason for /offline usage");
+                            Component.nullToEmpty("Correct disconnect reason for /offline usage"));
                     helper.assertTrue(result.matches(),
-                            "Player and OfflinePlayer match");
+                            Component.nullToEmpty("Player and OfflinePlayer match"));
                     helper.assertTrue(offlinePlayer.getDisplayName().getString().equals("[OFF]" + playerName),
-                            "OfflinePlayer name is correct");
+                            Component.nullToEmpty("OfflinePlayer name is correct"));
 
                     testPlayerBuilder.placeFakePlayer(server);
                 })
@@ -78,18 +74,18 @@ public class OfflinePlayerCreationGameTest {
                     Utils.ComparisonResult rejoinResult = Utils.compare(offlinePlayer, Objects.requireNonNull(rejoinedPlayer));
 
                     helper.assertTrue(DisconnectTracker.getReason("[OFF]" + playerName).equals(playerName + " Rejoined the game"),
-                            "Correct disconnect reason for player rejoin");
+                            Component.nullToEmpty("Correct disconnect reason for player rejoin"));
                     helper.assertTrue(rejoinResult.matches(),
-                            "OfflinePlayer and rejoined-player match");
+                            Component.nullToEmpty("OfflinePlayer and rejoined-player match"));
                     helper.assertTrue(rejoinedPlayer.getDisplayName().getString().equals(playerName),
-                            "rejoined-player name is correct");
+                            Component.nullToEmpty("rejoined-player name is correct"));
 
                     rejoinedPlayer.disconnect();
                 })
                 .thenSucceed();
     }
 
-    @GameTest(template = EMPTY_STRUCTURE, batch = "OfflinePlayerCreationGameTest", setupTicks = 6)
+    @GameTest(setupTicks = 6)
     public void createsOfflinePlayerAndPlayerRejoinsNewInventory(GameTestHelper helper) {
         String playerName = "test2";
         ServerLevel level = helper.getLevel();
@@ -116,11 +112,11 @@ public class OfflinePlayerCreationGameTest {
                 .thenWaitUntil(() -> DisconnectTracker.hasReason(playerName))
                 .thenExecute(() -> {
                     helper.assertTrue(DisconnectTracker.getReason(playerName).equals("Offline player generated"),
-                            "Correct disconnect reason for /offline usage");
+                            Component.nullToEmpty("Correct disconnect reason for /offline usage"));
                     helper.assertTrue(result.matches(),
-                            "Player and OfflinePlayer match");
+                            Component.nullToEmpty("Player and OfflinePlayer match"));
                     helper.assertTrue(offlinePlayer.getDisplayName().getString().equals("[OFF]" + playerName),
-                            "OfflinePlayer name is correct");
+                            Component.nullToEmpty("OfflinePlayer name is correct"));
 
                     Inventory newInventory = new TestPlayerBuilder().generateRandomInventory().buildFakePlayer(server).getInventory();
                     Utils.cloneInventory(offlinePlayer, newInventory);
@@ -131,17 +127,17 @@ public class OfflinePlayerCreationGameTest {
                     Utils.ComparisonResult rejoinResult = Utils.compare(offlinePlayer, Objects.requireNonNull(rejoinedPlayer));
 
                     helper.assertTrue(DisconnectTracker.getReason("[OFF]" + playerName).equals(playerName + " Rejoined the game"),
-                            "Correct disconnect reason for player rejoin");
+                            Component.nullToEmpty("Correct disconnect reason for player rejoin"));
                     helper.assertTrue(rejoinResult.matches(),
-                            "OfflinePlayer and rejoined-player match");
+                            Component.nullToEmpty("OfflinePlayer and rejoined-player match"));
                     helper.assertTrue(rejoinedPlayer.getDisplayName().getString().equals(playerName),
-                            "rejoined-player name is correct");
+                            Component.nullToEmpty("rejoined-player name is correct"));
 
                 })
                 .thenSucceed();
     }
 
-    @GameTest(template = EMPTY_STRUCTURE, batch = "OfflinePlayerCreationGameTest", setupTicks = 12)
+    @GameTest(setupTicks = 12, maxTicks = 100)
     public void createsOfflinePlayerAndPlayerRejoinsAfterDeath(GameTestHelper helper) {
         String playerName = "test3";
         ServerLevel level = helper.getLevel();
@@ -166,22 +162,22 @@ public class OfflinePlayerCreationGameTest {
         Utils.ComparisonResult result = Utils.compare(testPlayer, Objects.requireNonNull(offlinePlayer));
 
         helper.assertTrue(DisconnectTracker.getReason(playerName).equals("Offline player generated"),
-                "Correct disconnect reason for /offline usage");
+                Component.nullToEmpty("Correct disconnect reason for /offline usage"));
         helper.assertTrue(result.matches(),
-                "Player and OfflinePlayer match");
+                Component.nullToEmpty("Player and OfflinePlayer match"));
         helper.assertTrue(offlinePlayer.getDisplayName().getString().equals("[OFF]" + playerName),
-                "OfflinePlayer name is correct");
+                Component.nullToEmpty("OfflinePlayer name is correct"));
 
         Zombie zombie = EntityType.ZOMBIE.create(level, EntitySpawnReason.NATURAL);
         if (zombie == null) {
-            helper.fail("Could not create zombie");
+            helper.fail(Component.nullToEmpty("Could not create zombie"));
             return;
         }
         zombie.setNoAi(true);
-        zombie.moveTo(offlinePlayer.getX(), offlinePlayer.getY(), offlinePlayer.getZ(), 0.0F, 0.0F);
+        zombie.teleportTo(offlinePlayer.getX(), offlinePlayer.getY(), offlinePlayer.getZ());
         level.addFreshEntity(zombie);
 
-        offlinePlayer.getInventory().selected = 0;
+        offlinePlayer.getInventory().setSelectedSlot(0);
         offlinePlayer.getInventory().setItem(0, new ItemStack(Items.AIR, 0));
         offlinePlayer.getInventory().setItem(Inventory.SLOT_OFFHAND, new ItemStack(Items.AIR, 0));
         offlinePlayer.setLastHurtByMob(zombie);
@@ -197,28 +193,28 @@ public class OfflinePlayerCreationGameTest {
                     offlinePlayer.invulnerableTime = 0;
                     offlinePlayer.hurtServer(level, new DamageSource(mobAttackType, zombie, zombie), damage);
                     var isOnline = server.getPlayerList().getPlayerByName("[OFF]" + playerName);
-                    helper.assertTrue(isOnline == null, "Offlineplayer not be online");
+                    helper.assertTrue(isOnline == null, Component.nullToEmpty("Offlineplayer not be online"));
                 })
                 .thenExecute(() -> zombie.remove(Entity.RemovalReason.DISCARDED))
                 .thenIdle(5)
                 .thenExecute(() -> testPlayerBuilder.placeFakePlayer(server))
                 .thenWaitUntil(() -> {
-                    helper.assertTrue(DeathTracker.hasReason(playerName), "DeathTracker should have player death");
+                    helper.assertTrue(DeathTracker.hasReason(playerName), Component.nullToEmpty("DeathTracker should have player death"));
                 })
                 .thenExecute(() -> {
                     ServerPlayer rejoinedPlayer = server.getPlayerList().getPlayerByName(playerName);
                     String reason = DeathTracker.getReason(playerName);
                     if (reason == null) {
-                        helper.fail("No death reason found for player");
+                        helper.fail(Component.nullToEmpty("No death reason found for player"));
                         return;
                     }
 
                     helper.assertTrue(reason.equals(playerName + " was slain by Zombie"),
-                            "Correct disconnect reason for player rejoin");
+                            Component.nullToEmpty("Correct disconnect reason for player rejoin"));
                     helper.assertTrue(server.getPlayerList().getPlayerByName("[OFF]" + playerName) == null,
-                            "Offline player is not online");
+                            Component.nullToEmpty("Offline player is not online"));
                     helper.assertTrue(Objects.requireNonNull(rejoinedPlayer).getDisplayName().getString().equals(playerName),
-                            "rejoined-player name is correct");
+                            Component.nullToEmpty("rejoined-player name is correct"));
 
                     rejoinedPlayer.disconnect();
                 })

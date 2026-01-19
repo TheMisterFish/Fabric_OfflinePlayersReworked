@@ -93,7 +93,7 @@ public class OfflinePlayerCommands {
         ArrayList<Pair<EntityPlayerActionPack.ActionType, EntityPlayerActionPack.Action>> actionList;
 
         try {
-            actionList = getActionPackList(pairs);
+            actionList = getActionPackList(List.of(pairs));
         } catch (InvalidActionException | UnavailableActionException | InvalidIntervalException |
                  InvalidOffsetException e) {
             source.sendFailure(Component.literal(e.getMessage()));
@@ -133,10 +133,11 @@ public class OfflinePlayerCommands {
         }
 
         String[] arguments = new String[0];
-        if (actionList.size() > 0) {
+        if (!actionList.isEmpty()) {
             arguments = getString(context, "arguments").split(" ");
         }
-        OfflinePlayersReworked.getStorage().create(offlinePlayer.getUUID(), player.getUUID(), arguments, player.getX(), player.getY(), player.getZ());
+
+        OfflinePlayersReworked.getStorage().create(offlinePlayer.getUUID(), player.getUUID(), List.of(arguments), player.getX(), player.getY(), player.getZ());
 
         actionList.forEach(actionTypeActionPair -> manipulate(offlinePlayer, ap -> ap.start(
                 actionTypeActionPair.first(),

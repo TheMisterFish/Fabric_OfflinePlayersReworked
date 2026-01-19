@@ -10,31 +10,30 @@ import com.offlineplayersreworked.core.interfaces.ServerPlayerInterface;
 import com.offlineplayersreworked.storage.OfflinePlayersStorage;
 import lombok.extern.slf4j.Slf4j;
 import net.fabricmc.fabric.api.entity.FakePlayer;
-import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
-import net.minecraft.gametest.framework.AfterBatch;
-import net.minecraft.gametest.framework.GameTest;
+import net.fabricmc.fabric.api.gametest.v1.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
 @Slf4j
 public class RespawnOfflinePlayersGameTest {
 
-    @AfterBatch(batch = "RespawnOfflinePlayersGameTest")
-    public static void deletePlayerData(ServerLevel serverLevel) {
-        Utils.clearOfflinePlayerStorageAndDisconnectPlayers(serverLevel);
-        serverLevel.players().forEach(serverPlayer -> {
-            MinecraftServer server = serverPlayer.getServer();
-            server.getPlayerList().getPlayer(serverPlayer.getUUID()).disconnect();
-        });
-    }
+//    @AfterBatch(batch = "RespawnOfflinePlayersGameTest")
+//    public static void deletePlayerData(ServerLevel serverLevel) {
+//        Utils.clearOfflinePlayerStorageAndDisconnectPlayers(serverLevel);
+//        serverLevel.players().forEach(serverPlayer -> {
+//            MinecraftServer server = serverPlayer.getServer();
+//            server.getPlayerList().getPlayer(serverPlayer.getUUID()).disconnect();
+//        });
+//    }
 
-    @GameTest(template = FabricGameTest.EMPTY_STRUCTURE, batch = "RespawnOfflinePlayersGameTest")
+    @GameTest
     public void testRespawnActiveOfflinePlayers(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         MinecraftServer server = level.getServer();
@@ -54,7 +53,7 @@ public class RespawnOfflinePlayersGameTest {
 
         UUID offlineId = offlinePlayer.getUUID();
         UUID playerUUID = testPlayer.getUUID();
-        String[] actions = new String[]{"jump:20", "use:40"};
+        List<String> actions = List.of("jump:20", "use:40");
         storage.create(offlineId, playerUUID, actions, 0, 80, 0);
 
         helper.startSequence()
@@ -67,7 +66,7 @@ public class RespawnOfflinePlayersGameTest {
                 })
                 .thenWaitUntil(() -> {
                     ServerPlayer found = server.getPlayerList().getPlayer(offlineId);
-                    helper.assertTrue(found != null, "OfflinePlayer should have been respawned");
+                    helper.assertTrue(found != null, Component.nullToEmpty("OfflinePlayer should have been respawned"));
 
                     var actionPack = ((ServerPlayerInterface) Objects.requireNonNull(found))
                             .getActionPack();
@@ -75,18 +74,18 @@ public class RespawnOfflinePlayersGameTest {
 
                     helper.assertTrue(
                             actionPackActions.containsKey(EntityPlayerActionPack.ActionType.JUMP) || actionPackActions.containsKey(EntityPlayerActionPack.ActionType.USE),
-                            "ActionPack should contain actions from the OfflinePlayerModel"
+                            Component.nullToEmpty("ActionPack should contain actions from the OfflinePlayerModel")
                     );
 
                     Utils.ComparisonResult compare = Utils.compare(offlinePlayer, found);
                     helper.assertTrue(compare.matches(),
-                            "OfflinePlayer and online-player don't match");
+                            Component.nullToEmpty("OfflinePlayer and online-player don't match"));
 
                 })
                 .thenSucceed();
     }
 
-    @GameTest(template = FabricGameTest.EMPTY_STRUCTURE, batch = "RespawnOfflinePlayersGameTest", setupTicks = 16)
+    @GameTest(setupTicks = 16)
     public void testDontRespawnDeadOfflinPlayer(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         MinecraftServer server = level.getServer();
@@ -103,7 +102,7 @@ public class RespawnOfflinePlayersGameTest {
 
         UUID offlineId = offlinePlayer.getUUID();
         UUID playerUUID = testPlayer.getUUID();
-        String[] actions = new String[]{"jump:20", "use:40"};
+        List<String> actions = List.of("jump:20", "use:40");
         storage.create(offlineId, playerUUID, actions, 0, 80, 0);
         storage.killByIdWithDeathMessage(offlineId, offlinePlayer.getPosition(1f), "Died test");
 
@@ -116,12 +115,12 @@ public class RespawnOfflinePlayersGameTest {
                     new OfflinePlayersReworked().respawnActiveOfflinePlayersForTest();
                 })
                 .thenWaitUntil(() -> {
-                    helper.assertTrue(server.getPlayerList().getPlayer(offlineId) == null, "Dead OfflinePlayer should not have been respawned");
+                    helper.assertTrue(server.getPlayerList().getPlayer(offlineId) == null, Component.nullToEmpty("Dead OfflinePlayer should not have been respawned"));
                     helper.succeed();
                 });
     }
 
-    @GameTest(template = FabricGameTest.EMPTY_STRUCTURE, batch = "RespawnOfflinePlayersGameTest", setupTicks = 32)
+    @GameTest(setupTicks = 32)
     public void testRespawnKickedOfflinPlayer(GameTestHelper helper) {
         boolean oldRespawnKickedPlayers = ModConfigs.RESPAWN_KICKED_PLAYERS;
 
@@ -140,7 +139,7 @@ public class RespawnOfflinePlayersGameTest {
 
         UUID offlineId = offlinePlayer.getUUID();
         UUID playerUUID = testPlayer.getUUID();
-        storage.create(offlineId, playerUUID, new String[]{}, 0, 80, 0);
+        storage.create(offlineId, playerUUID, List.of(), 0, 80, 0);
         storage.kick(offlineId);
 
         helper.startSequence()
@@ -153,14 +152,14 @@ public class RespawnOfflinePlayersGameTest {
                     new OfflinePlayersReworked().respawnActiveOfflinePlayersForTest();
                 })
                 .thenWaitUntil(() -> {
-                    helper.assertTrue(server.getPlayerList().getPlayer(offlineId) != null, "Kicked OfflinePlayer should have been respawned");
+                    helper.assertTrue(server.getPlayerList().getPlayer(offlineId) != null, Component.nullToEmpty("Kicked OfflinePlayer should have been respawned"));
 
                     ModConfigs.RESPAWN_KICKED_PLAYERS = oldRespawnKickedPlayers;
                 })
                 .thenSucceed();
     }
 
-    @GameTest(template = FabricGameTest.EMPTY_STRUCTURE, batch = "RespawnOfflinePlayersGameTest", setupTicks = 48)
+    @GameTest(setupTicks = 48)
     public void testDontRespawnKickedOfflinPlayer(GameTestHelper helper) {
         boolean oldRespawnKickedPlayers = ModConfigs.RESPAWN_KICKED_PLAYERS;
 
@@ -179,7 +178,7 @@ public class RespawnOfflinePlayersGameTest {
 
         UUID offlineId = offlinePlayer.getUUID();
         UUID playerUUID = testPlayer.getUUID();
-        storage.create(offlineId, playerUUID, new String[]{}, 0, 80, 0);
+        storage.create(offlineId, playerUUID, List.of(), 0, 80, 0);
 
         helper.startSequence()
                 .thenExecute(() -> {
@@ -192,7 +191,7 @@ public class RespawnOfflinePlayersGameTest {
                     new OfflinePlayersReworked().respawnActiveOfflinePlayersForTest();
                 })
                 .thenWaitUntil(() -> {
-                    helper.assertTrue(server.getPlayerList().getPlayer(offlineId) == null, "Kicked OfflinePlayer should not have been respawned");
+                    helper.assertTrue(server.getPlayerList().getPlayer(offlineId) == null, Component.nullToEmpty("Kicked OfflinePlayer should not have been respawned"));
 
                     ModConfigs.RESPAWN_KICKED_PLAYERS = oldRespawnKickedPlayers;
                 })

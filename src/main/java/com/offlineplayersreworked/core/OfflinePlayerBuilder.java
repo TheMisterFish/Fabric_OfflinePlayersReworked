@@ -23,11 +23,14 @@ import net.minecraft.server.level.ParticleStatus;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.CommonListenerCookie;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.HumanoidArm;
+import net.minecraft.world.entity.Relative;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.ChatVisiblity;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.storage.LevelResource;
+import net.minecraft.world.phys.Vec3;
 import org.apache.commons.lang3.StringUtils;
 
 import java.nio.file.NoSuchFileException;
@@ -147,7 +150,8 @@ public class OfflinePlayerBuilder {
             return this;
         }
 
-        ResourceLocation dimLoc = ResourceLocation.tryParse(playerData.getString("Dimension"));
+
+        ResourceLocation dimLoc = playerData.getString("Dimension").isPresent() ? ResourceLocation.tryParse(playerData.getString("Dimension").get()) : null;
         if (dimLoc == null) {
             fail("Invalid dimension string in player data for " + profile.getName());
             return this;
@@ -184,16 +188,21 @@ public class OfflinePlayerBuilder {
             return this;
         }
 
-        ListTag pos = playerData.getList("Pos", 6);
-        ListTag rot = playerData.getList("Rotation", 5);
+        ListTag pos = playerData.getList("Pos").orElseThrow(NullPointerException::new);
+        ListTag rot = playerData.getList("Rotation").orElseThrow(NullPointerException::new);
 
-        offlinePlayer.moveTo(
-                pos.getDouble(0),
-                pos.getDouble(1),
-                pos.getDouble(2),
-                rot.getFloat(0),
-                rot.getFloat(1)
-        );
+        offlinePlayer.setYRot(rot.getFloat(0).orElseThrow(NullPointerException::new) % 360); //setYaw
+        offlinePlayer.setXRot(Mth.clamp(rot.getFloat(1).orElseThrow(NullPointerException::new), -90, 90)); // setPitch
+
+        offlinePlayer.teleportTo(
+                offlinePlayer.serverLevel(),
+                pos.getDouble(0).orElseThrow(NullPointerException::new),
+                pos.getDouble(1).orElseThrow(NullPointerException::new),
+                pos.getDouble(2).orElseThrow(NullPointerException::new),
+                Set.of(),
+                rot.getFloat(0).orElseThrow(NullPointerException::new),
+                rot.getFloat(1).orElseThrow(NullPointerException::new),
+                true);
 
         return this;
     }
@@ -278,6 +287,8 @@ public class OfflinePlayerBuilder {
     }
 
     public OfflinePlayerBuilder startActions(OfflinePlayerModel offlinePlayerModel) {
+        if (failed()) return this;
+
         var actionList = getActionPackList(offlinePlayerModel.getActions());
         actionList.forEach(actionTypeActionPair -> manipulate(offlinePlayer, ap -> ap.start(
                 actionTypeActionPair.first(),

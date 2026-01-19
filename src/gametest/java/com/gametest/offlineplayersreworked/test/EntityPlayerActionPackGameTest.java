@@ -7,11 +7,11 @@ import com.offlineplayersreworked.core.EntityPlayerActionPack;
 import com.offlineplayersreworked.core.EntityPlayerActionPack.Action;
 import com.offlineplayersreworked.core.EntityPlayerActionPack.ActionType;
 import com.offlineplayersreworked.core.interfaces.ServerPlayerInterface;
+import net.fabricmc.fabric.api.gametest.v1.GameTest;
 import net.minecraft.commands.arguments.EntityAnchorArgument;
 import net.minecraft.core.BlockPos;
-import net.minecraft.gametest.framework.AfterBatch;
-import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -37,18 +37,17 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 
 import java.util.Collection;
 import java.util.Objects;
-
-import static net.fabricmc.fabric.api.gametest.v1.FabricGameTest.EMPTY_STRUCTURE;
+import java.util.Set;
 
 public class EntityPlayerActionPackGameTest {
 
-    @AfterBatch(batch = "EntityPlayerActionPackGameTest")
-    public static void deletePlayerData(ServerLevel serverLevel) {
-        Utils.clearOfflinePlayerStorageAndDisconnectPlayers(serverLevel);
-    }
+//    @AfterBatch(batch = "")
+//    public static void deletePlayerData(ServerLevel serverLevel) {
+//        Utils.clearOfflinePlayerStorageAndDisconnectPlayers(serverLevel);
+//    }
 
-    @GameTest(template = EMPTY_STRUCTURE, batch = "EntityPlayerActionPackGameTest")
-    public static void sneakingAndSprintingAreExclusive(GameTestHelper helper) {
+    @GameTest(maxTicks = 100)
+    public void sneakingAndSprintingAreExclusive(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         MinecraftServer server = level.getServer();
 
@@ -57,18 +56,18 @@ public class EntityPlayerActionPackGameTest {
         EntityPlayerActionPack ap = ((ServerPlayerInterface) testPlayer).getActionPack();
 
         ap.setSneaking(true);
-        helper.assertTrue(testPlayer.isShiftKeyDown(), "player should be sneaking after setSneaking(true)");
-        helper.assertTrue(!testPlayer.isSprinting(), "player should not be sprinting initially");
+        helper.assertTrue(testPlayer.isShiftKeyDown(), Component.nullToEmpty("player should be sneaking after setSneaking(true)"));
+        helper.assertTrue(!testPlayer.isSprinting(), Component.nullToEmpty("player should not be sprinting initially"));
 
         ap.setSprinting(true);
-        helper.assertTrue(testPlayer.isSprinting(), "player should be sprinting after setSprinting(true)");
-        helper.assertTrue(!testPlayer.isShiftKeyDown(), "sneaking should be disabled when sprinting is enabled");
+        helper.assertTrue(testPlayer.isSprinting(), Component.nullToEmpty("player should be sprinting after setSprinting(true)"));
+        helper.assertTrue(!testPlayer.isShiftKeyDown(), Component.nullToEmpty("sneaking should be disabled when sprinting is enabled"));
 
         helper.succeed();
     }
 
-    @GameTest(template = EMPTY_STRUCTURE, batch = "EntityPlayerActionPackGameTest")
-    public static void forwardMovementAppliedOnUpdate(GameTestHelper helper) {
+    @GameTest(maxTicks = 100)
+    public void forwardMovementAppliedOnUpdate(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         MinecraftServer server = level.getServer();
 
@@ -86,14 +85,14 @@ public class EntityPlayerActionPackGameTest {
         double endX = testPlayer.getX();
         double endZ = testPlayer.getZ();
 
-        helper.assertTrue(beginZ - endZ < 0, "player should have moved forward on onUpdate()");
-        helper.assertTrue(beginX - endX == 0, "player should not have moved far sideways");
+        helper.assertTrue(beginZ - endZ < 0, Component.nullToEmpty("player should have moved forward on onUpdate()"));
+        helper.assertTrue(beginX - endX == 0, Component.nullToEmpty("player should not have moved far sideways"));
 
         helper.succeed();
     }
 
-    @GameTest(template = EMPTY_STRUCTURE, batch = "EntityPlayerActionPackGameTest")
-    public static void backwardMovementAppliedOnUpdate(GameTestHelper helper) {
+    @GameTest(maxTicks = 100)
+    public void backwardMovementAppliedOnUpdate(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         MinecraftServer server = level.getServer();
 
@@ -111,14 +110,14 @@ public class EntityPlayerActionPackGameTest {
         double endX = testPlayer.getX();
         double endZ = testPlayer.getZ();
 
-        helper.assertTrue(beginZ - endZ > 0, "player should have moved backward on onUpdate()");
-        helper.assertTrue(beginX - endX == 0, "player should not have moved far sideways");
+        helper.assertTrue(beginZ - endZ > 0, Component.nullToEmpty("player should have moved backward on onUpdate()"));
+        helper.assertTrue(beginX - endX == 0, Component.nullToEmpty("player should not have moved far sideways"));
 
         helper.succeed();
     }
 
-    @GameTest(template = EMPTY_STRUCTURE, batch = "EntityPlayerActionPackGameTest")
-    public static void crouchActionMakesPlayerSneak(GameTestHelper helper) {
+    @GameTest(maxTicks = 100)
+    public void crouchActionMakesPlayerSneak(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         MinecraftServer server = level.getServer();
 
@@ -129,16 +128,16 @@ public class EntityPlayerActionPackGameTest {
 
         ap.onUpdate();
 
-        helper.assertTrue(testPlayer.isShiftKeyDown(), "player should be sneaking after CROUCH action onUpdate()");
+        helper.assertTrue(testPlayer.isShiftKeyDown(), Component.nullToEmpty("player should be sneaking after CROUCH action onUpdate()"));
 
         ap.stopAll();
-        helper.assertTrue(!testPlayer.isShiftKeyDown(), "player should not be sneaking after stopAll()");
+        helper.assertTrue(!testPlayer.isShiftKeyDown(), Component.nullToEmpty("player should not be sneaking after stopAll()"));
 
         helper.succeed();
     }
 
-    @GameTest(template = EMPTY_STRUCTURE, batch = "EntityPlayerActionPackGameTest")
-    public static void jumpActionMakesPlayerJump(GameTestHelper helper) {
+    @GameTest(maxTicks = 100)
+    public void jumpActionMakesPlayerJump(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         MinecraftServer server = level.getServer();
 
@@ -164,15 +163,15 @@ public class EntityPlayerActionPackGameTest {
                 })
                 .thenExecute(() -> {
 
-                    helper.assertTrue(highestPosition[1] - highestPosition[0] > 1, "Player should be jumping");
+                    helper.assertTrue(highestPosition[1] - highestPosition[0] > 1, Component.nullToEmpty("Player should be jumping"));
 
                     testPlayer.disconnect();
                 })
                 .thenSucceed();
     }
 
-    @GameTest(template = EMPTY_STRUCTURE, batch = "EntityPlayerActionPackGameTest")
-    public static void disconnectActionDisconnectsPlayer(GameTestHelper helper) {
+    @GameTest(maxTicks = 100)
+    public void disconnectActionDisconnectsPlayer(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         MinecraftServer server = level.getServer();
 
@@ -184,7 +183,7 @@ public class EntityPlayerActionPackGameTest {
 
         boolean initiallyOnline = server.getPlayerList().getPlayers().stream()
                 .anyMatch(p -> p.getUUID().equals(testPlayer.getUUID()));
-        helper.assertTrue(initiallyOnline, "player should be online at test start");
+        helper.assertTrue(initiallyOnline, Component.nullToEmpty("player should be online at test start"));
 
         ap.start(ActionType.DISCONNECT, Action.once());
         ap.onUpdate();
@@ -192,16 +191,16 @@ public class EntityPlayerActionPackGameTest {
         helper.runAfterDelay(5, () -> {
             boolean stillOnline = server.getPlayerList().getPlayers().stream()
                     .anyMatch(p -> p.getUUID().equals(testPlayer.getUUID()));
-            helper.assertTrue(!stillOnline, "player should be disconnected after DISCONNECT action");
-            helper.assertTrue(DisconnectTracker.getReason("DisconnectTest").equals("DisconnectTest automatically disconnected."), "player should disconnect with correct reason");
+            helper.assertTrue(!stillOnline, Component.nullToEmpty("player should be disconnected after DISCONNECT action"));
+            helper.assertTrue(DisconnectTracker.getReason("DisconnectTest").equals("DisconnectTest automatically disconnected."), Component.nullToEmpty("player should disconnect with correct reason"));
 
             testPlayer.disconnect();
             helper.succeed();
         });
     }
 
-    @GameTest(template = EMPTY_STRUCTURE, batch = "EntityPlayerActionPackGameTest")
-    public static void dropAction_dropsSingleItem(GameTestHelper helper) {
+    @GameTest(maxTicks = 100)
+    public void dropAction_dropsSingleItem(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         MinecraftServer server = level.getServer();
 
@@ -215,15 +214,15 @@ public class EntityPlayerActionPackGameTest {
         ap.start(ActionType.DROP_ITEM, Action.once());
         ap.onUpdate();
 
-        helper.assertTrue(testPlayer.getInventory().getItem(0).is(Items.STONE), "Player should have one stone in inventory");
-        helper.assertTrue(testPlayer.getInventory().getItem(0).getCount() == 1, "Player should have one stone in inventory");
+        helper.assertTrue(testPlayer.getInventory().getItem(0).is(Items.STONE), Component.nullToEmpty("Player should have one stone in inventory"));
+        helper.assertTrue(testPlayer.getInventory().getItem(0).getCount() == 1, Component.nullToEmpty("Player should have one stone in inventory"));
 
         testPlayer.disconnect();
         helper.succeed();
     }
 
-    @GameTest(template = EMPTY_STRUCTURE, batch = "EntityPlayerActionPackGameTest")
-    public static void dropStackAction_dropsWholeStack(GameTestHelper helper) {
+    @GameTest(maxTicks = 100)
+    public void dropStackAction_dropsWholeStack(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         MinecraftServer server = level.getServer();
 
@@ -237,14 +236,14 @@ public class EntityPlayerActionPackGameTest {
         ap.start(ActionType.DROP_STACK, Action.once());
         ap.onUpdate();
 
-        helper.assertTrue(testPlayer.getInventory().getItem(0).getCount() == 0, "Player should have no items in inventory");
+        helper.assertTrue(testPlayer.getInventory().getItem(0).getCount() == 0, Component.nullToEmpty("Player should have no items in inventory"));
 
         testPlayer.disconnect();
         helper.succeed();
     }
 
-    @GameTest(template = EMPTY_STRUCTURE, batch = "EntityPlayerActionPackGameTest")
-    public static void eatActionConsumesFoodAndIncreasesHunger(GameTestHelper helper) {
+    @GameTest(maxTicks = 100)
+    public void eatActionConsumesFoodAndIncreasesHunger(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         MinecraftServer server = level.getServer();
 
@@ -254,28 +253,29 @@ public class EntityPlayerActionPackGameTest {
                 .setFood(6)
                 .setMoveTo(helper.absoluteVec(new Vec3(9, 0, 0)))
                 .placeOfflinePlayer(server);
+        testPlayer.setGameMode(GameType.SURVIVAL);
 
         int beforeCount = testPlayer.getInventory().countItem(Items.APPLE);
         int beforeFood = testPlayer.getFoodData().getFoodLevel();
 
         EntityPlayerActionPack ap = ((ServerPlayerInterface) testPlayer).getActionPack();
-        ap.start(ActionType.EAT, Action.once());
+        ap.start(ActionType.EAT, Action.continuous());
 
         helper.startSequence()
                 .thenWaitUntil(() -> {
                     int afterCount = testPlayer.getInventory().countItem(Items.APPLE);
                     int afterFood = testPlayer.getFoodData().getFoodLevel();
 
-                    helper.assertTrue(afterCount < beforeCount, "An edible item should have been consumed from the inventory");
-                    helper.assertTrue(afterFood > beforeFood, "Player food level should increase after eating");
+                    helper.assertTrue(afterCount < beforeCount, Component.nullToEmpty("An edible item should have been consumed from the inventory"));
+                    helper.assertTrue(afterFood > beforeFood, Component.nullToEmpty("Player food level should increase after eating"));
                 })
                 .thenExecute(testPlayer::disconnect)
                 .thenSucceed();
 
     }
 
-    @GameTest(template = EMPTY_STRUCTURE, batch = "EntityPlayerActionPackGameTest")
-    public static void eatActionConsumesOmniousBottleAndGivesEffect(GameTestHelper helper) {
+    @GameTest(maxTicks = 100)
+    public void eatActionConsumesOmniousBottleAndGivesEffect(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         MinecraftServer server = level.getServer();
 
@@ -285,7 +285,7 @@ public class EntityPlayerActionPackGameTest {
                 .setMoveTo(helper.absoluteVec(new Vec3(11, 0, 0)))
                 .placeOfflinePlayer(server);
 
-        helper.assertTrue(testPlayer.getActiveEffects().isEmpty(), "TestPlayer should have no effects");
+        helper.assertTrue(testPlayer.getActiveEffects().isEmpty(), Component.nullToEmpty("TestPlayer should have no effects"));
 
         EntityPlayerActionPack ap = ((ServerPlayerInterface) testPlayer).getActionPack();
         ap.start(ActionType.EAT, Action.once());
@@ -293,15 +293,15 @@ public class EntityPlayerActionPackGameTest {
         helper.startSequence()
                 .thenWaitUntil(() -> {
                     Collection<MobEffectInstance> afterEffects = testPlayer.getActiveEffects();
-                    helper.assertTrue(afterEffects.size() == 1, "TestPlayer should have one effect now");
-                    helper.assertTrue(afterEffects.stream().findFirst().orElseThrow().getEffect() == MobEffects.BAD_OMEN, "Effect is bad omen");
+                    helper.assertTrue(afterEffects.size() == 1, Component.nullToEmpty("TestPlayer should have one effect now"));
+                    helper.assertTrue(afterEffects.stream().findFirst().orElseThrow().getEffect() == MobEffects.BAD_OMEN, Component.nullToEmpty("Effect is bad omen"));
                 })
                 .thenExecute(testPlayer::disconnect)
                 .thenSucceed();
     }
 
-    @GameTest(template = EMPTY_STRUCTURE, batch = "EntityPlayerActionPackGameTest")
-    public static void attackEntityInFrontDealsDamage(GameTestHelper helper) {
+    @GameTest(maxTicks = 100)
+    public void attackEntityInFrontDealsDamage(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         MinecraftServer server = level.getServer();
 
@@ -312,7 +312,7 @@ public class EntityPlayerActionPackGameTest {
                 .setMoveTo(correctVec3)
                 .addItem(0, new ItemStack(Items.DIAMOND_SWORD, 1))
                 .placeOfflinePlayer(server);
-        testPlayer.getInventory().selected = 0;
+        testPlayer.getInventory().setSelectedSlot(0);
 
         Villager target = EntityType.VILLAGER.create(level, EntitySpawnReason.NATURAL);
         assert target != null;
@@ -323,7 +323,8 @@ public class EntityPlayerActionPackGameTest {
         float beforeHealth = target.getHealth();
         target.setInvulnerable(false);
 
-        target.moveTo(correctVec3.add(0, 0, 2));
+        Vec3 targetPos = correctVec3.add(0, 0, 2);
+        target.teleportTo(level, targetPos.x, targetPos.y, targetPos.z, Set.of(), 0f, 0f, true);
         testPlayer.lookAt( EntityAnchorArgument.Anchor.EYES, target.position().add(0, 0.5, 0) );
 
         EntityPlayerActionPack ap = ((ServerPlayerInterface) testPlayer).getActionPack();
@@ -332,7 +333,7 @@ public class EntityPlayerActionPackGameTest {
         helper.startSequence()
                 .thenWaitUntil(() -> {
                     testPlayer.tick();
-                    helper.assertTrue(target.getHealth() < beforeHealth, "Target entity should have taken damage from ATTACK action");
+                    helper.assertTrue(target.getHealth() < beforeHealth, Component.nullToEmpty("Target entity should have taken damage from ATTACK action"));
                 })
                 .thenExecute(() -> {
                     target.remove(Entity.RemovalReason.DISCARDED);
@@ -341,8 +342,8 @@ public class EntityPlayerActionPackGameTest {
                 .thenSucceed();
     }
 
-    @GameTest(template = EMPTY_STRUCTURE, batch = "EntityPlayerActionPackGameTest")
-    public static void attackBlockInFrontBreaksBlockCreative(GameTestHelper helper) {
+    @GameTest(maxTicks = 100)
+    public void attackBlockInFrontBreaksBlockCreative(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         MinecraftServer server = level.getServer();
 
@@ -362,13 +363,13 @@ public class EntityPlayerActionPackGameTest {
         ap.start(ActionType.ATTACK, Action.continuous());
 
         helper.startSequence()
-                .thenWaitUntil(() -> helper.assertTrue(level.getBlockState(targetPos).isAir(), "Block should be broken by ATTACK action in creative mode"))
+                .thenWaitUntil(() -> helper.assertTrue(level.getBlockState(targetPos).isAir(), Component.nullToEmpty("Block should be broken by ATTACK action in creative mode")))
                 .thenExecute(testPlayer::disconnect)
                 .thenSucceed();
     }
 
-    @GameTest(template = EMPTY_STRUCTURE, batch = "EntityPlayerActionPackGameTest")
-    public static void attackBlockInFrontBreaksBlockSurvival(GameTestHelper helper) {
+    @GameTest(maxTicks = 100)
+    public void attackBlockInFrontBreaksBlockSurvival(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         MinecraftServer server = level.getServer();
 
@@ -378,7 +379,7 @@ public class EntityPlayerActionPackGameTest {
                 .setName("BlockTestSurvival")
                 .setMoveTo(startingPoint)
                 .placeOfflinePlayer(server);
-        testPlayer.getInventory().selected = 0;
+        testPlayer.getInventory().setSelectedSlot(0);
         testPlayer.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(Items.DIAMOND_PICKAXE));
 
         BlockPos targetPos = new BlockPos((int) startingPoint.x, (int) startingPoint.y(), (int) startingPoint.z + 2);
@@ -389,13 +390,13 @@ public class EntityPlayerActionPackGameTest {
         ap.start(ActionType.ATTACK, Action.continuous());
 
         helper.startSequence()
-                .thenWaitUntil(() -> helper.assertTrue(level.getBlockState(targetPos).isAir(), "Block should be broken by ATTACK action in survival mode"))
+                .thenWaitUntil(() -> helper.assertTrue(level.getBlockState(targetPos).isAir(), Component.nullToEmpty("Block should be broken by ATTACK action in survival mode")))
                 .thenExecute(testPlayer::disconnect)
                 .thenSucceed();
     }
 
-    @GameTest(template = EMPTY_STRUCTURE, batch = "EntityPlayerActionPackGameTest")
-    public static void useDifferentObjects(GameTestHelper helper) {
+    @GameTest(maxTicks = 100)
+    public void useDifferentObjects(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         MinecraftServer server = level.getServer();
 
@@ -405,12 +406,12 @@ public class EntityPlayerActionPackGameTest {
                 .setName("UseTest")
                 .setMoveTo(startingPoint)
                 .placeOfflinePlayer(server);
-        testPlayer.getInventory().selected = 0;
+        testPlayer.getInventory().setSelectedSlot(0);
 
-        BlockPos targetPos = new BlockPos((int) startingPoint.x, (int) startingPoint.y(), (int) startingPoint.z + 1);
+        BlockPos targetPos = new BlockPos((int) startingPoint.x, (int) startingPoint.y(), (int) startingPoint.z + 2);
 
         EntityPlayerActionPack ap = ((ServerPlayerInterface) testPlayer).getActionPack();
-        ap.start(ActionType.USE, Action.interval(4));
+        ap.start(ActionType.USE, Action.continuous());
 
         helper.startSequence()
                 .thenExecute(() -> {
@@ -418,16 +419,16 @@ public class EntityPlayerActionPackGameTest {
                 })
                 .thenWaitUntil(() -> {
                     lookAtBlockHitboxCenter(testPlayer, level, targetPos);
-                    testPlayer.tick();
+
                     BlockState state = level.getBlockState(targetPos);
                     helper.assertTrue(
                             state.getBlock() instanceof LeverBlock && state.getValue(LeverBlock.POWERED),
-                            "Lever should be triggered"
+                            Component.nullToEmpty("Lever should be triggered")
                     );
                 })
                 .thenExecute(() -> {
                     level.removeBlock(targetPos, false);
-                    helper.assertTrue(level.getBlockState(targetPos).isAir(), "Lever should be removed");
+                    helper.assertTrue(level.getBlockState(targetPos).isAir(), Component.nullToEmpty("Lever should be removed"));
                 })
                 .thenExecute(() -> createVehicleScenario(helper, testPlayer, EntityType.OAK_BOAT))
                 .thenWaitUntil(() -> assertVehicleScenario(helper, testPlayer, EntityType.OAK_BOAT))
@@ -443,30 +444,30 @@ public class EntityPlayerActionPackGameTest {
                 .thenWaitUntil(() -> {
                     BlockState state = level.getBlockState(targetPos);
                     if (state.getBlock() instanceof ComposterBlock) {
-                        helper.assertTrue(state.getValue(ComposterBlock.LEVEL) >= 1, "Composter should be filled");
+                        helper.assertTrue(state.getValue(ComposterBlock.LEVEL) >= 1, Component.nullToEmpty("Composter should be filled"));
                     } else {
-                        helper.fail("Composter not found");
+                        helper.fail(Component.nullToEmpty("Composter not found"));
                     }
-                    helper.assertTrue(testPlayer.getInventory().countItem(Items.WHEAT_SEEDS) == 0, "Wheat seeds should be used");
+                    helper.assertTrue(testPlayer.getInventory().countItem(Items.WHEAT_SEEDS) == 0, Component.nullToEmpty("Wheat seeds should be used"));
                 })
                 .thenExecute(() -> {
                     level.removeBlock(targetPos, false);
-                    helper.assertTrue(level.getBlockState(targetPos).isAir(), "Composter should be removed");
+                    helper.assertTrue(level.getBlockState(targetPos).isAir(), Component.nullToEmpty("Composter should be removed"));
                 })
                 .thenExecute(() -> {
                     testPlayer.getInventory().setItem(0, new ItemStack(Items.STONE, 1));
-                    testPlayer.getInventory().selected = 0;
+                    testPlayer.getInventory().setSelectedSlot(0);
 
                     testPlayer.lookAt(EntityAnchorArgument.Anchor.EYES, Vec3.atCenterOf(targetPos));
-                    helper.assertTrue(level.getBlockState(targetPos).isAir(), "Stone should not have been placed yet");
+                    helper.assertTrue(level.getBlockState(targetPos).isAir(), Component.nullToEmpty("Stone should not have been placed yet"));
                 })
                 .thenWaitUntil(() -> {
                     testPlayer.tick();
-                    helper.assertTrue(testPlayer.getInventory().countItem(Items.STONE) == 0, "Stone block should be used");
-                    helper.assertTrue(level.getBlockState(targetPos).is(Blocks.STONE), "Stone should have been placed");
+                    helper.assertTrue(testPlayer.getInventory().countItem(Items.STONE) == 0, Component.nullToEmpty("Stone block should be used"));
+                    helper.assertTrue(level.getBlockState(targetPos).is(Blocks.STONE), Component.nullToEmpty("Stone should have been placed"));
                 }).thenExecute(() -> {
                     level.removeBlock(targetPos, false);
-                    helper.assertTrue(level.getBlockState(targetPos).isAir(), "Stone should be removed");
+                    helper.assertTrue(level.getBlockState(targetPos).isAir(), Component.nullToEmpty("Stone should be removed"));
                 })
                 .thenSucceed();
 
@@ -474,16 +475,15 @@ public class EntityPlayerActionPackGameTest {
 
     private static void createBlockScenario(GameTestHelper helper, BlockPos targetPos, Block block) {
         ServerLevel level = helper.getLevel();
-        helper.assertTrue(level.getBlockState(targetPos).isAir(), "Before block is placed, there should be air");
+        helper.assertTrue(level.getBlockState(targetPos).isAir(), Component.nullToEmpty("Before block is placed, there should be air"));
 
         BlockState blockstate = block.defaultBlockState();
         if (block == Blocks.LEVER) {
             blockstate = blockstate.setValue(LeverBlock.FACE, AttachFace.FLOOR);
         }
         level.setBlock(targetPos, blockstate, 3);
-        helper.assertTrue(!level.getBlockState(targetPos).isAir(), "Block should be present before USE");
-        helper.assertTrue(level.getBlockState(targetPos).getBlock().equals(block), "block before USE should be " + block.getDescriptionId());
-
+        helper.assertTrue(!level.getBlockState(targetPos).isAir(), Component.nullToEmpty("Block should be present before USE"));
+        helper.assertTrue(level.getBlockState(targetPos).getBlock().equals(block), Component.nullToEmpty("block before USE should be " + block.getDescriptionId()));
     }
 
     private static void createVehicleScenario(GameTestHelper helper, ServerPlayer testPlayer, EntityType<?> entityType) {
@@ -491,13 +491,14 @@ public class EntityPlayerActionPackGameTest {
         Entity target = entityType.create(level, EntitySpawnReason.NATURAL);
         assert target != null;
         level.addFreshEntity(target);
-        target.moveTo(testPlayer.position().add(0, 0, 2));
+        Vec3 targetPos = testPlayer.position().add(0, 0, 2);
+        target.teleportTo(targetPos.x, targetPos.y, targetPos.z);
         testPlayer.lookAt(EntityAnchorArgument.Anchor.EYES, target.getBoundingBox().getCenter());
     }
 
     private static void assertVehicleScenario(GameTestHelper helper, ServerPlayer testPlayer, EntityType<?> entityType) {
-        helper.assertTrue(testPlayer.getVehicle() != null, "TestPlayer should be in a vehicle (" + entityType.getDescriptionId() + ")");
-        helper.assertTrue(testPlayer.getVehicle().getType().equals(entityType), "Vehicle should be of type " + entityType.getDescriptionId());
+        helper.assertTrue(testPlayer.getVehicle() != null, Component.nullToEmpty("TestPlayer should be in a vehicle (" + entityType.getDescriptionId() + ")"));
+        helper.assertTrue(testPlayer.getVehicle().getType().equals(entityType), Component.nullToEmpty("Vehicle should be of type " + entityType.getDescriptionId()));
     }
 
     public static void lookAtBlockHitboxCenter(ServerPlayer player, ServerLevel level, BlockPos pos) {
