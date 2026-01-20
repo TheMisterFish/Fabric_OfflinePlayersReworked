@@ -4,16 +4,11 @@ import com.mojang.authlib.GameProfile;
 import com.offlineplayersreworked.storage.model.OfflinePlayerModel;
 import com.offlineplayersreworked.utils.DamageSourceSerializer;
 import lombok.extern.slf4j.Slf4j;
-import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.DisconnectionDetails;
-import net.minecraft.network.PacketSendListener;
-import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.network.chat.contents.TranslatableContents;
-import net.minecraft.network.protocol.game.ClientboundPlayerCombatKillPacket;
 import net.minecraft.network.protocol.game.ServerboundClientCommandPacket;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ClientInformation;
@@ -69,11 +64,6 @@ public class OfflinePlayer extends ServerPlayer {
     }
 
     @Override
-    public void load(@NotNull CompoundTag nbt) {
-        super.load(nbt);
-    }
-
-    @Override
     public void onEquipItem(final @NotNull EquipmentSlot slot, final @NotNull ItemStack previous, final @NotNull ItemStack stack) {
         if (!isUsingItem()) super.onEquipItem(slot, previous, stack);
     }
@@ -91,7 +81,7 @@ public class OfflinePlayer extends ServerPlayer {
         if (reason.getContents() instanceof TranslatableContents text && text.getKey().equals("multiplayer.disconnect.duplicate_login")) {
             this.connection.onDisconnect(new DisconnectionDetails(reason));
         } else {
-            this.server.execute(() -> this.connection.onDisconnect(new DisconnectionDetails(reason)) );
+            Objects.requireNonNull(this.getServer()).execute(() -> this.connection.onDisconnect(new DisconnectionDetails(reason)) );
         }
     }
 
@@ -104,7 +94,7 @@ public class OfflinePlayer extends ServerPlayer {
     public void tick() {
         if (Objects.requireNonNull(this.getServer()).getTickCount() % 10 == 0) {
             this.connection.resetPosition();
-            this.serverLevel().getChunkSource().move(this);
+            this.level().getChunkSource().move(this);
         }
         try {
             super.tick();
@@ -149,7 +139,7 @@ public class OfflinePlayer extends ServerPlayer {
     }
 
     @Override
-    public String getIpAddress() {
+    public @NotNull String getIpAddress() {
         return "127.0.0.1";
     }
 

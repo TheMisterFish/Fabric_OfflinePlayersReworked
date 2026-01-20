@@ -9,6 +9,8 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.CommonListenerCookie;
 import net.minecraft.server.players.PlayerList;
+import net.minecraft.util.ProblemReporter;
+import net.minecraft.world.level.storage.ValueInput;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -17,6 +19,8 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
+import java.util.Optional;
+
 @Mixin(value = PlayerList.class, priority = 900)
 public abstract class PlayerList_offlinePlayersMixin {
     @Shadow
@@ -24,9 +28,9 @@ public abstract class PlayerList_offlinePlayersMixin {
     private MinecraftServer server;
 
     @Inject(method = "load", at = @At(value = "RETURN", shift = At.Shift.BEFORE))
-    private void fixStartingPos(ServerPlayer serverPlayerEntity_1, CallbackInfoReturnable<CompoundTag> cir) {
-        if (serverPlayerEntity_1 instanceof OfflinePlayer) {
-            ((OfflinePlayer) serverPlayerEntity_1).fixStartingPosition.run();
+    private void fixStartingPos(ServerPlayer serverPlayer, ProblemReporter problemReporter, CallbackInfoReturnable<Optional<ValueInput>> cir) {
+        if (serverPlayer instanceof OfflinePlayer) {
+            ((OfflinePlayer) serverPlayer).fixStartingPosition.run();
         }
     }
 

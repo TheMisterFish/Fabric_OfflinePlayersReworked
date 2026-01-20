@@ -24,12 +24,13 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.CommonListenerCookie;
 import net.minecraft.util.Mth;
+import net.minecraft.util.ProblemReporter;
 import net.minecraft.world.entity.HumanoidArm;
 import net.minecraft.world.entity.Relative;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.ChatVisiblity;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.storage.LevelResource;
+import net.minecraft.world.level.storage.*;
 import net.minecraft.world.phys.Vec3;
 import org.apache.commons.lang3.StringUtils;
 
@@ -141,7 +142,7 @@ public class OfflinePlayerBuilder {
         if (failed()) return this;
 
         if (sourcePlayer != null) {
-            world = sourcePlayer.serverLevel();
+            world = sourcePlayer.level();
             return this;
         }
 
@@ -195,7 +196,7 @@ public class OfflinePlayerBuilder {
         offlinePlayer.setXRot(Mth.clamp(rot.getFloat(1).orElseThrow(NullPointerException::new), -90, 90)); // setPitch
 
         offlinePlayer.teleportTo(
-                offlinePlayer.serverLevel(),
+                offlinePlayer.level(),
                 pos.getDouble(0).orElseThrow(NullPointerException::new),
                 pos.getDouble(1).orElseThrow(NullPointerException::new),
                 pos.getDouble(2).orElseThrow(NullPointerException::new),
@@ -217,7 +218,20 @@ public class OfflinePlayerBuilder {
     public OfflinePlayerBuilder spawnFromSourcePlayer() {
         if (failed() || sourcePlayer == null) return this;
 
-        offlinePlayer.load(sourcePlayer.saveWithoutId(new CompoundTag()));
+        TagValueOutput out = TagValueOutput.createWithContext(
+                ProblemReporter.DISCARDING,
+                Objects.requireNonNull(sourcePlayer.getServer()).registryAccess()
+        );
+        sourcePlayer.saveWithoutId(out);
+        CompoundTag tag = out.buildResult();
+
+        ValueInput in = TagValueInput.create(
+                ProblemReporter.DISCARDING,
+                Objects.requireNonNull(offlinePlayer.getServer()).registryAccess(),
+                tag
+        );
+        offlinePlayer.load(in);
+
         offlinePlayer.setCustomNameVisible(true);
 
         if (sourcePlayer.getChatSession() != null) {
@@ -238,7 +252,7 @@ public class OfflinePlayerBuilder {
         ServerPlayerMapper.copyPlayerData(sourcePlayer, offlinePlayer);
 
         offlinePlayer.teleportTo(
-                sourcePlayer.serverLevel(),
+                sourcePlayer.level(),
                 sourcePlayer.getX(),
                 sourcePlayer.getY(),
                 sourcePlayer.getZ(),
