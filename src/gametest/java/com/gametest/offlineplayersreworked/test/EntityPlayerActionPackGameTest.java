@@ -35,7 +35,6 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
 import java.util.Collection;
-import java.util.Objects;
 import java.util.Set;
 
 public class EntityPlayerActionPackGameTest {
@@ -383,7 +382,6 @@ public class EntityPlayerActionPackGameTest {
 
     @GameTest(maxTicks = 100)
     public void useDifferentObjects(GameTestHelper helper) {
-
         ServerLevel level = helper.getLevel();
         MinecraftServer server = level.getServer();
 
