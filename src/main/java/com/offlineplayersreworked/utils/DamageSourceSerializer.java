@@ -153,7 +153,7 @@ public class DamageSourceSerializer {
                 );
             }
 
-            if(sourceEntity == null || directEntity == null) {
+            if(sourceEntity == null && directEntity == null) {
                 return level.damageSources().generic();
             }
 
