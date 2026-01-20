@@ -93,7 +93,7 @@ public class OfflinePlayerCommandsGameTest {
             int result = server.getCommands().getDispatcher().execute("offline", source);
             helper.assertTrue(result == 0, Component.nullToEmpty("spawnWithArguments should return 0 when not having op"));
 
-            server.getPlayerList().op(testPlayer.getGameProfile());
+            server.getPlayerList().op(testPlayer.nameAndId());
             CommandSourceStack sourceWithOp = testPlayer.createCommandSourceStack()
                     .withLevel(level)
                     .withPosition(testPlayer.position())

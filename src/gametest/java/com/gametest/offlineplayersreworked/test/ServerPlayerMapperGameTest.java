@@ -77,19 +77,19 @@ public class ServerPlayerMapperGameTest {
                 .setName("Target")
                 .placeFakePlayer(server);
 
-        playerList.getWhiteList().add(new UserWhiteListEntry(source.getGameProfile()));
-        playerList.op(source.getGameProfile());
-        playerList.setUsingWhiteList(true);
+        playerList.getWhiteList().add(new UserWhiteListEntry(source.nameAndId()));
+        playerList.op(source.nameAndId());
+        playerList.getServer().setUsingWhitelist(true);
 
         ServerPlayerMapper.copyPlayerRights(source, target);
 
         helper.assertTrue(
-                playerList.isWhiteListed(target.getGameProfile()),
+                playerList.isWhiteListed(target.nameAndId()),
                 Component.nullToEmpty("Target should be whitelisted after copying")
         );
 
         helper.assertTrue(
-                playerList.isOp(target.getGameProfile()),
+                playerList.isOp(target.nameAndId()),
                 Component.nullToEmpty("Target should be OP after copying")
         );
 
@@ -106,7 +106,7 @@ public class ServerPlayerMapperGameTest {
         GameProfile source = new GameProfile(UUID.randomUUID(), "Source");
         GameProfile target = new GameProfile(UUID.randomUUID(), "Target");
 
-        source.getProperties().put(
+        source.properties().put(
                 "textures",
                 new com.mojang.authlib.properties.Property(
                         "textures",
@@ -118,12 +118,12 @@ public class ServerPlayerMapperGameTest {
         ServerPlayerMapper.copyPlayerSkin(source, target);
 
         helper.assertTrue(
-                target.getProperties().containsKey("textures"),
+                target.properties().containsKey("textures"),
                 Component.nullToEmpty("Target should have textures property copied")
         );
 
         helper.assertTrue(
-                target.getProperties().get("textures").iterator().next().value().equals("FAKE_TEXTURE_DATA"),
+                target.properties().get("textures").iterator().next().value().equals("FAKE_TEXTURE_DATA"),
                 Component.nullToEmpty("Texture data should match")
         );
 

@@ -1,14 +1,22 @@
 package com.gametest.offlineplayersreworked;
 
+import com.mojang.authlib.GameProfileRepository;
+import com.mojang.authlib.minecraft.MinecraftSessionService;
+import com.mojang.authlib.yggdrasil.ServicesKeySet;
 import com.offlineplayersreworked.storage.OfflinePlayersStorage;
 import lombok.extern.slf4j.Slf4j;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.Services;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.players.CachedUserNameToIdResolver;
+import net.minecraft.server.players.ProfileResolver;
+import net.minecraft.server.players.UserNameToIdResolver;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
 
+import java.io.File;
 import java.util.*;
 
 @Slf4j
@@ -136,6 +144,17 @@ public class Utils {
         });
 
         log.info("Cleared OfflinePlayers storage & Disconnected all players");
+    }
+
+    public static Services createOfflineServices(File dir, Services services) {
+        File cache = new File(dir, "usercache.json");
+
+        MinecraftSessionService session = new OfflineSessionService(services);
+        GameProfileRepository repo = new OfflineGameProfileRepository();
+        UserNameToIdResolver resolver = new CachedUserNameToIdResolver(repo, cache);
+        ProfileResolver profileResolver = new ProfileResolver.Cached(session, resolver);
+
+        return new Services(session, ServicesKeySet.EMPTY, repo, resolver, profileResolver);
     }
 
 }

@@ -18,7 +18,7 @@ public class ServerPlayerMapper {
     public static void copyPlayerData(ServerPlayer source, ServerPlayer target) {
         TagValueOutput out = TagValueOutput.createWithContext(
                 ProblemReporter.DISCARDING,
-                Objects.requireNonNull(source.getServer()).registryAccess()
+                Objects.requireNonNull(source.level().getServer()).registryAccess()
         );
 
         source.saveWithoutId(out);
@@ -26,34 +26,29 @@ public class ServerPlayerMapper {
 
         ValueInput in = TagValueInput.create(
                 ProblemReporter.DISCARDING,
-                Objects.requireNonNull(target.getServer()).registryAccess(),
+                Objects.requireNonNull(target.level().getServer()).registryAccess(),
                 tag
         );
         target.load(in);
     }
 
     public static void copyPlayerRights(ServerPlayer source, ServerPlayer target) {
-        if (target.getServer() == null) {
-            log.error("Could not copy player rights to `{}` as the target ({}) getServer() returned null", source.getName().getString(), target.getName().getString());
-            return;
-        }
+        var playerList = target.level().getServer().getPlayerList();
 
-        var playerList = target.getServer().getPlayerList();
-
-        if (ModConfigs.AUTO_WHITELIST && playerList.isUsingWhitelist() && playerList.isWhiteListed(source.getGameProfile())) {
-            UserWhiteListEntry whitelistEntry = new UserWhiteListEntry(target.getGameProfile());
+        if (ModConfigs.AUTO_WHITELIST && playerList.isUsingWhitelist() && playerList.isWhiteListed(source.nameAndId())) {
+            UserWhiteListEntry whitelistEntry = new UserWhiteListEntry(target.nameAndId());
             playerList.getWhiteList().add(whitelistEntry);
         }
 
-        if (ModConfigs.AUTO_OP && playerList.isOp(source.getGameProfile())) {
-            playerList.op(target.getGameProfile());
+        if (ModConfigs.AUTO_OP && playerList.isOp(source.nameAndId())) {
+            playerList.op(target.nameAndId());
         }
     }
 
     public static void copyPlayerSkin(GameProfile sourceGameProfile, GameProfile targetGameProfile) {
         if (ModConfigs.COPY_SKIN) {
-            sourceGameProfile.getProperties().get("textures")
-                    .forEach(property -> targetGameProfile.getProperties().put("textures", property));
+            sourceGameProfile.properties().get("textures")
+                    .forEach(property -> targetGameProfile.properties().put("textures", property));
         }
     }
 

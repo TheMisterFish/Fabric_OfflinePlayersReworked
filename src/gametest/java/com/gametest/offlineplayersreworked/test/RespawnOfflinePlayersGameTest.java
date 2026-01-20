@@ -28,7 +28,7 @@ public class RespawnOfflinePlayersGameTest {
 //    public static void deletePlayerData(ServerLevel serverLevel) {
 //        Utils.clearOfflinePlayerStorageAndDisconnectPlayers(serverLevel);
 //        serverLevel.players().forEach(serverPlayer -> {
-//            MinecraftServer server = serverPlayer.getServer();
+//            MinecraftServer server = serverPlayer.level().getServer();
 //            server.getPlayerList().getPlayer(serverPlayer.getUUID()).disconnect();
 //        });
 //    }
