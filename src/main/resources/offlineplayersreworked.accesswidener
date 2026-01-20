@@ -1,4 +1,0 @@
-accessWidener	v1	named
-
-# Copied from Carpet, and he "don't want to deal with the interfaces until stuff is stable"
-accessible method net/minecraft/world/level/block/entity/SkullBlockEntity fetchGameProfile (Ljava/lang/String;)Ljava/util/concurrent/CompletableFuture;

@@ -17,6 +17,7 @@ import lombok.extern.slf4j.Slf4j;
 import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 
 import java.util.ArrayList;
@@ -118,14 +119,14 @@ public class OfflinePlayerCommands {
             return 0;
         }
 
-        if (ModConfigs.OP_REQUIRED && !OfflinePlayersReworked.getServer().getPlayerList().isOp(player.getGameProfile())) {
+        if (ModConfigs.OP_REQUIRED && !OfflinePlayersReworked.getServer().getPlayerList().isOp(player.nameAndId())) {
             source.sendFailure(Component.literal("You need to be OP to be able to use this command."));
             return 0;
         }
 
         log.debug("Adding new offline player");
 
-        var offlinePlayer = OfflinePlayer.createAndSpawnNewOfflinePlayer(player.getServer(), player);
+        var offlinePlayer = OfflinePlayer.createAndSpawnNewOfflinePlayer(player.level().getServer(), player);
 
         if (offlinePlayer == null) {
             source.sendFailure(Component.literal("Offline player could not be created."));

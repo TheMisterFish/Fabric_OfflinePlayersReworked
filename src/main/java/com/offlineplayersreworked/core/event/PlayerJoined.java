@@ -42,11 +42,7 @@ public class PlayerJoined {
         var model = getStorage().findByPlayerUUID(player.getUUID());
         if (model == null) return;
 
-        if (player.getServer() == null) {
-            log.error("Could not get offline player for {}: getServer() returned null",
-                    player.getName().getString());
-            return;
-        }
+        player.level().getServer();
 
         float originalHealth = player.getHealth();
         OfflinePlayer offline = findOnlineOfflinePlayer(model.getId());
@@ -71,7 +67,7 @@ public class PlayerJoined {
                                                     float originalHealth) {
 
         CompoundTag data = loadPlayerData(model.getId());
-        HolderLookup.Provider provider = Objects.requireNonNull(player.getServer()).registryAccess();
+        HolderLookup.Provider provider = Objects.requireNonNull(player.level().getServer()).registryAccess();
 
         ValueInput input = TagValueInput.create(ProblemReporter.DISCARDING, provider, data);
         if (data != null) player.load(input);
@@ -103,13 +99,13 @@ public class PlayerJoined {
 
             var rules = player.level().getGameRules();
             boolean oldState = rules.getBoolean(GameRules.RULE_SHOWDEATHMESSAGES);
-            rules.getRule(GameRules.RULE_SHOWDEATHMESSAGES).set(false, player.getServer());
+            rules.getRule(GameRules.RULE_SHOWDEATHMESSAGES).set(false, player.level().getServer());
 
             player.getInventory().dropAll();
             player.setHealth(0);
             player.die(source);
 
-            rules.getRule(GameRules.RULE_SHOWDEATHMESSAGES).set(oldState, player.getServer());
+            rules.getRule(GameRules.RULE_SHOWDEATHMESSAGES).set(oldState, player.level().getServer());
 
             broadcastDeathMessage(player, source);
 
@@ -127,7 +123,7 @@ public class PlayerJoined {
 
         String finalMsg = player.getName().getString() + " died: " + replaced;
 
-        Objects.requireNonNull(player.getServer()).getPlayerList().broadcastSystemMessage(
+        Objects.requireNonNull(player.level().getServer()).getPlayerList().broadcastSystemMessage(
                 Component.literal(finalMsg), false);
 
         player.connection.send(new ClientboundPlayerCombatKillPacket(

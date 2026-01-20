@@ -1,6 +1,7 @@
 package com.offlineplayersreworked.core;
 
 import com.mojang.authlib.GameProfile;
+import com.mojang.authlib.yggdrasil.ProfileResult;
 import com.offlineplayersreworked.config.ModConfigs;
 import com.offlineplayersreworked.core.connection.FakeClientConnection;
 import com.offlineplayersreworked.core.interfaces.ServerPlayerInterface;
@@ -37,6 +38,7 @@ import org.apache.commons.lang3.StringUtils;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
@@ -107,11 +109,16 @@ public class OfflinePlayerBuilder {
             return this;
         }
 
-        var cache = server.getProfileCache();
-        profile = cache != null ? cache.get(offlineUUID).orElse(null) : null;
-
-        if (profile == null) {
-            fail("Failed to respawn offline player: GameProfile not found for UUID " + offlineUUID);
+        if(server.services().profileResolver() != null){
+            Optional<GameProfile> profileResult = server.services().profileResolver().fetchById(offlineUUID);
+            if (profileResult.isEmpty()) {
+                fail("Failed to respawn offline player: GameProfile not found for UUID " + offlineUUID);
+                return this;
+            }
+            profile = profileResult.get();
+        } else {
+            log.error("SessionService was null! This should not be possible");
+            profile = new GameProfile(offlineUUID, "Error");
         }
 
         return this;
@@ -126,13 +133,13 @@ public class OfflinePlayerBuilder {
         try {
             playerData = NbtIo.readCompressed(file, NbtAccounter.unlimitedHeap());
         } catch (NoSuchFileException e) {
-            fail("Failed to load player data for " + profile.getName() + ", no player data found.");
+            fail("Failed to load player data for " + profile.name() + ", no player data found.");
         } catch (Exception e) {
-            fail("Failed to load player data for " + profile.getName() + ": " + e.getMessage());
+            fail("Failed to load player data for " + profile.name() + ": " + e.getMessage());
         }
 
         if (playerData == null && !failed()) {
-            fail("No player data found for " + profile.getName());
+            fail("No player data found for " + profile.name());
         }
 
         return this;
@@ -147,14 +154,14 @@ public class OfflinePlayerBuilder {
         }
 
         if (!playerData.contains("Dimension")) {
-            fail("No Dimension key found in player data for " + profile.getName());
+            fail("No Dimension key found in player data for " + profile.name());
             return this;
         }
 
 
         ResourceLocation dimLoc = playerData.getString("Dimension").isPresent() ? ResourceLocation.tryParse(playerData.getString("Dimension").get()) : null;
         if (dimLoc == null) {
-            fail("Invalid dimension string in player data for " + profile.getName());
+            fail("Invalid dimension string in player data for " + profile.name());
             return this;
         }
 
@@ -162,7 +169,7 @@ public class OfflinePlayerBuilder {
         world = server.getLevel(key);
 
         if (world == null) {
-            fail("Dimension " + key + " not found for " + profile.getName());
+            fail("Dimension " + key + " not found for " + profile.name());
             return this;
         }
 
@@ -220,14 +227,14 @@ public class OfflinePlayerBuilder {
 
         TagValueOutput out = TagValueOutput.createWithContext(
                 ProblemReporter.DISCARDING,
-                Objects.requireNonNull(sourcePlayer.getServer()).registryAccess()
+                Objects.requireNonNull(sourcePlayer.level().getServer()).registryAccess()
         );
         sourcePlayer.saveWithoutId(out);
         CompoundTag tag = out.buildResult();
 
         ValueInput in = TagValueInput.create(
                 ProblemReporter.DISCARDING,
-                Objects.requireNonNull(offlinePlayer.getServer()).registryAccess(),
+                Objects.requireNonNull(offlinePlayer.level().getServer()).registryAccess(),
                 tag
         );
         offlinePlayer.load(in);

@@ -51,7 +51,7 @@ public class DamageSourceSerializer {
             } else {
                 TagValueOutput out = TagValueOutput.createWithContext(
                         ProblemReporter.DISCARDING,
-                        Objects.requireNonNull(entity.getServer()).registryAccess()
+                        Objects.requireNonNull(entity.level().getServer()).registryAccess()
                 );
                 entity.saveWithoutId(out);
                 entityTag = out.buildResult();
@@ -70,7 +70,7 @@ public class DamageSourceSerializer {
 
             TagValueOutput out = TagValueOutput.createWithContext(
                     ProblemReporter.DISCARDING,
-                    Objects.requireNonNull(direct.getServer()).registryAccess()
+                    Objects.requireNonNull(direct.level().getServer()).registryAccess()
             );
             direct.saveWithoutId(out);
             CompoundTag directTag = out.buildResult();
@@ -111,7 +111,7 @@ public class DamageSourceSerializer {
             if (tag.contains("sourceEntity")) {
                 CompoundTag sourceEntityTag = tag.getCompound("sourceEntity").orElse(null);
 
-                if ("player".equals(sourceEntityTag.getString("entityType").orElse(null))) {
+                if (sourceEntityTag != null && "player".equals(sourceEntityTag.getString("entityType").orElse(null))) {
                     sourceEntity = new DamageSourcePlayer(
                             level,
                             UUID.fromString(sourceEntityTag.getStringOr("playerUUID", "")),

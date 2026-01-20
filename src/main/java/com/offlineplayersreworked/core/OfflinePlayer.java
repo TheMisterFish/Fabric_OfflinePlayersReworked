@@ -81,7 +81,7 @@ public class OfflinePlayer extends ServerPlayer {
         if (reason.getContents() instanceof TranslatableContents text && text.getKey().equals("multiplayer.disconnect.duplicate_login")) {
             this.connection.onDisconnect(new DisconnectionDetails(reason));
         } else {
-            Objects.requireNonNull(this.getServer()).execute(() -> this.connection.onDisconnect(new DisconnectionDetails(reason)) );
+            Objects.requireNonNull(this.level().getServer()).execute(() -> this.connection.onDisconnect(new DisconnectionDetails(reason)) );
         }
     }
 
@@ -92,7 +92,7 @@ public class OfflinePlayer extends ServerPlayer {
 
     @Override
     public void tick() {
-        if (Objects.requireNonNull(this.getServer()).getTickCount() % 10 == 0) {
+        if (Objects.requireNonNull(this.level().getServer()).getTickCount() % 10 == 0) {
             this.connection.resetPosition();
             this.level().getChunkSource().move(this);
         }
@@ -105,9 +105,8 @@ public class OfflinePlayer extends ServerPlayer {
         }
     }
 
-    @Override
     public boolean startRiding(Entity entityToRide, boolean force) {
-        if (super.startRiding(entityToRide, force)) {
+        if (super.startRiding(entityToRide)) {
             // from ClientPacketListener.handleSetEntityPassengersPacket
             if (entityToRide instanceof AbstractBoat) {
                 this.yRotO = entityToRide.getYRot();
@@ -130,7 +129,7 @@ public class OfflinePlayer extends ServerPlayer {
     @Override
     public void die(DamageSource cause)
     {
-        getStorage().killByIdWithDeathMessage(this.getGameProfile().getId(), this.getPosition(1f), DamageSourceSerializer.serializeDamageSource(cause));
+        getStorage().killByIdWithDeathMessage(this.getGameProfile().id(), this.getPosition(1f), DamageSourceSerializer.serializeDamageSource(cause));
         shakeOff();
         super.die(cause);
         setHealth(20);
