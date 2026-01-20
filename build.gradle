@@ -195,7 +195,9 @@ tasks.named('runGameTest') {
                     it.endsWith(':runGameTest') ||
                     it == 'runAllTestsWithCoverage' ||
                     it.endsWith(':runAllTestsWithCoverage') ||
-                    it == 'runAllTests' ||
+                    it == 'runAllTestsWithCoverage' ||
+                    it.endsWith(':runGameTestWithCoverage') ||
+                    it == 'runGameTestWithCoverage' ||
                     it.endsWith(':runAllTests')
         }
     }
