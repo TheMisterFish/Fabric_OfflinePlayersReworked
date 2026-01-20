@@ -6,16 +6,21 @@ import com.offlineplayersreworked.storage.model.OfflinePlayerModel;
 import com.offlineplayersreworked.utils.DamageSourceSerializer;
 import com.offlineplayersreworked.utils.ServerPlayerMapper;
 import lombok.extern.slf4j.Slf4j;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtAccounter;
 import net.minecraft.nbt.NbtIo;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundPlayerCombatKillPacket;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.ProblemReporter;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.storage.LevelResource;
+import net.minecraft.world.level.storage.TagValueInput;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueInputContextHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -66,7 +71,10 @@ public class PlayerJoined {
                                                     float originalHealth) {
 
         CompoundTag data = loadPlayerData(model.getId());
-        if (data != null) player.load(data);
+        HolderLookup.Provider provider = Objects.requireNonNull(player.getServer()).registryAccess();
+
+        ValueInput input = TagValueInput.create(ProblemReporter.DISCARDING, provider, data);
+        if (data != null) player.load(input);
 
         player.teleportTo(model.getX(), model.getY(), model.getZ());
 
@@ -91,9 +99,9 @@ public class PlayerJoined {
     private static void killPlayerWithOriginalDamage(ServerPlayer player, OfflinePlayerModel model) {
         try {
             DamageSource source = DamageSourceSerializer.deserializeDamageSource(
-                    model.getDeathMessage(), player.serverLevel());
+                    model.getDeathMessage(), player.level());
 
-            var rules = player.serverLevel().getGameRules();
+            var rules = player.level().getGameRules();
             boolean oldState = rules.getBoolean(GameRules.RULE_SHOWDEATHMESSAGES);
             rules.getRule(GameRules.RULE_SHOWDEATHMESSAGES).set(false, player.getServer());
 
