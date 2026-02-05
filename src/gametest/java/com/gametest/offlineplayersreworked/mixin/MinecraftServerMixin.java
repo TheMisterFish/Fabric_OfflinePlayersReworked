@@ -1,7 +1,5 @@
 package com.gametest.offlineplayersreworked.mixin;
 
-import com.gametest.offlineplayersreworked.Utils;
-import com.mojang.authlib.yggdrasil.YggdrasilAuthenticationService;
 import com.mojang.datafixers.DataFixer;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.Services;
@@ -10,9 +8,7 @@ import net.minecraft.server.level.progress.LevelLoadListener;
 import net.minecraft.server.packs.repository.PackRepository;
 import net.minecraft.world.level.storage.LevelResource;
 import net.minecraft.world.level.storage.LevelStorageSource;
-import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Mutable;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -26,11 +22,6 @@ import java.util.List;
 
 @Mixin(MinecraftServer.class)
 public abstract class MinecraftServerMixin {
-    @Shadow
-    @Final
-    @Mutable
-    protected Services services;
-
     @Shadow
     public abstract Path getWorldPath(LevelResource levelResource);
 
@@ -72,31 +63,7 @@ public abstract class MinecraftServerMixin {
 
         } catch (Exception e) {
             e.printStackTrace();
-            this.services = Services.create(YggdrasilAuthenticationService.createOffline(proxy), getServerDirectory().toFile());
-        }
-//        if (services == null) {
-//            this.services = Utils.createOfflineServices(getServerDirectory().toFile(), services);
-//        }
-    }
-//
-//    @Inject(method = "getProfileCache", at = @At("HEAD"), cancellable = true)
-//    private void test(CallbackInfoReturnable<GameProfileCache> cir) {
-//        File dummyFile = new File("usercache.json");
-//        GameProfileRepository repo = new GameProfileRepository() {
-//            @Override
-//            public void findProfilesByNames(String[] strings, ProfileLookupCallback profileLookupCallback) {
-//                //no-op
-//            }
-//
-//            @Override
-//            public Optional<GameProfile> findProfileByName(String s) {
-//                return Optional.empty();
-//            }
-//        };
-//
-//        GameProfileCache cache = new GameProfileCache(repo, dummyFile);
-//
-//        cir.setReturnValue(cache);
-//    }
 
+        }
+    }
 }

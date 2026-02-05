@@ -141,6 +141,7 @@ public class EntityPlayerActionPackGameTest {
 
         ServerPlayer testPlayer = new TestPlayerBuilder()
                 .setName("JumpTest")
+                .setMoveTo(helper.absoluteVec(new Vec3(0, 0, 0)))
                 .placeOfflinePlayer(server);
 
         EntityPlayerActionPack ap = ((ServerPlayerInterface) testPlayer).getActionPack();
@@ -158,9 +159,7 @@ public class EntityPlayerActionPackGameTest {
                     }
                 })
                 .thenExecute(() -> {
-
                     helper.assertTrue(highestPosition[1] - highestPosition[0] > 1, Component.nullToEmpty("Player should be jumping"));
-
                     testPlayer.disconnect();
                 })
                 .thenSucceed();
@@ -298,6 +297,7 @@ public class EntityPlayerActionPackGameTest {
 
         ServerPlayer testPlayer = new TestPlayerBuilder()
                 .setName("AttackEntityTest")
+                .setMoveTo(helper.absoluteVec(new Vec3(0, 0, 0)))
                 .addItem(0, new ItemStack(Items.DIAMOND_SWORD, 1))
                 .placeOfflinePlayer(server);
         Vec3 correctVec3 = testPlayer.position();
@@ -338,6 +338,7 @@ public class EntityPlayerActionPackGameTest {
 
         ServerPlayer testPlayer = new TestPlayerBuilder()
                 .setName("BlockTestCreative")
+                .setMoveTo(helper.absoluteVec(new Vec3(0, 0, 0)))
                 .placeOfflinePlayer(server);
         testPlayer.setGameMode(GameType.CREATIVE);
         Vec3 startingPoint = testPlayer.position();
@@ -362,6 +363,7 @@ public class EntityPlayerActionPackGameTest {
 
         ServerPlayer testPlayer = new TestPlayerBuilder()
                 .setName("BlockTestSurvival")
+                .setMoveTo(helper.absoluteVec(new Vec3(0, 0, 0)))
                 .placeOfflinePlayer(server);
         Vec3 startingPoint = testPlayer.position();
         testPlayer.getInventory().setSelectedSlot(0);
@@ -387,6 +389,7 @@ public class EntityPlayerActionPackGameTest {
 
         ServerPlayer testPlayer = new TestPlayerBuilder()
                 .setName("UseTest")
+                .setMoveTo(helper.absoluteVec(new Vec3(0, 0, 0)))
                 .placeOfflinePlayer(server);
         Vec3 startingPoint = testPlayer.position();
         testPlayer.getInventory().setSelectedSlot(0);
@@ -453,7 +456,7 @@ public class EntityPlayerActionPackGameTest {
                     testPlayer.getInventory().setItem(0, new ItemStack(Items.STONE, 1));
                     testPlayer.getInventory().setSelectedSlot(0);
 
-                    testPlayer.lookAt(EntityAnchorArgument.Anchor.EYES, targetPos.getCenter());
+                    testPlayer.lookAt(EntityAnchorArgument.Anchor.EYES, targetPos.getBottomCenter());
                     helper.assertTrue(level.getBlockState(targetPos).isAir(), Component.nullToEmpty("Stone should not have been placed yet"));
                 })
                 .thenWaitUntil(() -> {
@@ -485,7 +488,7 @@ public class EntityPlayerActionPackGameTest {
         Entity target = entityType.create(level, EntitySpawnReason.NATURAL);
         assert target != null;
         level.addFreshEntity(target);
-        Vec3 targetPos = testPlayer.position().add(0, 0, 1);
+        Vec3 targetPos = testPlayer.position().add(0, 0, 2);
         target.teleportTo(level, targetPos.x, targetPos.y, targetPos.z, Set.of(), 0f, 0f, true);
         testPlayer.lookAt(EntityAnchorArgument.Anchor.EYES, target.getBoundingBox().getBottomCenter());
     }

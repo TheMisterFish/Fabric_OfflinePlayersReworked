@@ -1,16 +1,23 @@
 package com.offlineplayersreworked.utils;
 
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.Multimap;
 import com.mojang.authlib.GameProfile;
+import com.mojang.authlib.properties.Property;
+import com.mojang.authlib.properties.PropertyMap;
 import com.offlineplayersreworked.config.ModConfigs;
 import lombok.extern.slf4j.Slf4j;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.players.UserWhiteListEntry;
+import net.minecraft.util.ExceptionCollector;
 import net.minecraft.util.ProblemReporter;
 import net.minecraft.world.level.storage.TagValueInput;
 import net.minecraft.world.level.storage.TagValueOutput;
 import net.minecraft.world.level.storage.ValueInput;
+import org.apache.commons.lang3.concurrent.Computable;
 
+import java.util.Collection;
 import java.util.Objects;
 
 @Slf4j
@@ -45,11 +52,28 @@ public class ServerPlayerMapper {
         }
     }
 
-    public static void copyPlayerSkin(GameProfile sourceGameProfile, GameProfile targetGameProfile) {
-        if (ModConfigs.COPY_SKIN) {
-            sourceGameProfile.properties().get("textures")
-                    .forEach(property -> targetGameProfile.properties().put("textures", property));
+    public static GameProfile copyPlayerSkin(GameProfile source, GameProfile target) {
+        if (!ModConfigs.COPY_SKIN) {
+            return target;
+        }
+
+        try {
+            Collection<Property> textures = source.properties().get("textures");
+            if (textures.isEmpty()) {
+                return target;
+            }
+
+            Multimap<String, Property> multimap = ArrayListMultimap.create();
+            for (Property property : textures) {
+                multimap.put("textures", property);
+            }
+            PropertyMap newMap = new PropertyMap(multimap);
+            return new GameProfile(target.id(), target.name(), newMap);
+
+
+        } catch (Exception e) {
+            log.error("Error while trying to copy texture", e);
+            return target;
         }
     }
-
 }

@@ -1,8 +1,11 @@
 package com.gametest.offlineplayersreworked.test;
 
 import com.gametest.offlineplayersreworked.TestPlayerBuilder;
-import com.gametest.offlineplayersreworked.Utils;
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.Multimap;
 import com.mojang.authlib.GameProfile;
+import com.mojang.authlib.properties.Property;
+import com.mojang.authlib.properties.PropertyMap;
 import com.offlineplayersreworked.config.ModConfigs;
 import com.offlineplayersreworked.utils.ServerPlayerMapper;
 import net.fabricmc.fabric.api.gametest.v1.GameTest;
@@ -103,19 +106,17 @@ public class ServerPlayerMapperGameTest {
         boolean oldCopySkin = ModConfigs.COPY_SKIN;
         ModConfigs.COPY_SKIN = true;
 
-        GameProfile source = new GameProfile(UUID.randomUUID(), "Source");
+        Multimap<String, Property> mutable = ArrayListMultimap.create();
+        mutable.put(
+                "textures",
+                new Property("textures", "FAKE_TEXTURE_DATA", "FAKE_SIGNATURE")
+        );
+        PropertyMap propertyMap = new PropertyMap(mutable);
+
+        GameProfile source = new GameProfile(UUID.randomUUID(), "Source", propertyMap);
         GameProfile target = new GameProfile(UUID.randomUUID(), "Target");
 
-        source.properties().put(
-                "textures",
-                new com.mojang.authlib.properties.Property(
-                        "textures",
-                        "FAKE_TEXTURE_DATA",
-                        "FAKE_SIGNATURE"
-                )
-        );
-
-        ServerPlayerMapper.copyPlayerSkin(source, target);
+        target = ServerPlayerMapper.copyPlayerSkin(source, target);
 
         helper.assertTrue(
                 target.properties().containsKey("textures"),

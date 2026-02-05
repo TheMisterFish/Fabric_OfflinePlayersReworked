@@ -1,12 +1,11 @@
 package com.offlineplayersreworked.core;
 
 import com.mojang.authlib.GameProfile;
-import com.mojang.authlib.yggdrasil.ProfileResult;
 import com.offlineplayersreworked.config.ModConfigs;
 import com.offlineplayersreworked.core.connection.FakeClientConnection;
 import com.offlineplayersreworked.core.interfaces.ServerPlayerInterface;
-import com.offlineplayersreworked.storage.model.OfflinePlayerModel;
 import com.offlineplayersreworked.utils.ServerPlayerMapper;
+import it.unimi.dsi.fastutil.Pair;
 import lombok.extern.slf4j.Slf4j;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
@@ -24,23 +23,22 @@ import net.minecraft.server.level.ParticleStatus;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.CommonListenerCookie;
+import net.minecraft.server.players.NameAndId;
 import net.minecraft.util.Mth;
 import net.minecraft.util.ProblemReporter;
 import net.minecraft.world.entity.HumanoidArm;
-import net.minecraft.world.entity.Relative;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.ChatVisiblity;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.storage.*;
-import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.level.storage.LevelResource;
+import net.minecraft.world.level.storage.TagValueInput;
+import net.minecraft.world.level.storage.TagValueOutput;
+import net.minecraft.world.level.storage.ValueInput;
 import org.apache.commons.lang3.StringUtils;
 
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 import static com.offlineplayersreworked.OfflinePlayersReworked.manipulate;
 import static com.offlineplayersreworked.utils.ActionMapper.getActionPackList;
@@ -52,7 +50,7 @@ public class OfflinePlayerBuilder {
 
     private ServerPlayer sourcePlayer;
     private UUID offlineUUID;
-    private UUID skinSourceUUID;
+    private UUID sourcePlayerUUID;
 
     private GameProfile profile;
     private CompoundTag playerData;
@@ -90,7 +88,7 @@ public class OfflinePlayerBuilder {
     }
 
     public OfflinePlayerBuilder withSkinFrom(UUID uuid) {
-        this.skinSourceUUID = uuid;
+        this.sourcePlayerUUID = uuid;
         return this;
     }
 
@@ -103,23 +101,27 @@ public class OfflinePlayerBuilder {
                     ModConfigs.OFFLINE_PLAYER_PREFIX + sourcePlayer.getName().getString(),
                     0, 15
             );
-            profile = new GameProfile(reversed, name);
 
-            ServerPlayerMapper.copyPlayerSkin(sourcePlayer.getGameProfile(), profile);
+            profile = ServerPlayerMapper.copyPlayerSkin(sourcePlayer.getGameProfile(), new GameProfile(reversed, name));
             return this;
         }
 
-        if(server.services().profileResolver() != null){
-            Optional<GameProfile> profileResult = server.services().profileResolver().fetchById(offlineUUID);
-            if (profileResult.isEmpty()) {
-                fail("Failed to respawn offline player: GameProfile not found for UUID " + offlineUUID);
-                return this;
-            }
+        Optional<GameProfile> profileResult = server.services().profileResolver().fetchById(offlineUUID);
+        if (profileResult.isPresent()) {
+            server.services().profileResolver().fetchById(offlineUUID);
             profile = profileResult.get();
-        } else {
-            log.error("SessionService was null! This should not be possible");
-            profile = new GameProfile(offlineUUID, "Error");
+            return this;
         }
+
+        log.error("Could not get GameProfile from user cache. Trying name cache fallback.");
+        // Fallback
+        Optional<NameAndId> nameAndIdResult = server.services().nameToIdCache().get(offlineUUID);
+        if (nameAndIdResult.isPresent()) {
+            profile = new GameProfile(offlineUUID, nameAndIdResult.get().name());
+            return this;
+        }
+
+        fail("Failed to respawn offline player: GameProfile not found for UUID " + offlineUUID);
 
         return this;
     }
@@ -216,9 +218,9 @@ public class OfflinePlayerBuilder {
     }
 
     public OfflinePlayerBuilder applySkinOverride() {
-        if (failed() || skinSourceUUID == null) return this;
+        if (failed() || sourcePlayerUUID == null) return this;
+        profile = ServerPlayerMapper.copyPlayerSkin(new GameProfile(sourcePlayerUUID, ""), profile);
 
-        ServerPlayerMapper.copyPlayerSkin(new GameProfile(skinSourceUUID, ""), profile);
         return this;
     }
 
@@ -307,10 +309,17 @@ public class OfflinePlayerBuilder {
         return this;
     }
 
-    public OfflinePlayerBuilder startActions(OfflinePlayerModel offlinePlayerModel) {
+    public OfflinePlayerBuilder startActionsFromStringList(List<String> actions) {
         if (failed()) return this;
 
-        var actionList = getActionPackList(offlinePlayerModel.getActions());
+        var actionList = getActionPackList(actions);
+
+        return startActions(actionList);
+    }
+
+    public OfflinePlayerBuilder startActions(List<Pair<EntityPlayerActionPack.ActionType, EntityPlayerActionPack.Action>> actionList) {
+        if (failed()) return this;
+
         actionList.forEach(actionTypeActionPair -> manipulate(offlinePlayer, ap -> ap.start(
                 actionTypeActionPair.first(),
                 actionTypeActionPair.second()
