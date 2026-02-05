@@ -4,7 +4,6 @@ import com.mojang.authlib.GameProfile;
 import com.offlineplayersreworked.config.ModConfigs;
 import com.offlineplayersreworked.core.connection.FakeClientConnection;
 import com.offlineplayersreworked.core.interfaces.ServerPlayerInterface;
-import com.offlineplayersreworked.storage.model.OfflinePlayerModel;
 import com.offlineplayersreworked.utils.ServerPlayerMapper;
 import lombok.extern.slf4j.Slf4j;
 import net.minecraft.core.registries.Registries;
@@ -273,8 +272,11 @@ public class OfflinePlayerBuilder {
         return this;
     }
 
-    public OfflinePlayerBuilder startActions(OfflinePlayerModel offlinePlayerModel) {
-        var actionList = getActionPackList(offlinePlayerModel.getActions());
+    public OfflinePlayerBuilder startActions(String[] actions) {
+        if (failed()) return this;
+
+        var actionList = getActionPackList(actions);
+
         actionList.forEach(actionTypeActionPair -> manipulate(offlinePlayer, ap -> ap.start(
                 actionTypeActionPair.first(),
                 actionTypeActionPair.second()

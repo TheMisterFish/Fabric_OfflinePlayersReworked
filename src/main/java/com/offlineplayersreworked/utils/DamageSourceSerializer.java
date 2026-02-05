@@ -28,8 +28,7 @@ public class DamageSourceSerializer {
             CompoundTag entityTag = new CompoundTag();
             Entity entity = damageSource.getEntity();
 
-            if (entity instanceof Player) {
-                Player player = (Player) entity;
+            if (entity instanceof Player player) {
                 entityTag.putString("playerName", player.getName().getString());
                 entityTag.putUUID("playerUUID", player.getUUID());
                 entityTag.putString("entityType", "player");

@@ -2,6 +2,7 @@ package com.gametest.offlineplayersreworked.mixin;
 
 import com.mojang.authlib.GameProfileRepository;
 import com.mojang.datafixers.DataFixer;
+import com.offlineplayersreworked.storage.OfflinePlayersStorage;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.Services;
 import net.minecraft.server.WorldStem;
@@ -12,6 +13,7 @@ import net.minecraft.world.level.storage.LevelResource;
 import net.minecraft.world.level.storage.LevelStorageSource;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -40,6 +42,22 @@ public abstract class MinecraftServerMixin {
                 this.getServerDirectory().resolve("ops.json"),
                 this.getServerDirectory().resolve("whitelist.json"));
 
+        deletePlayerData(playerDataDir, cachefiles);
+    }
+
+    @Inject(method = "loadLevel", at = @At("TAIL"))
+    private void load(CallbackInfo ci) {
+        MinecraftServer server = (MinecraftServer)(Object)this;
+
+        OfflinePlayersStorage storage = OfflinePlayersStorage.getStorage(server);
+        storage.findAll().forEach(offlinePlayerModel -> {
+            storage.remove(offlinePlayerModel.getId());
+        });
+    }
+
+
+    @Unique
+    private static void deletePlayerData(Path playerDataDir, List<Path> cachefiles) {
         try {
             if (Files.exists(playerDataDir)) {
                 try (var stream = Files.list(playerDataDir)) {

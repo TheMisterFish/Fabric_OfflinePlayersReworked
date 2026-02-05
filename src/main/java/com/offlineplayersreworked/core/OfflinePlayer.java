@@ -44,13 +44,14 @@ public class OfflinePlayer extends ServerPlayer {
         super(server, worldIn, profile, cli);
     }
 
-    public static OfflinePlayer createAndSpawnNewOfflinePlayer(MinecraftServer server, ServerPlayer player) {
+    public static OfflinePlayer createAndSpawnNewOfflinePlayer(MinecraftServer server, ServerPlayer player, String[] actions) {
         return OfflinePlayerBuilder.create(server)
                 .fromOnlinePlayer(player)
                 .loadProfile()
                 .resolveDimension()
                 .createOfflinePlayer()
                 .spawnFromSourcePlayer()
+                .startActions(actions)
                 .build();
     }
 
@@ -65,7 +66,7 @@ public class OfflinePlayer extends ServerPlayer {
                 .applyStoredPosition()
                 .applySkinOverride()
                 .spawn()
-                .startActions(offlinePlayerModel)
+                .startActions(offlinePlayerModel.getActions())
                 .build();
     }
 
