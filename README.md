@@ -6,21 +6,6 @@ Download/Build the .jar file and place it in the `/mods/` folder of your Minecra
 
 > Note: This is a **Server-side mod** only.
 
-## Dependencies and Compatibility
-
-This mod is built for Minecraft version 1.21 & 1.21.1 and is build using the following dependencies:
-
-- Fabric Loader 0.15.11 or higher
-- Fabric API 0.102.1+1.21.1 or higher
-- Loom-quiltflower version 1.7.3
-
-## Versions
-
-- **Current Version (1.21 & 1.21.1)**: [Download v1.1.2-mc.1.21.1](https://github.com/lilfish/Fabric_OfflinePlayersReworked/releases/tag/v1.1.2-mc.1.21.1)
-    - Available on modrinth: [OfflinePlayers - Modrinth](https://modrinth.com/mod/offlineplayers)
-- **Legacy Version (1.18.2)**: [Download v0.1.6-mc.1.18.2](https://github.com/lilfish/Fabric_OfflinePlayersReworked/releases/tag/v0.1.6-mc.1.18.2)
-    - This version is deprecated and will not be available on Modrinth.
-
 ## Goal
 
 This mod allows players to go AFK on a server without leaving their computers on. Simply use the `/offline` command to spawn an exact copy of your player, called an offline player. Depending on the configuration, you'll be kicked after the offline player has spawned.
