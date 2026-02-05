@@ -117,6 +117,10 @@ For setup instructions, please see the [Fabric wiki page](https://fabricmc.net/w
 
 This mod incorporates classes from the Carpet mod, which served as a valuable reference for implementation. We extend our gratitude to the Carpet mod developers for their work.
 
+## Test coverage (taken from 1.21 - 1.21.1 branch)
+<img width="1151" height="364" alt="image" src="https://github.com/user-attachments/assets/b45e6538-1dd4-4bbf-8564-85495bf70062" />
+
+
 ## License
 
 This template is available under the CC0 license. Feel free to learn from it and incorporate it into your own projects.
