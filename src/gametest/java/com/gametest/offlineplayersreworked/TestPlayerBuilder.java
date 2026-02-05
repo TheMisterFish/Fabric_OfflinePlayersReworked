@@ -3,6 +3,7 @@ package com.gametest.offlineplayersreworked;
 import com.mojang.authlib.GameProfile;
 import com.offlineplayersreworked.core.OfflinePlayer;
 import io.netty.channel.embedded.EmbeddedChannel;
+import lombok.extern.slf4j.Slf4j;
 import net.fabricmc.fabric.api.entity.FakePlayer;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -28,9 +29,11 @@ import net.minecraft.world.phys.Vec3;
 
 import java.util.*;
 import java.util.function.Consumer;
+import java.util.logging.Logger;
 
 import static net.minecraft.world.level.Level.OVERWORLD;
 
+@Slf4j
 public class TestPlayerBuilder {
     public UUID uuid = UUID.randomUUID();
     public String name = "TestPlayer";
@@ -253,6 +256,7 @@ public class TestPlayerBuilder {
 
         if (pos != null) {
             fake.moveTo(pos);
+            log.info("Moved {} to position {}", fake.getName(), fake.position());
         }
 
         return fake;
