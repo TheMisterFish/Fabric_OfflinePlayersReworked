@@ -40,11 +40,11 @@ public class OfflinePlayersStorage extends SavedData {
         return storage;
     }
 
-    public static final SavedDataType<OfflinePlayersStorage> TYPE =
+    public static final SavedDataType<@NotNull OfflinePlayersStorage> TYPE =
             new SavedDataType<>(
                     OfflinePlayersReworked.MOD_ID + "_storage",
-                    ctx -> new OfflinePlayersStorage(),
-                    ctx -> OfflinePlayersStorage.CODEC,
+                    OfflinePlayersStorage::new,
+                    OfflinePlayersStorage.CODEC,
                     DataFixTypes.PLAYER
             );
 
@@ -73,13 +73,12 @@ public class OfflinePlayersStorage extends SavedData {
         return storage;
     }
 
-    public CompoundTag save(CompoundTag tag, HolderLookup.Provider provider) {
+    public void save(CompoundTag tag, HolderLookup.Provider provider) {
         ListTag playerList = new ListTag();
         for (OfflinePlayerModel player : offlinePlayers) {
             playerList.add(player.toTag());
         }
         tag.put("OfflinePlayers", playerList);
-        return tag;
     }
 
     public List<OfflinePlayerModel> findAll() {

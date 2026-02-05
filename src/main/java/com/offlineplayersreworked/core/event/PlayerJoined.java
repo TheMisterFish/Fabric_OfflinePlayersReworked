@@ -15,14 +15,11 @@ import net.minecraft.network.protocol.game.ClientboundPlayerCombatKillPacket;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.ProblemReporter;
 import net.minecraft.world.damagesource.DamageSource;
-import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.GameType;
+import net.minecraft.world.level.gamerules.GameRules;
 import net.minecraft.world.level.storage.LevelResource;
 import net.minecraft.world.level.storage.TagValueInput;
 import net.minecraft.world.level.storage.ValueInput;
-import net.minecraft.world.level.storage.ValueInputContextHelper;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -30,7 +27,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
-import static com.offlineplayersreworked.OfflinePlayersReworked.*;
+import static com.offlineplayersreworked.OfflinePlayersReworked.getServer;
+import static com.offlineplayersreworked.OfflinePlayersReworked.getStorage;
 
 @Slf4j
 public class PlayerJoined {
@@ -98,14 +96,15 @@ public class PlayerJoined {
                     model.getDeathMessage(), player.level());
 
             var rules = player.level().getGameRules();
-            boolean oldState = rules.getBoolean(GameRules.RULE_SHOWDEATHMESSAGES);
-            rules.getRule(GameRules.RULE_SHOWDEATHMESSAGES).set(false, player.level().getServer());
+
+            boolean oldState = rules.get(GameRules.SHOW_DEATH_MESSAGES);
+            rules.set(GameRules.SHOW_DEATH_MESSAGES, false, player.level().getServer());
 
             player.getInventory().dropAll();
             player.setHealth(0);
             player.die(source);
 
-            rules.getRule(GameRules.RULE_SHOWDEATHMESSAGES).set(oldState, player.level().getServer());
+            rules.set(GameRules.SHOW_DEATH_MESSAGES, oldState, player.level().getServer());
 
             broadcastDeathMessage(player, source);
 

@@ -1,4 +1,4 @@
-# OfflinePlayers-Reworked 1.2.0 (MC 1.21.9 - 1.21.10)
+# OfflinePlayers-Reworked 1.2.0 (MC 1.21.11)
 
 **Update:**
 

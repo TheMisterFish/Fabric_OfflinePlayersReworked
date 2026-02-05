@@ -15,8 +15,8 @@ import net.minecraft.nbt.NbtIo;
 import net.minecraft.network.protocol.PacketFlow;
 import net.minecraft.network.protocol.game.ClientboundPlayerInfoUpdatePacket;
 import net.minecraft.network.protocol.game.ClientboundRotateHeadPacket;
+import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ClientInformation;
 import net.minecraft.server.level.ParticleStatus;
@@ -161,7 +161,7 @@ public class OfflinePlayerBuilder {
         }
 
 
-        ResourceLocation dimLoc = playerData.getString("Dimension").isPresent() ? ResourceLocation.tryParse(playerData.getString("Dimension").get()) : null;
+        Identifier dimLoc = playerData.getString("Dimension").isPresent() ? Identifier.tryParse(playerData.getString("Dimension").get()) : null;
         if (dimLoc == null) {
             fail("Invalid dimension string in player data for " + profile.name());
             return this;
