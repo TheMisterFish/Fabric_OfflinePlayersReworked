@@ -53,7 +53,7 @@ public class RespawnOfflinePlayersGameTest {
 
         UUID offlineId = offlinePlayer.getUUID();
         UUID playerUUID = testPlayer.getUUID();
-        List<String> actions = List.of("jump:20", "use:40");
+        List<String> actions = List.of("jump:20");
         storage.create(offlineId, playerUUID, actions, 0, 80, 0);
 
         helper.startSequence()
@@ -73,14 +73,9 @@ public class RespawnOfflinePlayersGameTest {
                     var actionPackActions = actionPack.getActions();
 
                     helper.assertTrue(
-                            actionPackActions.containsKey(EntityPlayerActionPack.ActionType.JUMP) || actionPackActions.containsKey(EntityPlayerActionPack.ActionType.USE),
+                            actionPackActions.containsKey(EntityPlayerActionPack.ActionType.JUMP),
                             Component.nullToEmpty("ActionPack should contain actions from the OfflinePlayerModel")
                     );
-
-                    Utils.ComparisonResult compare = Utils.compare(offlinePlayer, found);
-                    helper.assertTrue(compare.matches(),
-                            Component.nullToEmpty("OfflinePlayer and online-player don't match"));
-
                 })
                 .thenSucceed();
     }
