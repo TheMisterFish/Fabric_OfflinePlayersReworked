@@ -126,24 +126,19 @@ public class OfflinePlayerCommands {
 
         log.debug("Adding new offline player");
 
-        var offlinePlayer = OfflinePlayer.createAndSpawnNewOfflinePlayer(player.level().getServer(), player);
+        String[] arguments = new String[0];
+        if (!actionList.isEmpty()) {
+            arguments = getString(context, "arguments").split(" ");
+        }
+
+        var offlinePlayer = OfflinePlayer.createAndSpawnNewOfflinePlayer(player.level().getServer(), player, actionList);
 
         if (offlinePlayer == null) {
             source.sendFailure(Component.literal("Offline player could not be created."));
             return 0;
         }
 
-        String[] arguments = new String[0];
-        if (!actionList.isEmpty()) {
-            arguments = getString(context, "arguments").split(" ");
-        }
-
         OfflinePlayersReworked.getStorage().create(offlinePlayer.getUUID(), player.getUUID(), List.of(arguments), player.getX(), player.getY(), player.getZ());
-
-        actionList.forEach(actionTypeActionPair -> manipulate(offlinePlayer, ap -> ap.start(
-                actionTypeActionPair.first(),
-                actionTypeActionPair.second()
-        )));
 
         if (ModConfigs.AUTO_DISCONNECT) {
             player.connection.disconnect(Component.literal("Offline player generated"));
