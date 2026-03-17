@@ -5,6 +5,7 @@
   "mixins": [
     "KickCommand_offlinePlayerMixin",
     "PlayerList_offlinePlayersMixin",
+    "ServerGamePacketListener_disconnectMixin",
     "ServerPlayer_actionPackMixin",
     "ServerStatus_metaPingMixin",
     "SleepStatus_sleepersNeededMixin"
