@@ -78,7 +78,7 @@ respawnKickedPlayers=true #      - If true, offline players automatically respaw
 informAboutKickedPlayer=true #   - If true, if offline player was kicked and player rejoins, player will be informed about offline player being kicked | default: true
 copySkin=true #                  - If true, offline players copy the original player's skin. | default: true
 ignoreSleepingPercentage=true #  - If true, offline players will not be counted towards the sleeping percentage rule. | default: true
-autoOfflineOnDisconnect=false    - If true, offline players automatically be created on disconnect. | default: false
+autoOfflineOnDisconnect=false #  - If true, offline players automatically be created on disconnect. | default: false
 offlinePlayerPrefix=[OFF] #      - Sets the prefix for the offline player. | default: OFF_
 
 availableOptions=attack,break,place,use,crouch,jump,eat,drop_item,drop_stack,move_forward,move_backward,disconnect #  | default: attack,break,place,use,crouch,jump,eat,drop_item,drop_stack,move_forward,move_backward,disconnect
