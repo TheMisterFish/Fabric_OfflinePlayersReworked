@@ -33,6 +33,7 @@ import net.minecraft.world.level.block.state.properties.AttachFace;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.VoxelShape;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.Objects;
@@ -141,10 +142,9 @@ public class EntityPlayerActionPackGameTest {
         ServerLevel level = helper.getLevel();
         MinecraftServer server = level.getServer();
 
-        Vec3 startingPoint = helper.absoluteVec(new Vec3(1, 0, 0));
         ServerPlayer testPlayer = new TestPlayerBuilder()
                 .setName("JumpTest")
-                .setMoveTo(startingPoint)
+                .setMoveTo(helper.absoluteVec(new Vec3(1, 0, 0)))
                 .placeOfflinePlayer(server);
 
         EntityPlayerActionPack ap = ((ServerPlayerInterface) testPlayer).getActionPack();
@@ -304,11 +304,9 @@ public class EntityPlayerActionPackGameTest {
         ServerLevel level = helper.getLevel();
         MinecraftServer server = level.getServer();
 
-        Vec3 correctVec3 = helper.absoluteVec(new Vec3(13, 0, 0));
-
         ServerPlayer testPlayer = new TestPlayerBuilder()
                 .setName("AttackEntityTest")
-                .setMoveTo(correctVec3)
+                .setMoveTo(helper.absoluteVec(new Vec3(13, 0, 0)))
                 .addItem(0, new ItemStack(Items.DIAMOND_SWORD, 1))
                 .placeOfflinePlayer(server);
         testPlayer.getInventory().selected = 0;
@@ -322,7 +320,7 @@ public class EntityPlayerActionPackGameTest {
         float beforeHealth = target.getHealth();
         target.setInvulnerable(false);
 
-        target.moveTo(correctVec3.add(0, 0, 2));
+        target.moveTo(testPlayer.position().add(0, 0, 2));
         testPlayer.lookAt( EntityAnchorArgument.Anchor.EYES, target.position().add(0, 0.5, 0) );
 
         EntityPlayerActionPack ap = ((ServerPlayerInterface) testPlayer).getActionPack();
@@ -345,15 +343,14 @@ public class EntityPlayerActionPackGameTest {
         ServerLevel level = helper.getLevel();
         MinecraftServer server = level.getServer();
 
-        Vec3 startingPoint = helper.absoluteVec(new Vec3(15, 0, 0));
-
         ServerPlayer testPlayer = new TestPlayerBuilder()
                 .setName("BlockTestCreative")
-                .setMoveTo(startingPoint)
+                .setMoveTo(helper.absoluteVec(new Vec3(15, 0, 0)))
                 .placeOfflinePlayer(server);
         testPlayer.setGameMode(GameType.CREATIVE);
 
-        BlockPos targetPos = new BlockPos((int) startingPoint.x, (int) startingPoint.y(), (int) startingPoint.z + 2);
+        BlockPos targetPos = getBlockPos(testPlayer, 2);
+
         createBlockScenario(helper, targetPos, Blocks.STONE);
         testPlayer.lookAt(EntityAnchorArgument.Anchor.EYES, Vec3.atBottomCenterOf(targetPos));
 
@@ -366,21 +363,21 @@ public class EntityPlayerActionPackGameTest {
                 .thenSucceed();
     }
 
+
     @GameTest(template = EMPTY_STRUCTURE, batch = "EntityPlayerActionPackGameTest")
     public static void attackBlockInFrontBreaksBlockSurvival(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         MinecraftServer server = level.getServer();
 
-        Vec3 startingPoint = helper.absoluteVec(new Vec3(18, 0, 0));
-
         ServerPlayer testPlayer = new TestPlayerBuilder()
                 .setName("BlockTestSurvival")
-                .setMoveTo(startingPoint)
+                .setMoveTo(helper.absoluteVec(new Vec3(18, 0, 0)))
                 .placeOfflinePlayer(server);
         testPlayer.getInventory().selected = 0;
         testPlayer.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(Items.DIAMOND_PICKAXE));
 
-        BlockPos targetPos = new BlockPos((int) startingPoint.x, (int) startingPoint.y(), (int) startingPoint.z);
+        BlockPos targetPos = getBlockPos(testPlayer, 0);
+
         createBlockScenario(helper, targetPos, Blocks.STONE);
         testPlayer.lookAt(EntityAnchorArgument.Anchor.EYES, Vec3.atBottomCenterOf(targetPos));
 
@@ -393,20 +390,18 @@ public class EntityPlayerActionPackGameTest {
                 .thenSucceed();
     }
 
-    @GameTest(template = EMPTY_STRUCTURE, batch = "EntityPlayerActionPackGameTest")
+    @GameTest(template = EMPTY_STRUCTURE, batch = "EntityPlayerActionPackGameTest", attempts = 5)
     public static void useDifferentObjects(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         MinecraftServer server = level.getServer();
 
-        Vec3 startingPoint = helper.absoluteVec(new Vec3(8, 0, 8));
-
         ServerPlayer testPlayer = new TestPlayerBuilder()
                 .setName("UseTest")
-                .setMoveTo(startingPoint)
+                .setMoveTo(helper.absoluteVec(new Vec3(8, 0, 8)))
                 .placeOfflinePlayer(server);
         testPlayer.getInventory().selected = 0;
 
-        BlockPos targetPos = new BlockPos((int) startingPoint.x, (int) startingPoint.y(), (int) startingPoint.z + 1);
+        BlockPos targetPos = getBlockPos(testPlayer, 1);
 
         EntityPlayerActionPack ap = ((ServerPlayerInterface) testPlayer).getActionPack();
         ap.start(ActionType.USE, Action.interval(4));
@@ -471,6 +466,14 @@ public class EntityPlayerActionPackGameTest {
 
     }
 
+    private static @NotNull BlockPos getBlockPos(ServerPlayer testPlayer, int z_offset) {
+        int x = (int) testPlayer.getX();
+        int y = (int) testPlayer.getY();
+        int z = (int) testPlayer.getZ();
+
+        return new BlockPos(x, y, z + z_offset);
+    }
+
     private static void createBlockScenario(GameTestHelper helper, BlockPos targetPos, Block block) {
         ServerLevel level = helper.getLevel();
         helper.assertTrue(level.getBlockState(targetPos).isAir(), "Before block is placed, there should be air");
@@ -491,7 +494,7 @@ public class EntityPlayerActionPackGameTest {
         assert target != null;
         level.addFreshEntity(target);
         target.moveTo(testPlayer.position().add(0, 0, 2));
-        testPlayer.lookAt(EntityAnchorArgument.Anchor.EYES, target.getBoundingBox().getCenter());
+        testPlayer.lookAt(EntityAnchorArgument.Anchor.EYES, target.getBoundingBox().getBottomCenter());
     }
 
     private static void assertVehicleScenario(GameTestHelper helper, ServerPlayer testPlayer, EntityType<?> entityType) {
