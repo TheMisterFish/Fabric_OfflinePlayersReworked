@@ -1,8 +1,7 @@
-# OfflinePlayers-Reworked 1.2.0 (MC 1.21.1)
+# OfflinePlayers-Reworked 1.2.1 (MC 1.21.11)
 
 **Update:**
 
-- Changed package to com.offlineplayersreworked
-- Added Gametest
-- Updated to loader version 0.18.4
-- Updated gradle to 9.2.1
+- Updated to Loom 1.15
+- Added new option `autoOfflineOnDisconnect` to automatically generate offline players on disconnect.
+- Minor code change

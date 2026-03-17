@@ -4,8 +4,8 @@ import com.mojang.authlib.GameProfile;
 import com.offlineplayersreworked.config.ModConfigs;
 import com.offlineplayersreworked.core.connection.FakeClientConnection;
 import com.offlineplayersreworked.core.interfaces.ServerPlayerInterface;
-import com.offlineplayersreworked.storage.model.OfflinePlayerModel;
 import com.offlineplayersreworked.utils.ServerPlayerMapper;
+import it.unimi.dsi.fastutil.Pair;
 import lombok.extern.slf4j.Slf4j;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
@@ -15,24 +15,30 @@ import net.minecraft.nbt.NbtIo;
 import net.minecraft.network.protocol.PacketFlow;
 import net.minecraft.network.protocol.game.ClientboundPlayerInfoUpdatePacket;
 import net.minecraft.network.protocol.game.ClientboundRotateHeadPacket;
+import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ClientInformation;
+import net.minecraft.server.level.ParticleStatus;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.CommonListenerCookie;
+import net.minecraft.server.players.NameAndId;
+import net.minecraft.util.Mth;
+import net.minecraft.util.ProblemReporter;
 import net.minecraft.world.entity.HumanoidArm;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.ChatVisiblity;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.storage.LevelResource;
+import net.minecraft.world.level.storage.TagValueInput;
+import net.minecraft.world.level.storage.TagValueOutput;
+import net.minecraft.world.level.storage.ValueInput;
 import org.apache.commons.lang3.StringUtils;
 
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
-import java.util.Objects;
-import java.util.UUID;
+import java.util.*;
 
 import static com.offlineplayersreworked.OfflinePlayersReworked.manipulate;
 import static com.offlineplayersreworked.utils.ActionMapper.getActionPackList;
@@ -44,7 +50,7 @@ public class OfflinePlayerBuilder {
 
     private ServerPlayer sourcePlayer;
     private UUID offlineUUID;
-    private UUID skinSourceUUID;
+    private UUID sourcePlayerUUID;
 
     private GameProfile profile;
     private CompoundTag playerData;
@@ -82,7 +88,7 @@ public class OfflinePlayerBuilder {
     }
 
     public OfflinePlayerBuilder withSkinFrom(UUID uuid) {
-        this.skinSourceUUID = uuid;
+        this.sourcePlayerUUID = uuid;
         return this;
     }
 
@@ -95,18 +101,27 @@ public class OfflinePlayerBuilder {
                     ModConfigs.OFFLINE_PLAYER_PREFIX + sourcePlayer.getName().getString(),
                     0, 15
             );
-            profile = new GameProfile(reversed, name);
 
-            ServerPlayerMapper.copyPlayerSkin(sourcePlayer.getGameProfile(), profile);
+            profile = ServerPlayerMapper.copyPlayerSkin(sourcePlayer.getGameProfile(), new GameProfile(reversed, name));
             return this;
         }
 
-        var cache = server.getProfileCache();
-        profile = cache != null ? cache.get(offlineUUID).orElse(null) : null;
-
-        if (profile == null) {
-            fail("Failed to respawn offline player: GameProfile not found for UUID " + offlineUUID);
+        Optional<GameProfile> profileResult = server.services().profileResolver().fetchById(offlineUUID);
+        if (profileResult.isPresent()) {
+            server.services().profileResolver().fetchById(offlineUUID);
+            profile = profileResult.get();
+            return this;
         }
+
+        log.error("Could not get GameProfile from user cache. Trying name cache fallback.");
+        // Fallback
+        Optional<NameAndId> nameAndIdResult = server.services().nameToIdCache().get(offlineUUID);
+        if (nameAndIdResult.isPresent()) {
+            profile = new GameProfile(offlineUUID, nameAndIdResult.get().name());
+            return this;
+        }
+
+        fail("Failed to respawn offline player: GameProfile not found for UUID " + offlineUUID);
 
         return this;
     }
@@ -120,13 +135,13 @@ public class OfflinePlayerBuilder {
         try {
             playerData = NbtIo.readCompressed(file, NbtAccounter.unlimitedHeap());
         } catch (NoSuchFileException e) {
-            fail("Failed to load player data for " + profile.getName() + ", no player data found.");
+            fail("Failed to load player data for " + profile.name() + ", no player data found.");
         } catch (Exception e) {
-            fail("Failed to load player data for " + profile.getName() + ": " + e.getMessage());
+            fail("Failed to load player data for " + profile.name() + ": " + e.getMessage());
         }
 
         if (playerData == null && !failed()) {
-            fail("No player data found for " + profile.getName());
+            fail("No player data found for " + profile.name());
         }
 
         return this;
@@ -136,18 +151,19 @@ public class OfflinePlayerBuilder {
         if (failed()) return this;
 
         if (sourcePlayer != null) {
-            world = sourcePlayer.serverLevel();
+            world = sourcePlayer.level();
             return this;
         }
 
         if (!playerData.contains("Dimension")) {
-            fail("No Dimension key found in player data for " + profile.getName());
+            fail("No Dimension key found in player data for " + profile.name());
             return this;
         }
 
-        ResourceLocation dimLoc = ResourceLocation.tryParse(playerData.getString("Dimension"));
+
+        Identifier dimLoc = playerData.getString("Dimension").isPresent() ? Identifier.tryParse(playerData.getString("Dimension").get()) : null;
         if (dimLoc == null) {
-            fail("Invalid dimension string in player data for " + profile.getName());
+            fail("Invalid dimension string in player data for " + profile.name());
             return this;
         }
 
@@ -155,7 +171,7 @@ public class OfflinePlayerBuilder {
         world = server.getLevel(key);
 
         if (world == null) {
-            fail("Dimension " + key + " not found for " + profile.getName());
+            fail("Dimension " + key + " not found for " + profile.name());
             return this;
         }
 
@@ -182,31 +198,49 @@ public class OfflinePlayerBuilder {
             return this;
         }
 
-        ListTag pos = playerData.getList("Pos", 6);
-        ListTag rot = playerData.getList("Rotation", 5);
+        ListTag pos = playerData.getList("Pos").orElseThrow(NullPointerException::new);
+        ListTag rot = playerData.getList("Rotation").orElseThrow(NullPointerException::new);
 
-        offlinePlayer.moveTo(
-                pos.getDouble(0),
-                pos.getDouble(1),
-                pos.getDouble(2),
-                rot.getFloat(0),
-                rot.getFloat(1)
-        );
+        offlinePlayer.setYRot(rot.getFloat(0).orElseThrow(NullPointerException::new) % 360); //setYaw
+        offlinePlayer.setXRot(Mth.clamp(rot.getFloat(1).orElseThrow(NullPointerException::new), -90, 90)); // setPitch
+
+        offlinePlayer.teleportTo(
+                offlinePlayer.level(),
+                pos.getDouble(0).orElseThrow(NullPointerException::new),
+                pos.getDouble(1).orElseThrow(NullPointerException::new),
+                pos.getDouble(2).orElseThrow(NullPointerException::new),
+                Set.of(),
+                rot.getFloat(0).orElseThrow(NullPointerException::new),
+                rot.getFloat(1).orElseThrow(NullPointerException::new),
+                true);
 
         return this;
     }
 
     public OfflinePlayerBuilder applySkinOverride() {
-        if (failed() || skinSourceUUID == null) return this;
+        if (failed() || sourcePlayerUUID == null) return this;
+        profile = ServerPlayerMapper.copyPlayerSkin(new GameProfile(sourcePlayerUUID, ""), profile);
 
-        ServerPlayerMapper.copyPlayerSkin(new GameProfile(skinSourceUUID, ""), profile);
         return this;
     }
 
     public OfflinePlayerBuilder spawnFromSourcePlayer() {
         if (failed() || sourcePlayer == null) return this;
 
-        offlinePlayer.load(sourcePlayer.saveWithoutId(new CompoundTag()));
+        TagValueOutput out = TagValueOutput.createWithContext(
+                ProblemReporter.DISCARDING,
+                Objects.requireNonNull(sourcePlayer.level().getServer()).registryAccess()
+        );
+        sourcePlayer.saveWithoutId(out);
+        CompoundTag tag = out.buildResult();
+
+        ValueInput in = TagValueInput.create(
+                ProblemReporter.DISCARDING,
+                Objects.requireNonNull(offlinePlayer.level().getServer()).registryAccess(),
+                tag
+        );
+        offlinePlayer.load(in);
+
         offlinePlayer.setCustomNameVisible(true);
 
         if (sourcePlayer.getChatSession() != null) {
@@ -227,12 +261,14 @@ public class OfflinePlayerBuilder {
         ServerPlayerMapper.copyPlayerData(sourcePlayer, offlinePlayer);
 
         offlinePlayer.teleportTo(
-                sourcePlayer.serverLevel(),
+                sourcePlayer.level(),
                 sourcePlayer.getX(),
                 sourcePlayer.getY(),
                 sourcePlayer.getZ(),
+                Set.of(),
                 sourcePlayer.getYRot(),
-                sourcePlayer.getXRot()
+                sourcePlayer.getXRot(),
+                false
         );
 
         ((ServerPlayerInterface) offlinePlayer).getActionPack()
@@ -266,15 +302,24 @@ public class OfflinePlayerBuilder {
     public OfflinePlayerBuilder spawn() {
         if (failed()) return this;
 
-        var clientInformation = new ClientInformation("", 0, ChatVisiblity.FULL, true, 0, HumanoidArm.RIGHT, false, false);
+        var clientInformation = new ClientInformation("", 0, ChatVisiblity.FULL, true, 0, HumanoidArm.RIGHT, false, false, ParticleStatus.ALL);
         server.getPlayerList().placeNewPlayer(new FakeClientConnection(PacketFlow.SERVERBOUND), offlinePlayer, new CommonListenerCookie(offlinePlayer.getGameProfile(), 0, clientInformation, true));
 
         offlinePlayer.fixStartingPosition.run();
         return this;
     }
 
-    public OfflinePlayerBuilder startActions(OfflinePlayerModel offlinePlayerModel) {
-        var actionList = getActionPackList(offlinePlayerModel.getActions());
+    public OfflinePlayerBuilder startActionsFromStringList(List<String> actions) {
+        if (failed()) return this;
+
+        var actionList = getActionPackList(actions);
+
+        return startActions(actionList);
+    }
+
+    public OfflinePlayerBuilder startActions(List<Pair<EntityPlayerActionPack.ActionType, EntityPlayerActionPack.Action>> actionList) {
+        if (failed()) return this;
+
         actionList.forEach(actionTypeActionPair -> manipulate(offlinePlayer, ap -> ap.start(
                 actionTypeActionPair.first(),
                 actionTypeActionPair.second()

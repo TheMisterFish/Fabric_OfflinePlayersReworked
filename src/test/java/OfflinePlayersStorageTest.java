@@ -12,8 +12,8 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class OfflinePlayersStorageTest {
 
-    private static String[] sampleActions() {
-        return new String[] { "jump", "sit" };
+    private static List<String> sampleActions() {
+        return List.of("jump", "sit");
     }
 
     @Test
@@ -31,7 +31,7 @@ public class OfflinePlayersStorageTest {
         OfflinePlayerModel found = storage.findByPlayerUUID(playerId);
         assertNotNull(found, "findByPlayerUUID should return the created model");
         assertEquals(offlineId, found.getId(), "IDs should match");
-        assertArrayEquals(sampleActions(), found.getActions(), "Actions should match");
+        assertEquals(sampleActions(), found.getActions(), "Actions should match");
         assertEquals(1.0, found.getX(), 1e-9);
         assertEquals(2.0, found.getY(), 1e-9);
         assertEquals(3.0, found.getZ(), 1e-9);
@@ -96,20 +96,20 @@ public class OfflinePlayersStorageTest {
 
         UUID offlineId1 = UUID.randomUUID();
         UUID playerId1 = UUID.randomUUID();
-        storage.create(offlineId1, playerId1, new String[] { "a", "b" }, 1.1, 2.2, 3.3);
+        storage.create(offlineId1, playerId1, List.of("a", "b"), 1.1, 2.2, 3.3);
 
         UUID offlineId2 = UUID.randomUUID();
         UUID playerId2 = UUID.randomUUID();
-        storage.create(offlineId2, playerId2, new String[] { "x" }, -1.0, -2.0, -3.0);
+        storage.create(offlineId2, playerId2, List.of("x"), -1.0, -2.0, -3.0);
 
         storage.killByIdWithDeathMessage(offlineId1, new Vec3(5, 6, 7), "boom");
         storage.kick(offlineId2);
 
         CompoundTag tag = new CompoundTag();
-        storage.save(tag, null); // provider is not used by save implementation
+        storage.save(tag, null);
 
         assertTrue(tag.contains("OfflinePlayers"), "Saved tag should contain OfflinePlayers list");
-        ListTag list = tag.getList("OfflinePlayers", 10);
+        ListTag list = tag.getList("OfflinePlayers").orElseThrow(NullPointerException::new);
         assertEquals(2, list.size(), "There should be two saved player entries");
 
         OfflinePlayersStorage loaded = OfflinePlayersStorage.load(tag, null);
@@ -127,7 +127,7 @@ public class OfflinePlayersStorageTest {
         OfflinePlayerModel loaded2 = loaded.findByPlayerUUID(playerId2);
         assertNotNull(loaded2);
         assertTrue(loaded2.isKicked());
-        assertArrayEquals(new String[] { "x" }, loaded2.getActions());
+        assertEquals(List.of("x"), loaded2.getActions());
         assertEquals(-1.0, loaded2.getX(), 1e-9);
         assertEquals(-2.0, loaded2.getY(), 1e-9);
         assertEquals(-3.0, loaded2.getZ(), 1e-9);

@@ -1,14 +1,22 @@
 package com.gametest.offlineplayersreworked;
 
+import com.mojang.authlib.GameProfileRepository;
+import com.mojang.authlib.minecraft.MinecraftSessionService;
+import com.mojang.authlib.yggdrasil.ServicesKeySet;
 import com.offlineplayersreworked.storage.OfflinePlayersStorage;
 import lombok.extern.slf4j.Slf4j;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.Services;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.players.CachedUserNameToIdResolver;
+import net.minecraft.server.players.ProfileResolver;
+import net.minecraft.server.players.UserNameToIdResolver;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
 
+import java.io.File;
 import java.util.*;
 
 @Slf4j
@@ -54,17 +62,18 @@ public class Utils {
             }
         }
 
-        for (int i = 0; i < invA.armor.size(); i++) {
-            ItemStack sA = invA.armor.get(i);
-            ItemStack sB = invB.armor.get(i);
+        for (int slot = 36; slot <= 39; slot++) {
+            ItemStack sA = invA.getItem(slot);
+            ItemStack sB = invB.getItem(slot);
 
             if (!ItemStack.matches(sA, sB)) {
-                result.add("Armor slot " + i + " differs: " + sA + " vs " + sB);
+                result.add("Armor slot " + slot + " differs: " + sA + " vs " + sB);
             }
         }
 
-        ItemStack offA = invA.offhand.getFirst();
-        ItemStack offB = invB.offhand.getFirst();
+
+        ItemStack offA = invA.getItem(40);
+        ItemStack offB = invB.getItem(40);
         if (!ItemStack.matches(offA, offB)) {
             result.add("Offhand differs: " + offA + " vs " + offB);
         }
@@ -114,16 +123,13 @@ public class Utils {
             tgt.setItem(i, s.isEmpty() ? ItemStack.EMPTY : s.copy());
         }
 
-        int armorSize = Math.min(tgt.armor.size(), source.armor.size());
-        for (int i = 0; i < armorSize; i++) {
-            ItemStack s = source.armor.get(i);
-            tgt.armor.set(i, s.isEmpty() ? ItemStack.EMPTY : s.copy());
+        for (int slot = 36; slot <= 39; slot++) {
+            ItemStack s = source.getItem(slot);
+            tgt.setItem(slot, s.isEmpty() ? ItemStack.EMPTY : s.copy());
         }
 
-        ItemStack off = source.offhand.getFirst();
-        tgt.offhand.set(0, off.isEmpty() ? ItemStack.EMPTY : off.copy());
-
-        tgt.selected = Math.max(0, Math.min(source.selected, tgt.getContainerSize() - 1));
+        ItemStack off = source.getItem(40);
+        tgt.setItem(40, off.isEmpty() ? ItemStack.EMPTY : off.copy());
     }
 
     public static void clearOfflinePlayerStorageAndDisconnectPlayers(ServerLevel serverLevel) {
@@ -138,6 +144,17 @@ public class Utils {
         });
 
         log.info("Cleared OfflinePlayers storage & Disconnected all players");
+    }
+
+    public static Services createOfflineServices(File dir, Services services) {
+        File cache = new File(dir, "usercache.json");
+
+        MinecraftSessionService session = new OfflineSessionService(services);
+        GameProfileRepository repo = new OfflineGameProfileRepository();
+        UserNameToIdResolver resolver = new CachedUserNameToIdResolver(repo, cache);
+        ProfileResolver profileResolver = new ProfileResolver.Cached(session, resolver);
+
+        return new Services(session, ServicesKeySet.EMPTY, repo, resolver, profileResolver);
     }
 
 }

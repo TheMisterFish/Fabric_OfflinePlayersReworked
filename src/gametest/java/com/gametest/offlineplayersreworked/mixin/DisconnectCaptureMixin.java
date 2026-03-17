@@ -17,7 +17,7 @@ public class DisconnectCaptureMixin {
         ServerGamePacketListenerImpl self = (ServerGamePacketListenerImpl) (Object) this;
 
         ServerPlayer player = self.player;
-        String name = player.getGameProfile().getName();
+        String name = player.getGameProfile().name();
         String reasonText = disconnectionDetails.reason().getString();
 
         DisconnectTracker.record(name, reasonText);

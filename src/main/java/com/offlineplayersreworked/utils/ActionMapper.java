@@ -24,11 +24,11 @@ public class ActionMapper {
                 .orElse(null);
     }
 
-    public static ArrayList<Pair<EntityPlayerActionPack.ActionType, EntityPlayerActionPack.Action>> getActionPackList(String[] pairs) {
+    public static ArrayList<Pair<EntityPlayerActionPack.ActionType, EntityPlayerActionPack.Action>> getActionPackList(List<String> pairs) {
         ArrayList<Pair<EntityPlayerActionPack.ActionType, EntityPlayerActionPack.Action>> actionList = new ArrayList<>();
 
-        IntStream.range(0, pairs.length).forEach(index -> {
-            String pair = pairs[index];
+        IntStream.range(0, pairs.size()).forEach(index -> {
+            String pair = pairs.get(index);
             String[] actionInterval = pair.split(":");
             if (actionInterval.length != 1 && actionInterval.length != 2 && actionInterval.length != 3) {
                 throw new InvalidActionException("Invalid format. Use action, action:interval or action:interval:offset.");

@@ -6,18 +6,20 @@ import com.offlineplayersreworked.storage.model.OfflinePlayerModel;
 import com.offlineplayersreworked.utils.DamageSourceSerializer;
 import com.offlineplayersreworked.utils.ServerPlayerMapper;
 import lombok.extern.slf4j.Slf4j;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtAccounter;
 import net.minecraft.nbt.NbtIo;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundPlayerCombatKillPacket;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.ProblemReporter;
 import net.minecraft.world.damagesource.DamageSource;
-import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.GameType;
+import net.minecraft.world.level.gamerules.GameRules;
 import net.minecraft.world.level.storage.LevelResource;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import net.minecraft.world.level.storage.TagValueInput;
+import net.minecraft.world.level.storage.ValueInput;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -25,7 +27,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
-import static com.offlineplayersreworked.OfflinePlayersReworked.*;
+import static com.offlineplayersreworked.OfflinePlayersReworked.getServer;
+import static com.offlineplayersreworked.OfflinePlayersReworked.getStorage;
 
 @Slf4j
 public class PlayerJoined {
@@ -37,11 +40,7 @@ public class PlayerJoined {
         var model = getStorage().findByPlayerUUID(player.getUUID());
         if (model == null) return;
 
-        if (player.getServer() == null) {
-            log.error("Could not get offline player for {}: getServer() returned null",
-                    player.getName().getString());
-            return;
-        }
+        player.level().getServer();
 
         float originalHealth = player.getHealth();
         OfflinePlayer offline = findOnlineOfflinePlayer(model.getId());
@@ -66,7 +65,10 @@ public class PlayerJoined {
                                                     float originalHealth) {
 
         CompoundTag data = loadPlayerData(model.getId());
-        if (data != null) player.load(data);
+        HolderLookup.Provider provider = Objects.requireNonNull(player.level().getServer()).registryAccess();
+
+        ValueInput input = TagValueInput.create(ProblemReporter.DISCARDING, provider, data);
+        if (data != null) player.load(input);
 
         player.teleportTo(model.getX(), model.getY(), model.getZ());
 
@@ -91,17 +93,18 @@ public class PlayerJoined {
     private static void killPlayerWithOriginalDamage(ServerPlayer player, OfflinePlayerModel model) {
         try {
             DamageSource source = DamageSourceSerializer.deserializeDamageSource(
-                    model.getDeathMessage(), player.serverLevel());
+                    model.getDeathMessage(), player.level());
 
-            var rules = player.serverLevel().getGameRules();
-            boolean oldState = rules.getBoolean(GameRules.RULE_SHOWDEATHMESSAGES);
-            rules.getRule(GameRules.RULE_SHOWDEATHMESSAGES).set(false, player.getServer());
+            var rules = player.level().getGameRules();
+
+            boolean oldState = rules.get(GameRules.SHOW_DEATH_MESSAGES);
+            rules.set(GameRules.SHOW_DEATH_MESSAGES, false, player.level().getServer());
 
             player.getInventory().dropAll();
             player.setHealth(0);
             player.die(source);
 
-            rules.getRule(GameRules.RULE_SHOWDEATHMESSAGES).set(oldState, player.getServer());
+            rules.set(GameRules.SHOW_DEATH_MESSAGES, oldState, player.level().getServer());
 
             broadcastDeathMessage(player, source);
 
@@ -119,7 +122,7 @@ public class PlayerJoined {
 
         String finalMsg = player.getName().getString() + " died: " + replaced;
 
-        Objects.requireNonNull(player.getServer()).getPlayerList().broadcastSystemMessage(
+        Objects.requireNonNull(player.level().getServer()).getPlayerList().broadcastSystemMessage(
                 Component.literal(finalMsg), false);
 
         player.connection.send(new ClientboundPlayerCombatKillPacket(

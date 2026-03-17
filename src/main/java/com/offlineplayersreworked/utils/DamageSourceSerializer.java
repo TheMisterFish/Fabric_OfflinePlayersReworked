@@ -6,15 +6,23 @@ import net.minecraft.core.Holder;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtUtils;
+import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.ProblemReporter;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.damagesource.DamageType;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.GameType;
+import net.minecraft.world.level.storage.TagValueInput;
+import net.minecraft.world.level.storage.TagValueOutput;
+import net.minecraft.world.level.storage.ValueInput;
+import org.jetbrains.annotations.Nullable;
 
+import java.util.Objects;
 import java.util.UUID;
 
 @Slf4j
@@ -25,27 +33,44 @@ public class DamageSourceSerializer {
         tag.putString("damageType", damageSource.typeHolder().getRegisteredName());
 
         if (damageSource.getEntity() != null) {
-            CompoundTag entityTag = new CompoundTag();
             Entity entity = damageSource.getEntity();
+            CompoundTag entityTag = new CompoundTag();
 
-            if (entity instanceof Player) {
-                Player player = (Player) entity;
+            if (entity instanceof Player player) {
                 entityTag.putString("playerName", player.getName().getString());
-                entityTag.putUUID("playerUUID", player.getUUID());
+                entityTag.putString("playerUUID", player.getUUID().toString());
                 entityTag.putString("entityType", "player");
             } else {
-                entity.save(entityTag);
-                entityTag.putString("entityType", EntityType.getKey(entity.getType()).toString());
+                TagValueOutput out = TagValueOutput.createWithContext(
+                        ProblemReporter.DISCARDING,
+                        Objects.requireNonNull(entity.level().getServer()).registryAccess()
+                );
+                entity.saveWithoutId(out);
+                entityTag = out.buildResult();
+
+                entityTag.putString("id",
+                        EntityType.getKey(entity.getType()).toString());
             }
 
             tag.put("sourceEntity", entityTag);
         }
 
-        if (damageSource.getDirectEntity() != null && damageSource.getDirectEntity() != damageSource.getEntity()) {
-            CompoundTag directEntityTag = new CompoundTag();
-            damageSource.getDirectEntity().save(directEntityTag);
-            directEntityTag.putString("entityType", EntityType.getKey(damageSource.getDirectEntity().getType()).toString());
-            tag.put("directEntity", directEntityTag);
+        if (damageSource.getDirectEntity() != null &&
+                damageSource.getDirectEntity() != damageSource.getEntity()) {
+
+            Entity direct = damageSource.getDirectEntity();
+
+            TagValueOutput out = TagValueOutput.createWithContext(
+                    ProblemReporter.DISCARDING,
+                    Objects.requireNonNull(direct.level().getServer()).registryAccess()
+            );
+            direct.saveWithoutId(out);
+            CompoundTag directTag = out.buildResult();
+
+            directTag.putString("id",
+                    EntityType.getKey(direct.getType()).toString());
+
+            tag.put("directEntity", directTag);
         }
 
         return tag.toString();
@@ -54,18 +79,20 @@ public class DamageSourceSerializer {
     public static DamageSource deserializeDamageSource(String serialized, ServerLevel level) {
         try {
             CompoundTag tag = NbtUtils.snbtToStructure(serialized);
-            String damageTypeId = tag.getString("damageType");
+            String damageTypeId = tag.getString("damageType").orElse(null);
 
-            ResourceLocation damageTypeLocation = ResourceLocation.tryParse(damageTypeId);
-            if (damageTypeLocation == null) {
+            Identifier damageIdentifier = Identifier.tryParse(damageTypeId != null ? damageTypeId : "");
+
+            if (damageIdentifier == null) {
                 log.warn("Invalid damage type ID: {}. Using generic damage.", damageTypeId);
                 return level.damageSources().generic();
             }
 
-            Holder<DamageType> damageTypeHolder = level.registryAccess()
-                    .registryOrThrow(Registries.DAMAGE_TYPE)
-                    .getHolder(ResourceKey.create(Registries.DAMAGE_TYPE, damageTypeLocation))
-                    .orElse(null);
+            Holder<DamageType> damageTypeHolder =
+                    level.holderLookup(Registries.DAMAGE_TYPE)
+                            .get(ResourceKey.create(Registries.DAMAGE_TYPE, damageIdentifier))
+                            .orElse(null);
+
             if (damageTypeHolder == null) {
                 log.warn("Unknown damage type: {}. Using generic damage.", damageTypeId);
                 return level.damageSources().generic();
@@ -73,32 +100,72 @@ public class DamageSourceSerializer {
 
             Entity sourceEntity = null;
             if (tag.contains("sourceEntity")) {
-                CompoundTag sourceEntityTag = tag.getCompound("sourceEntity");
-                if ("player".equals(sourceEntityTag.getString("entityType"))) {
-                    sourceEntity = new DamageSourcePlayer(level, sourceEntityTag.getUUID("playerUUID"), sourceEntityTag.getString("playerName"));
-                } else {
-                    sourceEntity = EntityType.loadEntityRecursive(sourceEntityTag, level, entity -> entity);
+                CompoundTag sourceEntityTag = tag.getCompound("sourceEntity").orElse(null);
+
+                if (sourceEntityTag != null && "player".equals(sourceEntityTag.getString("entityType").orElse(null))) {
+                    sourceEntity = new DamageSourcePlayer(
+                            level,
+                            UUID.fromString(sourceEntityTag.getStringOr("playerUUID", "")),
+                            sourceEntityTag.getString("playerName").orElse("Unknown")
+                    );
+                } else if(sourceEntityTag != null) {
+                    ValueInput in = TagValueInput.create(
+                            ProblemReporter.DISCARDING,
+                            level.registryAccess(),
+                            sourceEntityTag
+                    );
+
+                    sourceEntity = EntityType.loadEntityRecursive(
+                            in,
+                            level,
+                            EntitySpawnReason.NATURAL,
+                            e -> e
+                    );
                 }
             }
 
             Entity directEntity = null;
-            if (tag.contains("directEntity")) {
-                directEntity = EntityType.loadEntityRecursive(tag.getCompound("directEntity"), level, entity -> entity);
+            if (tag.contains("directEntity") &&
+                    tag.getCompound("directEntity").isPresent()) {
+
+                CompoundTag directTag = tag.getCompound("directEntity").get();
+
+                ValueInput in = TagValueInput.create(
+                        ProblemReporter.DISCARDING,
+                        level.registryAccess(),
+                        directTag
+                );
+
+                directEntity = EntityType.loadEntityRecursive(
+                        in,
+                        level,
+                        EntitySpawnReason.NATURAL,
+                        e -> e
+                );
+            }
+
+            if (sourceEntity == null && directEntity == null) {
+                return level.damageSources().generic();
             }
 
             return new DamageSource(damageTypeHolder, directEntity, sourceEntity);
+
         } catch (Exception e) {
             log.error("Failed to deserialize DamageSource: " + serialized, e);
-            return level.damageSources().generic(); // Fallback to generic damage source
+            return level.damageSources().generic();
         }
     }
 
     static class DamageSourcePlayer extends Player {
         public DamageSourcePlayer(ServerLevel level, UUID uuid, String name) {
-            super(level, level.getSharedSpawnPos(), 0, new GameProfile(uuid, name));
+            super(level, new GameProfile(uuid, name));
         }
 
-        // Override necessary methods
+        @Override
+        public @Nullable GameType gameMode() {
+            return GameType.SURVIVAL;
+        }
+
         @Override
         public boolean isSpectator() {
             return false;

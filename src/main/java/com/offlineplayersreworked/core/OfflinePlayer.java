@@ -3,20 +3,14 @@ package com.offlineplayersreworked.core;
 import com.mojang.authlib.GameProfile;
 import com.offlineplayersreworked.storage.model.OfflinePlayerModel;
 import com.offlineplayersreworked.utils.DamageSourceSerializer;
+import it.unimi.dsi.fastutil.Pair;
 import lombok.extern.slf4j.Slf4j;
-import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.DisconnectionDetails;
-import net.minecraft.network.PacketSendListener;
-import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.network.chat.contents.TranslatableContents;
-import net.minecraft.network.protocol.game.ClientboundPlayerCombatKillPacket;
 import net.minecraft.network.protocol.game.ServerboundClientCommandPacket;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.TickTask;
 import net.minecraft.server.level.ClientInformation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -24,13 +18,14 @@ import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.vehicle.boat.AbstractBoat;
+import net.minecraft.world.food.FoodData;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.portal.DimensionTransition;
-import net.minecraft.world.scores.Team;
+import net.minecraft.world.level.portal.TeleportTransition;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
 import java.util.Objects;
 
 import static com.offlineplayersreworked.OfflinePlayersReworked.getStorage;
@@ -44,13 +39,14 @@ public class OfflinePlayer extends ServerPlayer {
         super(server, worldIn, profile, cli);
     }
 
-    public static OfflinePlayer createAndSpawnNewOfflinePlayer(MinecraftServer server, ServerPlayer player) {
+    public static OfflinePlayer createAndSpawnNewOfflinePlayer(MinecraftServer server, ServerPlayer player, List<Pair<EntityPlayerActionPack.ActionType, EntityPlayerActionPack.Action>> actions) {
         return OfflinePlayerBuilder.create(server)
                 .fromOnlinePlayer(player)
                 .loadProfile()
                 .resolveDimension()
                 .createOfflinePlayer()
                 .spawnFromSourcePlayer()
+                .startActions(actions)
                 .build();
     }
 
@@ -62,16 +58,11 @@ public class OfflinePlayer extends ServerPlayer {
                 .loadPlayerData()
                 .resolveDimension()
                 .createOfflinePlayer()
-                .applyStoredPosition()
                 .applySkinOverride()
                 .spawn()
-                .startActions(offlinePlayerModel)
+                .applyStoredPosition()
+                .startActionsFromStringList(offlinePlayerModel.getActions())
                 .build();
-    }
-
-    @Override
-    public void load(@NotNull CompoundTag nbt) {
-        super.load(nbt);
     }
 
     @Override
@@ -80,9 +71,11 @@ public class OfflinePlayer extends ServerPlayer {
     }
 
     @Override
-    public void kill() {
+    public void kill(ServerLevel level)
+    {
         kill(Component.literal("Killed"));
     }
+
 
     public void kill(Component reason) {
         shakeOff();
@@ -90,7 +83,7 @@ public class OfflinePlayer extends ServerPlayer {
         if (reason.getContents() instanceof TranslatableContents text && text.getKey().equals("multiplayer.disconnect.duplicate_login")) {
             this.connection.onDisconnect(new DisconnectionDetails(reason));
         } else {
-            this.server.tell(new TickTask(this.server.getTickCount(), () -> this.connection.onDisconnect(new DisconnectionDetails(reason))));
+            Objects.requireNonNull(this.level().getServer()).execute(() -> this.connection.onDisconnect(new DisconnectionDetails(reason)) );
         }
     }
 
@@ -101,9 +94,9 @@ public class OfflinePlayer extends ServerPlayer {
 
     @Override
     public void tick() {
-        if (Objects.requireNonNull(this.getServer()).getTickCount() % 10 == 0) {
+        if (Objects.requireNonNull(this.level().getServer()).getTickCount() % 10 == 0) {
             this.connection.resetPosition();
-            this.serverLevel().getChunkSource().move(this);
+            this.level().getChunkSource().move(this);
         }
         try {
             super.tick();
@@ -111,6 +104,20 @@ public class OfflinePlayer extends ServerPlayer {
         } catch (NullPointerException ignored) {
             // happens with that paper port thingy - not sure what that would fix, but hey
             // the game not gonna crash violently.
+        }
+    }
+
+    public boolean startRiding(Entity entityToRide, boolean force) {
+        if (super.startRiding(entityToRide)) {
+            // from ClientPacketListener.handleSetEntityPassengersPacket
+            if (entityToRide instanceof AbstractBoat) {
+                this.yRotO = entityToRide.getYRot();
+                this.setYRot(entityToRide.getYRot());
+                this.setYHeadRot(entityToRide.getYRot());
+            }
+            return true;
+        } else {
+            return false;
         }
     }
 
@@ -122,39 +129,18 @@ public class OfflinePlayer extends ServerPlayer {
     }
 
     @Override
-    public void die(@NotNull DamageSource cause) {
+    public void die(DamageSource cause)
+    {
+        getStorage().killByIdWithDeathMessage(this.getGameProfile().id(), this.getPosition(1f), DamageSourceSerializer.serializeDamageSource(cause));
         shakeOff();
-        getStorage().killByIdWithDeathMessage(this.getGameProfile().getId(), this.getPosition(1f), DamageSourceSerializer.serializeDamageSource(cause));
-
-        // Only send out death message (from the super.die()) method, without actually killing the offline player.
-        boolean bl = this.level().getGameRules().getBoolean(GameRules.RULE_SHOWDEATHMESSAGES);
-        if (bl) {
-            Component component = this.getCombatTracker().getDeathMessage();
-            this.connection.send(new ClientboundPlayerCombatKillPacket(this.getId(), component), PacketSendListener.exceptionallySend(() -> {
-                String string = component.getString(256);
-                Component component2 = Component.translatable("death.attack.message_too_long", Component.literal(string).withStyle(ChatFormatting.YELLOW));
-                Component component3 = Component.translatable("death.attack.even_more_magic", this.getDisplayName()).withStyle((style) -> style.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, component2)));
-                return new ClientboundPlayerCombatKillPacket(this.getId(), component3);
-            }));
-            Team team = this.getTeam();
-            if (team != null && team.getDeathMessageVisibility() != Team.Visibility.ALWAYS) {
-                if (team.getDeathMessageVisibility() == Team.Visibility.HIDE_FOR_OTHER_TEAMS) {
-                    this.server.getPlayerList().broadcastSystemToTeam(this, component);
-                } else if (team.getDeathMessageVisibility() == Team.Visibility.HIDE_FOR_OWN_TEAM) {
-                    this.server.getPlayerList().broadcastSystemToAllExceptTeam(this, component);
-                }
-            } else {
-                this.server.getPlayerList().broadcastSystemMessage(component, false);
-            }
-        } else {
-            this.connection.send(new ClientboundPlayerCombatKillPacket(this.getId(), CommonComponents.EMPTY));
-        }
-
+        super.die(cause);
+        setHealth(20);
+        this.foodData = new FoodData();
         kill(this.getCombatTracker().getDeathMessage());
     }
 
     @Override
-    public String getIpAddress() {
+    public @NotNull String getIpAddress() {
         return "127.0.0.1";
     }
 
@@ -169,8 +155,9 @@ public class OfflinePlayer extends ServerPlayer {
     }
 
     @Override
-    public Entity changeDimension(@NotNull DimensionTransition serverLevel) {
-        super.changeDimension(serverLevel);
+    public ServerPlayer teleport(TeleportTransition serverLevel)
+    {
+        super.teleport(serverLevel);
         if (wonGame) {
             ServerboundClientCommandPacket p = new ServerboundClientCommandPacket(ServerboundClientCommandPacket.Action.PERFORM_RESPAWN);
             connection.handleClientCommand(p);
@@ -183,4 +170,8 @@ public class OfflinePlayer extends ServerPlayer {
         }
         return connection.player;
     }
+
+
+
+
 }

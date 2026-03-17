@@ -14,7 +14,7 @@ public class DeathCaptureMixin {
     @Inject(method = "die", at = @At("HEAD"))
     private void captureDisconnect(DamageSource damageSource, CallbackInfo ci) {
         ServerPlayer player = (ServerPlayer) (Object) this;
-        String name = player.getGameProfile().getName();
+        String name = player.getGameProfile().name();
         String reasonText = damageSource.getLocalizedDeathMessage(player).getString();
 
         DeathTracker.record(name, reasonText);
