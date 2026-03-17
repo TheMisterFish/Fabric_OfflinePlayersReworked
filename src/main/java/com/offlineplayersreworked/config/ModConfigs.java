@@ -22,6 +22,7 @@ public class ModConfigs {
     public static String OFFLINE_PLAYER_PREFIX;
     public static List<String> AVAILABLE_OPTIONS;
     public static boolean IGNORE_SLEEPING_PERCENTAGE;
+    public static boolean AUTO_OFFLINE_ON_DISCONNECT;
 
     public static void registerConfigs() {
         configs = new ModConfigProvider();
@@ -42,7 +43,8 @@ public class ModConfigs {
         configs.addKeyValuePair(new Pair<>("informAboutKickedPlayer", true), "  - If true, if offline player was kicked and player rejoins, player will be informed about offline player being kicked");
         configs.addKeyValuePair(new Pair<>("copySkin", true), "                 - If true, offline players copy the original player's skin.");
         configs.addKeyValuePair(new Pair<>("ignoreSleepingPercentage", true), " - If true, offline players will not be counted towards the sleeping percentage rule.");
-        configs.addKeyValuePair(new Pair<>("offlinePlayerPrefix", "[OFF]"), "      - Sets the prefix for the offline player.");
+        configs.addKeyValuePair(new Pair<>("autoOfflineOnDisconnect", false), " - If true, offline players automatically be created on disconnect.");
+        configs.addKeyValuePair(new Pair<>("offlinePlayerPrefix", "[OFF]"), "     - Sets the prefix for the offline player.");
 
         configs.addEmptyLine();
         String defaultOptions = String.join(",", "attack", "break", "place", "use", "crouch", "jump", "eat", "drop_item", "drop_stack", "move_forward", "move_backward", "disconnect");
@@ -60,6 +62,7 @@ public class ModConfigs {
         INFORM_ABOUT_KICKED_PLAYER = CONFIG.getOrDefault("informAboutKickedPlayer", true);
         COPY_SKIN = CONFIG.getOrDefault("copySkin", true);
         IGNORE_SLEEPING_PERCENTAGE = CONFIG.getOrDefault("ignoreSleepingPercentage", true);
+        AUTO_OFFLINE_ON_DISCONNECT = CONFIG.getOrDefault("autoOfflineOnDisconnect", false);
         OFFLINE_PLAYER_PREFIX = CONFIG.getOrDefault("offlinePlayerPrefix", "[OFF]");
 
         String optionsString = CONFIG.getOrDefault("availableOptions", "attack,break,place,use,crouch,jump,eat,drop_item,drop_stack,move_forward,move_backward,disconnect");
