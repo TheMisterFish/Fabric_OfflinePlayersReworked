@@ -17,6 +17,7 @@ import lombok.extern.slf4j.Slf4j;
 import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 
 import java.util.ArrayList;
@@ -93,7 +94,7 @@ public class OfflinePlayerCommands {
         ArrayList<Pair<EntityPlayerActionPack.ActionType, EntityPlayerActionPack.Action>> actionList;
 
         try {
-            actionList = getActionPackList(pairs);
+            actionList = getActionPackList(List.of(pairs));
         } catch (InvalidActionException | UnavailableActionException | InvalidIntervalException |
                  InvalidOffsetException e) {
             source.sendFailure(Component.literal(e.getMessage()));
@@ -118,30 +119,26 @@ public class OfflinePlayerCommands {
             return 0;
         }
 
-        if (ModConfigs.OP_REQUIRED && !OfflinePlayersReworked.getServer().getPlayerList().isOp(player.getGameProfile())) {
+        if (ModConfigs.OP_REQUIRED && !OfflinePlayersReworked.getServer().getPlayerList().isOp(player.nameAndId())) {
             source.sendFailure(Component.literal("You need to be OP to be able to use this command."));
             return 0;
         }
 
         log.debug("Adding new offline player");
 
-        var offlinePlayer = OfflinePlayer.createAndSpawnNewOfflinePlayer(player.getServer(), player);
+        String[] arguments = new String[0];
+        if (!actionList.isEmpty()) {
+            arguments = getString(context, "arguments").split(" ");
+        }
+
+        var offlinePlayer = OfflinePlayer.createAndSpawnNewOfflinePlayer(player.level().getServer(), player, actionList);
 
         if (offlinePlayer == null) {
             source.sendFailure(Component.literal("Offline player could not be created."));
             return 0;
         }
 
-        String[] arguments = new String[0];
-        if (actionList.size() > 0) {
-            arguments = getString(context, "arguments").split(" ");
-        }
-        OfflinePlayersReworked.getStorage().create(offlinePlayer.getUUID(), player.getUUID(), arguments, player.getX(), player.getY(), player.getZ());
-
-        actionList.forEach(actionTypeActionPair -> manipulate(offlinePlayer, ap -> ap.start(
-                actionTypeActionPair.first(),
-                actionTypeActionPair.second()
-        )));
+        OfflinePlayersReworked.getStorage().create(offlinePlayer.getUUID(), player.getUUID(), List.of(arguments), player.getX(), player.getY(), player.getZ());
 
         if (ModConfigs.AUTO_DISCONNECT) {
             player.connection.disconnect(Component.literal("Offline player generated"));

@@ -34,7 +34,7 @@ You can add actions to your offline player. Available actions include:
 | drop_stack    | Drops all items from the active slot                              |
 | move_forward  | Moves the player forward                                          |
 | move_backward | Moves the player backwards                                        |
- | disconnect    | Automatically disconnects the offline player after a set interval |
+| disconnect    | Automatically disconnects the offline player after a set interval |
 
 To use an action, type `/offline [action]`, e.g., `/offline attack`.
 
@@ -78,7 +78,8 @@ respawnKickedPlayers=true #      - If true, offline players automatically respaw
 informAboutKickedPlayer=true #   - If true, if offline player was kicked and player rejoins, player will be informed about offline player being kicked | default: true
 copySkin=true #                  - If true, offline players copy the original player's skin. | default: true
 ignoreSleepingPercentage=true #  - If true, offline players will not be counted towards the sleeping percentage rule. | default: true
-offlinePlayerPrefix=[OFF] #       - Sets the prefix for the offline player. | default: OFF_
+autoOfflineOnDisconnect=false    - If true, offline players automatically be created on disconnect. | default: false
+offlinePlayerPrefix=[OFF] #      - Sets the prefix for the offline player. | default: OFF_
 
 availableOptions=attack,break,place,use,crouch,jump,eat,drop_item,drop_stack,move_forward,move_backward,disconnect #  | default: attack,break,place,use,crouch,jump,eat,drop_item,drop_stack,move_forward,move_backward,disconnect
 # ^ A comma-separated list of the available action options that can be used.
