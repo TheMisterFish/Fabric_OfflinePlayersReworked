@@ -28,8 +28,10 @@ public class OfflinePlayerModel {
     private double x;
     private double y;
     private double z;
+    private String skinValue = "";
+    private String skinSignature = "";
 
-    public OfflinePlayerModel(UUID id, UUID player, List<String> actions, double x, double y, double z) {
+    public OfflinePlayerModel(UUID id, UUID player, List<String> actions, double x, double y, double z, String skinValue, String skinSignature) {
         this.id = id;
         this.player = player;
         this.actions = actions;
@@ -38,6 +40,8 @@ public class OfflinePlayerModel {
         this.x = x;
         this.y = y;
         this.z = z;
+        this.skinValue = skinValue;
+        this.skinSignature = skinSignature;
     }
 
     public CompoundTag toTag() {
@@ -55,6 +59,8 @@ public class OfflinePlayerModel {
         tag.putBoolean("died", died);
         tag.putString("deathMessage", deathMessage);
         tag.putBoolean("kicked", kicked);
+        tag.putString("skinValue", skinValue);
+        tag.putString("skinSignature", skinSignature);
         return tag;
     }
 
@@ -70,7 +76,10 @@ public class OfflinePlayerModel {
         double y = tag.getDouble("y").orElseThrow(NullPointerException::new);
         double z = tag.getDouble("z").orElseThrow(NullPointerException::new);
 
-        OfflinePlayerModel model = new OfflinePlayerModel(id, player, List.of(actions), x, y, z);
+        String skinValue = tag.getString("skinValue").orElse("");
+        String skinSignature = tag.getString("skinSignature").orElse("");
+
+        OfflinePlayerModel model = new OfflinePlayerModel(id, player, List.of(actions), x, y, z, skinValue, skinSignature);
         model.setDied(tag.getBoolean("died").orElseThrow(NullPointerException::new));
         model.setDeathMessage(tag.getString("deathMessage").orElseThrow(NullPointerException::new));
         model.setKicked(tag.getBoolean("kicked").orElseThrow(NullPointerException::new));
@@ -87,7 +96,9 @@ public class OfflinePlayerModel {
                     Codec.STRING.fieldOf("deathMessage").forGetter(OfflinePlayerModel::getDeathMessage),
                     Codec.DOUBLE.fieldOf("x").forGetter(OfflinePlayerModel::getX),
                     Codec.DOUBLE.fieldOf("y").forGetter(OfflinePlayerModel::getY),
-                    Codec.DOUBLE.fieldOf("z").forGetter(OfflinePlayerModel::getZ)
+                    Codec.DOUBLE.fieldOf("z").forGetter(OfflinePlayerModel::getZ),
+                    Codec.STRING.fieldOf("skinValue").forGetter(OfflinePlayerModel::getSkinValue),
+                    Codec.STRING.fieldOf("skinSignature").forGetter(OfflinePlayerModel::getSkinSignature)
             ).apply(instance, OfflinePlayerModel::new));
 
 }

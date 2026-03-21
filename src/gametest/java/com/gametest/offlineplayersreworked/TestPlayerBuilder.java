@@ -281,6 +281,7 @@ public class TestPlayerBuilder {
     public OfflinePlayer placeOfflinePlayer(MinecraftServer server) {
         OfflinePlayer fake = this.buildOfflinePlayer(server);
         server.getPlayerList().placeNewPlayer(connection, fake, cookie);
+        server.getPlayerList().saveAll();
 
         if (pos != null) {
             fake.teleportTo(pos.x, pos.y, pos.z);
