@@ -97,8 +97,8 @@ public class OfflinePlayerModel {
                     Codec.DOUBLE.fieldOf("x").forGetter(OfflinePlayerModel::getX),
                     Codec.DOUBLE.fieldOf("y").forGetter(OfflinePlayerModel::getY),
                     Codec.DOUBLE.fieldOf("z").forGetter(OfflinePlayerModel::getZ),
-                    Codec.STRING.fieldOf("skinValue").forGetter(OfflinePlayerModel::getSkinValue),
-                    Codec.STRING.fieldOf("skinSignature").forGetter(OfflinePlayerModel::getSkinSignature)
+                    Codec.STRING.optionalFieldOf("skinValue", "").forGetter(OfflinePlayerModel::getSkinValue),
+                    Codec.STRING.optionalFieldOf("skinSignature", "").forGetter(OfflinePlayerModel::getSkinSignature)
             ).apply(instance, OfflinePlayerModel::new));
 
 }
