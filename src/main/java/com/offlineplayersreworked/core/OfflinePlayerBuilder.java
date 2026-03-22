@@ -107,23 +107,18 @@ public class OfflinePlayerBuilder {
             return this;
         }
 
-        // Restart recreation: read profile name from NBT playerdata
-        // This works on online, offline/cracked, and gametest environments
-        // since we stored it ourselves when first saving the player
         if (playerData != null && playerData.getString("OfflinePlayerName").isPresent()) {
             String storedName = playerData.getString("OfflinePlayerName").get();
             profile = new GameProfile(offlinePlayerUUID, storedName);
             return this;
         }
 
-        // Fallback for online-mode servers (Mojang auth available)
         Optional<GameProfile> profileResult = server.services().profileResolver().fetchById(offlinePlayerUUID);
         if (profileResult.isPresent()) {
             profile = profileResult.get();
             return this;
         }
 
-        // Last resort: nameToIdCache (in-memory, may be empty after restart)
         log.warn("Could not get GameProfile from profileResolver for profile {}. Trying nameToIdCache fallback.", offlinePlayerUUID);
         Optional<NameAndId> nameAndIdResult = server.services().nameToIdCache().get(offlinePlayerUUID);
         if (nameAndIdResult.isPresent()) {
@@ -328,27 +323,6 @@ public class OfflinePlayerBuilder {
         if (failed()) return null;
 
         offlinePlayer.level().getServer().getPlayerList().saveAll();
-//
-//        Path file = server.getWorldPath(LevelResource.PLAYER_DATA_DIR)
-//                .resolve(offlinePlayer.getUUID() + ".dat");
-//        try {
-//            log.info("Patching OfflinePlayerName into file: {}", file);
-//            log.info("File exists: {}", file.toFile().exists());
-//            log.info("Offline player UUID: {}", offlinePlayer.getUUID());
-//            log.info("Offline player name: {}", offlinePlayer.getGameProfile().name());
-//
-//            CompoundTag nbt = NbtIo.readCompressed(file, NbtAccounter.unlimitedHeap());
-//            nbt.putString("OfflinePlayerName", offlinePlayer.getGameProfile().name());
-//            NbtIo.writeCompressed(nbt, file);
-//
-//            // Verify it was written
-//            CompoundTag verify = NbtIo.readCompressed(file, NbtAccounter.unlimitedHeap());
-//            log.info("Verification - OfflinePlayerName in file after patch: {}", verify.getString("OfflinePlayerName"));
-//
-//        } catch (Exception e) {
-//            log.error("Failed to patch OfflinePlayerName: {}", e.getMessage(), e);
-//        }
-
         return offlinePlayer;
     }
 
