@@ -14,11 +14,6 @@ import net.minecraft.server.level.ServerPlayer;
 
 public class OfflinePlayerCommandsGameTest {
 
-//    @AfterBatch(batch = "OfflinePlayerCommandsGameTest")
-//    public static void deletePlayerData(ServerLevel serverLevel) {
-//        Utils.clearOfflinePlayerStorageAndDisconnectPlayers(serverLevel);
-//    }
-
     @GameTest
     public void registerAndExampleSendsMessage(GameTestHelper helper) throws CommandSyntaxException {
         MinecraftServer server = helper.getLevel().getServer();

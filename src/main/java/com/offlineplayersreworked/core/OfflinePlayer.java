@@ -3,6 +3,7 @@ package com.offlineplayersreworked.core;
 import com.mojang.authlib.GameProfile;
 import com.offlineplayersreworked.storage.model.OfflinePlayerModel;
 import com.offlineplayersreworked.utils.DamageSourceSerializer;
+import it.unimi.dsi.fastutil.Pair;
 import lombok.extern.slf4j.Slf4j;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -25,6 +26,8 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.portal.TeleportTransition;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 import static com.offlineplayersreworked.OfflinePlayersReworked.getStorage;
@@ -38,28 +41,29 @@ public class OfflinePlayer extends ServerPlayer {
         super(server, worldIn, profile, cli);
     }
 
-    public static OfflinePlayer createAndSpawnNewOfflinePlayer(MinecraftServer server, ServerPlayer player) {
+    public static OfflinePlayer createAndSpawnNewOfflinePlayer(MinecraftServer server, ServerPlayer player, List<Pair<EntityPlayerActionPack.ActionType, EntityPlayerActionPack.Action>> actions) {
         return OfflinePlayerBuilder.create(server)
                 .fromOnlinePlayer(player)
                 .loadProfile()
                 .resolveDimension()
                 .createOfflinePlayer()
                 .spawnFromSourcePlayer()
+                .startActions(actions)
                 .build();
     }
 
     public static void recreateOfflinePlayer(MinecraftServer server, OfflinePlayerModel offlinePlayerModel) {
         OfflinePlayerBuilder.create(server)
                 .fromStoredData(offlinePlayerModel.getId())
-                .withSkinFrom(offlinePlayerModel.getPlayer())
-                .loadProfile()
                 .loadPlayerData()
+                .loadProfile()
+                .applySkinOverride(offlinePlayerModel.getSkinValue(), offlinePlayerModel.getSkinSignature())
                 .resolveDimension()
                 .createOfflinePlayer()
-                .applySkinOverride()
+                .applyPlayerData()
                 .spawn()
                 .applyStoredPosition()
-                .startActions(offlinePlayerModel)
+                .startActionsFromStringList(offlinePlayerModel.getActions())
                 .build();
     }
 

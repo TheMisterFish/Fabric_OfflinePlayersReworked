@@ -50,11 +50,12 @@ public class ServerPlayerMapper {
         }
     }
 
-    public static void copyPlayerSkin(GameProfile sourceGameProfile, GameProfile targetGameProfile) {
+    public static GameProfile copyPlayerSkin(GameProfile sourceGameProfile, GameProfile targetGameProfile) {
         if (ModConfigs.COPY_SKIN) {
             sourceGameProfile.getProperties().get("textures")
                     .forEach(property -> targetGameProfile.getProperties().put("textures", property));
         }
+        return targetGameProfile;
     }
 
 }

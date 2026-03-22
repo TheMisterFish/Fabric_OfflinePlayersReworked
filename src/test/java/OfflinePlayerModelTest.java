@@ -19,7 +19,7 @@ public class OfflinePlayerModelTest {
         double y = 56.78;
         double z = -9.01;
 
-        OfflinePlayerModel original = new OfflinePlayerModel(id, player, List.of(actions), x, y, z);
+        OfflinePlayerModel original = new OfflinePlayerModel(id, player, List.of(actions), x, y, z, "skinValue", "skinSignature");
         original.setDied(true);
         original.setDeathMessage("fell into void");
         original.setKicked(true);
@@ -36,6 +36,9 @@ public class OfflinePlayerModelTest {
         assertEquals(original.getY(), restored.getY(), 1e-9, "y should roundtrip");
         assertEquals(original.getZ(), restored.getZ(), 1e-9, "z should roundtrip");
 
+        assertEquals(original.getSkinValue(), restored.getSkinValue(), "SkinValue should roundtrip");
+        assertEquals(original.getSkinSignature(), restored.getSkinSignature(), "SkinSignature should roundtrip");
+
         assertTrue(restored.isDied(), "died flag should roundtrip");
         assertEquals("fell into void", restored.getDeathMessage(), "deathMessage should roundtrip");
         assertTrue(restored.isKicked(), "kicked flag should roundtrip");
@@ -46,7 +49,7 @@ public class OfflinePlayerModelTest {
         UUID id = UUID.randomUUID();
         UUID player = UUID.randomUUID();
         String[] actions = new String[0];
-        OfflinePlayerModel original = new OfflinePlayerModel(id, player, List.of(actions), 0.0, 0.0, 0.0);
+        OfflinePlayerModel original = new OfflinePlayerModel(id, player, List.of(actions), 0.0, 0.0, 0.0, "", "");
 
         CompoundTag tag = original.toTag();
 

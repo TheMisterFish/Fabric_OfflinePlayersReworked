@@ -111,7 +111,9 @@ public class OfflinePlayerAutoDisconnectGameTest {
         Utils.ComparisonResult result = Utils.compare(testPlayer, Objects.requireNonNull(offlinePlayer));
 
         helper.startSequence()
-                .thenWaitUntil(() -> DisconnectTracker.hasReason(playerName))
+                .thenWaitUntil(() ->
+                        helper.assertTrue(DisconnectTracker.hasReason(playerName), Component.nullToEmpty("DisconnectTracker did not have a reason"))
+                )
                 .thenExecute(() -> {
                     helper.assertTrue(DisconnectTracker.getReason(playerName).equals("Offline player generated"),
                             Component.nullToEmpty("Correct disconnect reason for /offline usage"));
