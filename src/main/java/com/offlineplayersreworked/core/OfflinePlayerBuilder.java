@@ -107,12 +107,6 @@ public class OfflinePlayerBuilder {
             return this;
         }
 
-        if (playerData != null && playerData.getString("OfflinePlayerName").isPresent()) {
-            String storedName = playerData.getString("OfflinePlayerName").get();
-            profile = new GameProfile(offlinePlayerUUID, storedName);
-            return this;
-        }
-
         Optional<GameProfile> profileResult = server.services().profileResolver().fetchById(offlinePlayerUUID);
         if (profileResult.isPresent()) {
             profile = profileResult.get();
