@@ -5,6 +5,9 @@
   "name": "Fabric docs reference",
   "environment": "*",
   "entrypoints": {
+    "preLaunch": [
+      "com.gametest.offlineplayersreworked.GameTestPreLaunch"
+    ],
     "fabric-gametest": [
       "com.gametest.offlineplayersreworked.test.OfflinePlayerCreationGameTest",
       "com.gametest.offlineplayersreworked.test.OfflinePlayerCommandsGameTest",

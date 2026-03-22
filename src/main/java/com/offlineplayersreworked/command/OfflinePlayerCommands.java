@@ -1,5 +1,6 @@
 package com.offlineplayersreworked.command;
 
+import com.mojang.authlib.properties.Property;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
@@ -21,6 +22,8 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 
 import java.util.ArrayList;
+import java.util.Base64;
+import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -138,7 +141,17 @@ public class OfflinePlayerCommands {
             return 0;
         }
 
-        OfflinePlayersReworked.getStorage().create(offlinePlayer.getUUID(), player.getUUID(), List.of(arguments), player.getX(), player.getY(), player.getZ());
+        Collection<Property> textures = offlinePlayer.getGameProfile().properties().get("textures");
+        String textureValue = "";
+        String textureSignature = "";
+        if (!textures.isEmpty()) {
+            Property texture = textures.iterator().next();
+            textureValue = texture.value();
+            textureSignature = texture.signature();
+            String decoded = new String(Base64.getDecoder().decode(texture.value()));
+        }
+
+        OfflinePlayersReworked.getStorage().create(offlinePlayer.getUUID(), player.getUUID(), List.of(arguments), player.getX(), player.getY(), player.getZ(), textureValue, textureSignature);
 
         if (ModConfigs.AUTO_DISCONNECT) {
             player.connection.disconnect(Component.literal("Offline player generated"));
