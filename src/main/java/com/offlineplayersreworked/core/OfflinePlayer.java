@@ -1,20 +1,24 @@
 package com.offlineplayersreworked.core;
 
 import com.mojang.authlib.GameProfile;
+import com.offlineplayersreworked.core.connection.FakeClientConnection;
 import com.offlineplayersreworked.storage.model.OfflinePlayerModel;
 import com.offlineplayersreworked.utils.DamageSourceSerializer;
 import it.unimi.dsi.fastutil.Pair;
 import lombok.extern.slf4j.Slf4j;
+import net.fabricmc.fabric.api.entity.FakePlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.DisconnectionDetails;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.contents.TranslatableContents;
+import net.minecraft.network.protocol.PacketFlow;
 import net.minecraft.network.protocol.game.ServerboundClientCommandPacket;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ClientInformation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.network.CommonListenerCookie;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
@@ -29,6 +33,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.UUID;
 
 import static com.offlineplayersreworked.OfflinePlayersReworked.getStorage;
 
@@ -55,14 +60,13 @@ public class OfflinePlayer extends ServerPlayer {
     public static void recreateOfflinePlayer(MinecraftServer server, OfflinePlayerModel offlinePlayerModel) {
         OfflinePlayerBuilder.create(server)
                 .fromStoredData(offlinePlayerModel.getId())
-                .loadPlayerData()
                 .loadProfile()
+                .loadPlayerData()
                 .applySkinOverride(offlinePlayerModel.getSkinValue(), offlinePlayerModel.getSkinSignature())
                 .resolveDimension()
                 .createOfflinePlayer()
-                .applyPlayerData()
                 .spawn()
-                .applyStoredPosition()
+                .applyPlayerData()
                 .startActionsFromStringList(offlinePlayerModel.getActions())
                 .build();
     }

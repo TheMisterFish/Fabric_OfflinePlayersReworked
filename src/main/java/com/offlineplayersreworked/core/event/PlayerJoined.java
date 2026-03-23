@@ -49,10 +49,10 @@ public class PlayerJoined {
         }
 
         float originalHealth = player.getHealth();
-        OfflinePlayer offline = findOnlineOfflinePlayer(model.getId());
+        ServerPlayer offline = findOnlineOfflinePlayer(model.getId());
 
         if (offline != null) {
-            handleOnlineOfflinePlayer(player, offline);
+            handleOnlineOfflinePlayer(player, (OfflinePlayer) offline);
         } else {
             handleOfflinePlayerFromDisk(player, model, originalHealth);
         }
@@ -158,8 +158,8 @@ public class PlayerJoined {
         getStorage().remove(id);
     }
 
-    private static OfflinePlayer findOnlineOfflinePlayer(UUID id) {
-        return (OfflinePlayer) getServer().getPlayerList().getPlayer(id);
+    private static ServerPlayer findOnlineOfflinePlayer(UUID id) {
+        return getServer().getPlayerList().getPlayer(id);
     }
 
     private static CompoundTag loadPlayerData(UUID id) {

@@ -37,7 +37,6 @@ public abstract class PlayerList_offlinePlayersMixin {
     @Inject(method = "placeNewPlayer", at = @At("TAIL"))
     private void afterPlaceNewPlayer(Connection clientConnection, ServerPlayer playerIn, CommonListenerCookie cookie, CallbackInfo ci) {
         if (playerIn instanceof OfflinePlayer fake) {
-            // Replace the network manager with our custom one
             playerIn.connection = new NetHandlerPlayServerFake(this.server, clientConnection, fake, cookie);
         } else {
             PlayerJoined.playerJoined(playerIn);
