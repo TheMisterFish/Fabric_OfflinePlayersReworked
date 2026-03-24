@@ -1,7 +1,6 @@
 package com.gametest.offlineplayersreworked.test;
 
 import com.gametest.offlineplayersreworked.TestPlayerBuilder;
-import com.gametest.offlineplayersreworked.Utils;
 import com.mojang.authlib.GameProfile;
 import com.offlineplayersreworked.config.ModConfigs;
 import com.offlineplayersreworked.utils.ServerPlayerMapper;

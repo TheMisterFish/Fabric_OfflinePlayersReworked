@@ -20,9 +20,6 @@ import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.storage.LevelResource;
 import net.minecraft.world.level.storage.TagValueInput;
 import net.minecraft.world.level.storage.ValueInput;
-import net.minecraft.world.level.storage.ValueInputContextHelper;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -30,7 +27,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
-import static com.offlineplayersreworked.OfflinePlayersReworked.*;
+import static com.offlineplayersreworked.OfflinePlayersReworked.getServer;
+import static com.offlineplayersreworked.OfflinePlayersReworked.getStorage;
 
 @Slf4j
 public class PlayerJoined {

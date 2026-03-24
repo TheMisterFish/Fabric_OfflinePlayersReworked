@@ -3,7 +3,6 @@ package com.offlineplayersreworked.mixin;
 import com.offlineplayersreworked.core.OfflinePlayer;
 import com.offlineplayersreworked.core.connection.NetHandlerPlayServerFake;
 import com.offlineplayersreworked.core.event.PlayerJoined;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.Connection;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
