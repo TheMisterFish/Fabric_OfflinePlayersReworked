@@ -131,30 +131,4 @@ public class Utils {
         ItemStack off = source.getItem(40);
         tgt.setItem(40, off.isEmpty() ? ItemStack.EMPTY : off.copy());
     }
-
-    public static void clearOfflinePlayerStorageAndDisconnectPlayers(ServerLevel serverLevel) {
-        MinecraftServer server = serverLevel.getServer();
-        OfflinePlayersStorage storage = OfflinePlayersStorage.getStorage(server);
-        storage.findAll().forEach(offlinePlayerModel -> {
-            storage.remove(offlinePlayerModel.getId());
-        });
-
-        server.getPlayerList().getPlayers().forEach(player -> {
-            Objects.requireNonNull(server.getPlayerList().getPlayer(player.getUUID())).disconnect();
-        });
-
-        log.info("Cleared OfflinePlayers storage & Disconnected all players");
-    }
-
-    public static Services createOfflineServices(File dir, Services services) {
-        File cache = new File(dir, "usercache.json");
-
-        MinecraftSessionService session = new OfflineSessionService(services);
-        GameProfileRepository repo = new OfflineGameProfileRepository();
-        UserNameToIdResolver resolver = new CachedUserNameToIdResolver(repo, cache);
-        ProfileResolver profileResolver = new ProfileResolver.Cached(session, resolver);
-
-        return new Services(session, ServicesKeySet.EMPTY, repo, resolver, profileResolver);
-    }
-
 }

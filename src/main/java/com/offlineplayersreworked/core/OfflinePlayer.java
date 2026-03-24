@@ -53,14 +53,13 @@ public class OfflinePlayer extends ServerPlayer {
     public static void recreateOfflinePlayer(MinecraftServer server, OfflinePlayerModel offlinePlayerModel) {
         OfflinePlayerBuilder.create(server)
                 .fromStoredData(offlinePlayerModel.getId())
-                .withSkinFrom(offlinePlayerModel.getPlayer())
-                .loadProfile()
                 .loadPlayerData()
+                .loadProfile()
+                .applySkinOverride(offlinePlayerModel.getSkinValue(), offlinePlayerModel.getSkinSignature())
                 .resolveDimension()
                 .createOfflinePlayer()
-                .applySkinOverride()
+                .applyPlayerData()
                 .spawn()
-                .applyStoredPosition()
                 .startActionsFromStringList(offlinePlayerModel.getActions())
                 .build();
     }
