@@ -1,10 +1,10 @@
 package com.offlineplayersreworked.command;
 
-import com.offlineplayersreworked.config.ModConfigs;
-import com.offlineplayersreworked.utils.ActionMapper;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
+import com.offlineplayersreworked.config.ModConfigs;
+import com.offlineplayersreworked.utils.ActionMapper;
 import net.minecraft.commands.CommandSourceStack;
 
 import java.util.Arrays;
