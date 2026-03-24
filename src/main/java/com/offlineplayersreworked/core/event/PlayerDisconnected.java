@@ -36,7 +36,6 @@ public class PlayerDisconnected {
 
             OfflinePlayersReworked.getStorage().create(offlinePlayer.getUUID(), player.getUUID(), List.of(), player.getX(), player.getY(), player.getZ(), textureValue, textureSignature);
         }
-        ;
     }
 
     private static boolean isAllowedToRespawn(Component reason) {
