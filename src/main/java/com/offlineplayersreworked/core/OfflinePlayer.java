@@ -1,5 +1,6 @@
 package com.offlineplayersreworked.core;
 
+import it.unimi.dsi.fastutil.Pair;
 import com.mojang.authlib.GameProfile;
 import com.offlineplayersreworked.storage.model.OfflinePlayerModel;
 import com.offlineplayersreworked.utils.DamageSourceSerializer;
@@ -31,6 +32,8 @@ import net.minecraft.world.level.portal.TeleportTransition;
 import net.minecraft.world.scores.Team;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 import static com.offlineplayersreworked.OfflinePlayersReworked.getStorage;
@@ -44,28 +47,27 @@ public class OfflinePlayer extends ServerPlayer {
         super(server, worldIn, profile, cli);
     }
 
-    public static OfflinePlayer createAndSpawnNewOfflinePlayer(MinecraftServer server, ServerPlayer player) {
+    public static OfflinePlayer createAndSpawnNewOfflinePlayer(MinecraftServer server, ServerPlayer player, List<Pair<EntityPlayerActionPack.ActionType, EntityPlayerActionPack.Action>> actions) {
         return OfflinePlayerBuilder.create(server)
                 .fromOnlinePlayer(player)
                 .loadProfile()
                 .resolveDimension()
                 .createOfflinePlayer()
                 .spawnFromSourcePlayer()
+                .startActions(actions)
                 .build();
     }
 
     public static void recreateOfflinePlayer(MinecraftServer server, OfflinePlayerModel offlinePlayerModel) {
         OfflinePlayerBuilder.create(server)
                 .fromStoredData(offlinePlayerModel.getId())
-                .withSkinFrom(offlinePlayerModel.getPlayer())
-                .loadProfile()
                 .loadPlayerData()
+                .loadProfile()
+                .applySkinOverride(offlinePlayerModel.getSkinValue(), offlinePlayerModel.getSkinSignature())
                 .resolveDimension()
                 .createOfflinePlayer()
-                .applyStoredPosition()
-                .applySkinOverride()
                 .spawn()
-                .startActions(offlinePlayerModel)
+                .startActionsFromStringList(offlinePlayerModel.getActions())
                 .build();
     }
 
@@ -80,8 +82,7 @@ public class OfflinePlayer extends ServerPlayer {
     }
 
     @Override
-    public void kill(ServerLevel level)
-    {
+    public void kill(ServerLevel level) {
         kill(Component.literal("Killed"));
     }
 
@@ -92,7 +93,7 @@ public class OfflinePlayer extends ServerPlayer {
         if (reason.getContents() instanceof TranslatableContents text && text.getKey().equals("multiplayer.disconnect.duplicate_login")) {
             this.connection.onDisconnect(new DisconnectionDetails(reason));
         } else {
-            this.server.execute(() -> this.connection.onDisconnect(new DisconnectionDetails(reason)) );
+            this.server.execute(() -> this.connection.onDisconnect(new DisconnectionDetails(reason)));
         }
     }
 
@@ -124,8 +125,7 @@ public class OfflinePlayer extends ServerPlayer {
     }
 
     @Override
-    public void die(DamageSource cause)
-    {
+    public void die(DamageSource cause) {
         getStorage().killByIdWithDeathMessage(this.getGameProfile().getId(), this.getPosition(1f), DamageSourceSerializer.serializeDamageSource(cause));
         shakeOff();
         super.die(cause);
@@ -150,8 +150,7 @@ public class OfflinePlayer extends ServerPlayer {
     }
 
     @Override
-    public ServerPlayer teleport(TeleportTransition serverLevel)
-    {
+    public ServerPlayer teleport(TeleportTransition serverLevel) {
         super.teleport(serverLevel);
         if (wonGame) {
             ServerboundClientCommandPacket p = new ServerboundClientCommandPacket(ServerboundClientCommandPacket.Action.PERFORM_RESPAWN);
@@ -165,8 +164,6 @@ public class OfflinePlayer extends ServerPlayer {
         }
         return connection.player;
     }
-
-
 
 
 }

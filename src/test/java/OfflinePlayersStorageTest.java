@@ -12,8 +12,8 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class OfflinePlayersStorageTest {
 
-    private static String[] sampleActions() {
-        return new String[] { "jump", "sit" };
+    private static List<String> sampleActions() {
+        return List.of("jump", "sit");
     }
 
     @Test
@@ -23,7 +23,7 @@ public class OfflinePlayersStorageTest {
         UUID offlineId = UUID.randomUUID();
         UUID playerId = UUID.randomUUID();
 
-        storage.create(offlineId, playerId, sampleActions(), 1.0, 2.0, 3.0);
+        storage.create(offlineId, playerId, sampleActions(), 1.0, 2.0, 3.0, "", "");
 
         List<OfflinePlayerModel> all = storage.findAll();
         assertEquals(1, all.size(), "There should be one stored offline player");
@@ -31,7 +31,7 @@ public class OfflinePlayersStorageTest {
         OfflinePlayerModel found = storage.findByPlayerUUID(playerId);
         assertNotNull(found, "findByPlayerUUID should return the created model");
         assertEquals(offlineId, found.getId(), "IDs should match");
-        assertArrayEquals(sampleActions(), found.getActions(), "Actions should match");
+        assertEquals(sampleActions(), found.getActions(), "Actions should match");
         assertEquals(1.0, found.getX(), 1e-9);
         assertEquals(2.0, found.getY(), 1e-9);
         assertEquals(3.0, found.getZ(), 1e-9);
@@ -44,7 +44,7 @@ public class OfflinePlayersStorageTest {
         UUID offlineId = UUID.randomUUID();
         UUID playerId = UUID.randomUUID();
 
-        storage.create(offlineId, playerId, sampleActions(), 0, 0, 0);
+        storage.create(offlineId, playerId, sampleActions(), 0, 0, 0, "", "");
         assertEquals(1, storage.findAll().size());
 
         storage.remove(offlineId);
@@ -58,7 +58,7 @@ public class OfflinePlayersStorageTest {
         UUID offlineId = UUID.randomUUID();
         UUID playerId = UUID.randomUUID();
 
-        storage.create(offlineId, playerId, sampleActions(), 0.0, 0.0, 0.0);
+        storage.create(offlineId, playerId, sampleActions(), 0.0, 0.0, 0.0, "", "");
 
         Vec3 pos = new Vec3(10.5, 64.0, -3.25);
         String deathMessage = "fell into the void";
@@ -81,7 +81,7 @@ public class OfflinePlayersStorageTest {
         UUID offlineId = UUID.randomUUID();
         UUID playerId = UUID.randomUUID();
 
-        storage.create(offlineId, playerId, sampleActions(), 0.0, 0.0, 0.0);
+        storage.create(offlineId, playerId, sampleActions(), 0.0, 0.0, 0.0, "", "");
 
         storage.kick(offlineId);
 
@@ -96,17 +96,17 @@ public class OfflinePlayersStorageTest {
 
         UUID offlineId1 = UUID.randomUUID();
         UUID playerId1 = UUID.randomUUID();
-        storage.create(offlineId1, playerId1, new String[] { "a", "b" }, 1.1, 2.2, 3.3);
+        storage.create(offlineId1, playerId1, List.of("a", "b"), 1.1, 2.2, 3.3, "skinValue1", "skinSignature1");
 
         UUID offlineId2 = UUID.randomUUID();
         UUID playerId2 = UUID.randomUUID();
-        storage.create(offlineId2, playerId2, new String[] { "x" }, -1.0, -2.0, -3.0);
+        storage.create(offlineId2, playerId2, List.of("x"), -1.0, -2.0, -3.0, "skinValue2", "skinSignature2");
 
         storage.killByIdWithDeathMessage(offlineId1, new Vec3(5, 6, 7), "boom");
         storage.kick(offlineId2);
 
         CompoundTag tag = new CompoundTag();
-        storage.save(tag, null); // provider is not used by save implementation
+        storage.save(tag, null);
 
         assertTrue(tag.contains("OfflinePlayers"), "Saved tag should contain OfflinePlayers list");
         ListTag list = tag.getList("OfflinePlayers", 10);
@@ -123,13 +123,17 @@ public class OfflinePlayersStorageTest {
         assertEquals(5.0, loaded1.getX(), 1e-9);
         assertEquals(6.0, loaded1.getY(), 1e-9);
         assertEquals(7.0, loaded1.getZ(), 1e-9);
+        assertEquals("skinValue1", loaded1.getSkinValue());
+        assertEquals("skinSignature1", loaded1.getSkinSignature());
 
         OfflinePlayerModel loaded2 = loaded.findByPlayerUUID(playerId2);
         assertNotNull(loaded2);
         assertTrue(loaded2.isKicked());
-        assertArrayEquals(new String[] { "x" }, loaded2.getActions());
+        assertEquals(List.of("x"), loaded2.getActions());
         assertEquals(-1.0, loaded2.getX(), 1e-9);
         assertEquals(-2.0, loaded2.getY(), 1e-9);
         assertEquals(-3.0, loaded2.getZ(), 1e-9);
+        assertEquals("skinValue2", loaded2.getSkinValue());
+        assertEquals("skinSignature2", loaded2.getSkinSignature());
     }
 }

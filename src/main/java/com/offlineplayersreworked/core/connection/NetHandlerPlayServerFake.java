@@ -13,23 +13,18 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 
-public class NetHandlerPlayServerFake extends ServerGamePacketListenerImpl
-{
-    public NetHandlerPlayServerFake(final MinecraftServer minecraftServer, final Connection connection, final ServerPlayer serverPlayer, final CommonListenerCookie i)
-    {
+public class NetHandlerPlayServerFake extends ServerGamePacketListenerImpl {
+    public NetHandlerPlayServerFake(final MinecraftServer minecraftServer, final Connection connection, final ServerPlayer serverPlayer, final CommonListenerCookie i) {
         super(minecraftServer, connection, serverPlayer, i);
     }
 
     @Override
-    public void send(final @NotNull Packet<?> packetIn)
-    {
+    public void send(final @NotNull Packet<?> packetIn) {
     }
 
     @Override
-    public void disconnect(Component message)
-    {
-        if (message.getContents() instanceof TranslatableContents text && (text.getKey().equals("multiplayer.disconnect.idling") || text.getKey().equals("multiplayer.disconnect.duplicate_login")))
-        {
+    public void disconnect(Component message) {
+        if (message.getContents() instanceof TranslatableContents text && (text.getKey().equals("multiplayer.disconnect.idling") || text.getKey().equals("multiplayer.disconnect.duplicate_login"))) {
             ((OfflinePlayer) player).kill(message);
         }
     }

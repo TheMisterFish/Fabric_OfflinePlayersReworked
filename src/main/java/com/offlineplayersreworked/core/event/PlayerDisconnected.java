@@ -1,5 +1,6 @@
 package com.offlineplayersreworked.core.event;
 
+import com.mojang.authlib.properties.Property;
 import com.offlineplayersreworked.OfflinePlayersReworked;
 import com.offlineplayersreworked.config.ModConfigs;
 import com.offlineplayersreworked.core.OfflinePlayer;
@@ -8,26 +9,34 @@ import net.minecraft.network.DisconnectionDetails;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 
+import java.util.Collection;
+import java.util.List;
+
 import static com.offlineplayersreworked.OfflinePlayersReworked.getStorage;
 
 @Slf4j
 public class PlayerDisconnected {
-    public static void playerDisconnected(ServerPlayer player, DisconnectionDetails disconnectionDetails){
-        if(!ModConfigs.AUTO_OFFLINE_ON_DISCONNECT) return;
+    public static void playerDisconnected(ServerPlayer player, DisconnectionDetails disconnectionDetails) {
+        if (!ModConfigs.AUTO_OFFLINE_ON_DISCONNECT) return;
 
         var model = getStorage().findByPlayerUUID(player.getUUID());
         if (model != null) return;
 
-        if (player.getServer() == null) {
-            log.error("Could not create offline player for {}: getServer() returned null",
-                    player.getName().getString());
-            return;
-        }
+        if (isAllowedToRespawn(disconnectionDetails.reason())) {
+            var offlinePlayer = OfflinePlayer.createAndSpawnNewOfflinePlayer(player.level().getServer(), player, List.of());
 
-        if(isAllowedToRespawn(disconnectionDetails.reason())){
-            var offlinePlayer = OfflinePlayer.createAndSpawnNewOfflinePlayer(player.level().getServer(), player);
-            OfflinePlayersReworked.getStorage().create(offlinePlayer.getUUID(), player.getUUID(), new String[0], player.getX(), player.getY(), player.getZ());
-        };
+            Collection<Property> textures = offlinePlayer.getGameProfile().getProperties().get("textures");
+            String textureValue = "";
+            String textureSignature = "";
+            if (!textures.isEmpty()) {
+                Property texture = textures.iterator().next();
+                textureValue = texture.value();
+                textureSignature = texture.signature();
+            }
+
+            OfflinePlayersReworked.getStorage().create(offlinePlayer.getUUID(), player.getUUID(), List.of(), player.getX(), player.getY(), player.getZ(), textureValue, textureSignature);
+        }
+        ;
     }
 
     private static boolean isAllowedToRespawn(Component reason) {

@@ -24,11 +24,11 @@ public class ActionMapper {
                 .orElse(null);
     }
 
-    public static ArrayList<Pair<EntityPlayerActionPack.ActionType, EntityPlayerActionPack.Action>> getActionPackList(String[] pairs) {
+    public static ArrayList<Pair<EntityPlayerActionPack.ActionType, EntityPlayerActionPack.Action>> getActionPackList(List<String> pairs) {
         ArrayList<Pair<EntityPlayerActionPack.ActionType, EntityPlayerActionPack.Action>> actionList = new ArrayList<>();
 
-        IntStream.range(0, pairs.length).forEach(index -> {
-            String pair = pairs[index];
+        IntStream.range(0, pairs.size()).forEach(index -> {
+            String pair = pairs.get(index);
             String[] actionInterval = pair.split(":");
             if (actionInterval.length != 1 && actionInterval.length != 2 && actionInterval.length != 3) {
                 throw new InvalidActionException("Invalid format. Use action, action:interval or action:interval:offset.");
@@ -46,7 +46,7 @@ public class ActionMapper {
             if (actionInterval.length > 1) {
                 try {
                     interval = TimeParser.parse(actionInterval[1]);
-                } catch(IllegalArgumentException e) {
+                } catch (IllegalArgumentException e) {
                     throw new InvalidIntervalException("Invalid interval format: " + e.getMessage());
                 }
             }
@@ -57,7 +57,7 @@ public class ActionMapper {
                 try {
                     int offset = TimeParser.parse(actionInterval[2]);
                     actionPair = EntityPlayerActionPack.getActionPair(action, interval, offset);
-                } catch(IllegalArgumentException e) {
+                } catch (IllegalArgumentException e) {
                     throw new InvalidOffsetException("Invalid offset format: " + e.getMessage());
                 }
             } else {

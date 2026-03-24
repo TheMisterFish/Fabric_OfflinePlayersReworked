@@ -1,5 +1,6 @@
 package com.offlineplayersreworked.command;
 
+import com.mojang.authlib.properties.Property;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
@@ -20,6 +21,8 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 
 import java.util.ArrayList;
+import java.util.Base64;
+import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -93,7 +96,7 @@ public class OfflinePlayerCommands {
         ArrayList<Pair<EntityPlayerActionPack.ActionType, EntityPlayerActionPack.Action>> actionList;
 
         try {
-            actionList = getActionPackList(pairs);
+            actionList = getActionPackList(List.of(pairs));
         } catch (InvalidActionException | UnavailableActionException | InvalidIntervalException |
                  InvalidOffsetException e) {
             source.sendFailure(Component.literal(e.getMessage()));
@@ -125,23 +128,29 @@ public class OfflinePlayerCommands {
 
         log.debug("Adding new offline player");
 
-        var offlinePlayer = OfflinePlayer.createAndSpawnNewOfflinePlayer(player.getServer(), player);
+        String[] arguments = new String[0];
+        if (!actionList.isEmpty()) {
+            arguments = getString(context, "arguments").split(" ");
+        }
+
+        var offlinePlayer = OfflinePlayer.createAndSpawnNewOfflinePlayer(player.level().getServer(), player, actionList);
 
         if (offlinePlayer == null) {
             source.sendFailure(Component.literal("Offline player could not be created."));
             return 0;
         }
 
-        String[] arguments = new String[0];
-        if (actionList.size() > 0) {
-            arguments = getString(context, "arguments").split(" ");
+        Collection<Property> textures = offlinePlayer.getGameProfile().getProperties().get("textures");
+        String textureValue = "";
+        String textureSignature = "";
+        if (!textures.isEmpty()) {
+            Property texture = textures.iterator().next();
+            textureValue = texture.value();
+            textureSignature = texture.signature();
+            String decoded = new String(Base64.getDecoder().decode(texture.value()));
         }
-        OfflinePlayersReworked.getStorage().create(offlinePlayer.getUUID(), player.getUUID(), arguments, player.getX(), player.getY(), player.getZ());
 
-        actionList.forEach(actionTypeActionPair -> manipulate(offlinePlayer, ap -> ap.start(
-                actionTypeActionPair.first(),
-                actionTypeActionPair.second()
-        )));
+        OfflinePlayersReworked.getStorage().create(offlinePlayer.getUUID(), player.getUUID(), List.of(arguments), player.getX(), player.getY(), player.getZ(), textureValue, textureSignature);
 
         if (ModConfigs.AUTO_DISCONNECT) {
             player.connection.disconnect(Component.literal("Offline player generated"));

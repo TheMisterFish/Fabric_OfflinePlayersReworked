@@ -42,11 +42,6 @@ import static net.fabricmc.fabric.api.gametest.v1.FabricGameTest.EMPTY_STRUCTURE
 
 public class EntityPlayerActionPackGameTest {
 
-    @AfterBatch(batch = "EntityPlayerActionPackGameTest")
-    public static void deletePlayerData(ServerLevel serverLevel) {
-        Utils.clearOfflinePlayerStorageAndDisconnectPlayers(serverLevel);
-    }
-
     @GameTest(template = EMPTY_STRUCTURE, batch = "EntityPlayerActionPackGameTest")
     public static void sneakingAndSprintingAreExclusive(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
@@ -145,7 +140,6 @@ public class EntityPlayerActionPackGameTest {
         Vec3 startingPoint = helper.absoluteVec(new Vec3(1, 0, 0));
         ServerPlayer testPlayer = new TestPlayerBuilder()
                 .setName("JumpTest")
-                .setMoveTo(startingPoint)
                 .placeOfflinePlayer(server);
 
         EntityPlayerActionPack ap = ((ServerPlayerInterface) testPlayer).getActionPack();
@@ -177,7 +171,6 @@ public class EntityPlayerActionPackGameTest {
         MinecraftServer server = level.getServer();
 
         ServerPlayer testPlayer = new TestPlayerBuilder().setName("DisconnectTest")
-                .setMoveTo(helper.absoluteVec(new Vec3(3, 0, 0)))
                 .placeOfflinePlayer(server);
 
         EntityPlayerActionPack ap = ((ServerPlayerInterface) testPlayer).getActionPack();
@@ -208,7 +201,6 @@ public class EntityPlayerActionPackGameTest {
         ServerPlayer testPlayer = new TestPlayerBuilder()
                 .setName("DropTest")
                 .addItem(0, new ItemStack(Items.STONE, 2))
-                .setMoveTo(helper.absoluteVec(new Vec3(5, 0, 0)))
                 .placeOfflinePlayer(server);
 
         EntityPlayerActionPack ap = ((ServerPlayerInterface) testPlayer).getActionPack();
@@ -230,7 +222,6 @@ public class EntityPlayerActionPackGameTest {
         ServerPlayer testPlayer = new TestPlayerBuilder()
                 .setName("StackDropTest")
                 .addItem(0, new ItemStack(Items.DIRT, 16))
-                .setMoveTo(helper.absoluteVec(new Vec3(7, 0, 0)))
                 .placeOfflinePlayer(server);
 
         EntityPlayerActionPack ap = ((ServerPlayerInterface) testPlayer).getActionPack();
@@ -252,14 +243,14 @@ public class EntityPlayerActionPackGameTest {
                 .setName("EatTest")
                 .addItem(0, new ItemStack(Items.APPLE, 16))
                 .setFood(6)
-                .setMoveTo(helper.absoluteVec(new Vec3(9, 0, 0)))
                 .placeOfflinePlayer(server);
+        testPlayer.setGameMode(GameType.SURVIVAL);
 
         int beforeCount = testPlayer.getInventory().countItem(Items.APPLE);
         int beforeFood = testPlayer.getFoodData().getFoodLevel();
 
         EntityPlayerActionPack ap = ((ServerPlayerInterface) testPlayer).getActionPack();
-        ap.start(ActionType.EAT, Action.once());
+        ap.start(ActionType.EAT, Action.continuous());
 
         helper.startSequence()
                 .thenWaitUntil(() -> {
@@ -282,7 +273,6 @@ public class EntityPlayerActionPackGameTest {
         ServerPlayer testPlayer = new TestPlayerBuilder()
                 .setName("OmniousBottleTest")
                 .addItem(40, new ItemStack(Items.OMINOUS_BOTTLE, 16))
-                .setMoveTo(helper.absoluteVec(new Vec3(11, 0, 0)))
                 .placeOfflinePlayer(server);
 
         helper.assertTrue(testPlayer.getActiveEffects().isEmpty(), "TestPlayer should have no effects");
@@ -305,13 +295,11 @@ public class EntityPlayerActionPackGameTest {
         ServerLevel level = helper.getLevel();
         MinecraftServer server = level.getServer();
 
-        Vec3 correctVec3 = helper.absoluteVec(new Vec3(13, 0, 0));
-
         ServerPlayer testPlayer = new TestPlayerBuilder()
                 .setName("AttackEntityTest")
-                .setMoveTo(correctVec3)
                 .addItem(0, new ItemStack(Items.DIAMOND_SWORD, 1))
                 .placeOfflinePlayer(server);
+        Vec3 correctVec3 = testPlayer.position();
         testPlayer.getInventory().selected = 0;
 
         Villager target = EntityType.VILLAGER.create(level, EntitySpawnReason.NATURAL);
@@ -324,7 +312,7 @@ public class EntityPlayerActionPackGameTest {
         target.setInvulnerable(false);
 
         target.moveTo(correctVec3.add(0, 0, 2));
-        testPlayer.lookAt( EntityAnchorArgument.Anchor.EYES, target.position().add(0, 0.5, 0) );
+        testPlayer.lookAt(EntityAnchorArgument.Anchor.EYES, target.position().add(0, 0.5, 0));
 
         EntityPlayerActionPack ap = ((ServerPlayerInterface) testPlayer).getActionPack();
         ap.start(ActionType.ATTACK, Action.interval(5));
@@ -346,13 +334,11 @@ public class EntityPlayerActionPackGameTest {
         ServerLevel level = helper.getLevel();
         MinecraftServer server = level.getServer();
 
-        Vec3 startingPoint = helper.absoluteVec(new Vec3(15, 0, 0));
-
         ServerPlayer testPlayer = new TestPlayerBuilder()
                 .setName("BlockTestCreative")
-                .setMoveTo(startingPoint)
                 .placeOfflinePlayer(server);
         testPlayer.setGameMode(GameType.CREATIVE);
+        Vec3 startingPoint = testPlayer.position();
 
         BlockPos targetPos = new BlockPos((int) startingPoint.x, (int) startingPoint.y(), (int) startingPoint.z + 2);
         createBlockScenario(helper, targetPos, Blocks.STONE);
@@ -372,12 +358,10 @@ public class EntityPlayerActionPackGameTest {
         ServerLevel level = helper.getLevel();
         MinecraftServer server = level.getServer();
 
-        Vec3 startingPoint = helper.absoluteVec(new Vec3(18, 0, 0));
-
         ServerPlayer testPlayer = new TestPlayerBuilder()
                 .setName("BlockTestSurvival")
-                .setMoveTo(startingPoint)
                 .placeOfflinePlayer(server);
+        Vec3 startingPoint = testPlayer.position();
         testPlayer.getInventory().selected = 0;
         testPlayer.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(Items.DIAMOND_PICKAXE));
 
@@ -399,12 +383,10 @@ public class EntityPlayerActionPackGameTest {
         ServerLevel level = helper.getLevel();
         MinecraftServer server = level.getServer();
 
-        Vec3 startingPoint = helper.absoluteVec(new Vec3(8, 0, 8));
-
         ServerPlayer testPlayer = new TestPlayerBuilder()
                 .setName("UseTest")
-                .setMoveTo(startingPoint)
                 .placeOfflinePlayer(server);
+        Vec3 startingPoint = testPlayer.position();
         testPlayer.getInventory().selected = 0;
 
         BlockPos targetPos = new BlockPos((int) startingPoint.x, (int) startingPoint.y(), (int) startingPoint.z + 1);
@@ -416,9 +398,10 @@ public class EntityPlayerActionPackGameTest {
                 .thenExecute(() -> {
                     createBlockScenario(helper, targetPos, Blocks.LEVER);
                 })
+                .thenIdle(2)
                 .thenWaitUntil(() -> {
                     lookAtBlockHitboxCenter(testPlayer, level, targetPos);
-                    testPlayer.tick();
+
                     BlockState state = level.getBlockState(targetPos);
                     helper.assertTrue(
                             state.getBlock() instanceof LeverBlock && state.getValue(LeverBlock.POWERED),
@@ -431,22 +414,31 @@ public class EntityPlayerActionPackGameTest {
                 })
                 .thenExecute(() -> createVehicleScenario(helper, testPlayer, EntityType.OAK_BOAT))
                 .thenWaitUntil(() -> assertVehicleScenario(helper, testPlayer, EntityType.OAK_BOAT))
-                .thenExecute(() -> Objects.requireNonNull(testPlayer.getVehicle()).discard())
+                .thenWaitUntil(() -> {
+                    Entity vehicle = testPlayer.getVehicle();
+                    if (vehicle != null) {
+                        vehicle.discard();
+                    }
+                    helper.assertTrue(testPlayer.getVehicle() == null, "Boat should be removed");
+                })
+                .thenIdle(10)
                 .thenExecute(() -> createVehicleScenario(helper, testPlayer, EntityType.MINECART))
                 .thenWaitUntil(() -> assertVehicleScenario(helper, testPlayer, EntityType.MINECART))
-                .thenExecute(() -> Objects.requireNonNull(testPlayer.getVehicle()).discard())
+                .thenWaitUntil(() -> {
+                    Entity vehicle = testPlayer.getVehicle();
+                    if (vehicle != null) {
+                        vehicle.discard();
+                    }
+                })
+                .thenIdle(10)
                 .thenExecute(() -> {
                     createBlockScenario(helper, targetPos, Blocks.COMPOSTER);
-                    testPlayer.lookAt(EntityAnchorArgument.Anchor.EYES, Vec3.atBottomCenterOf(targetPos));
+                    testPlayer.lookAt(EntityAnchorArgument.Anchor.EYES, targetPos.getCenter());
                 })
                 .thenExecute(() -> testPlayer.getInventory().setItem(0, new ItemStack(Items.WHEAT_SEEDS, 1)))
                 .thenWaitUntil(() -> {
                     BlockState state = level.getBlockState(targetPos);
-                    if (state.getBlock() instanceof ComposterBlock) {
-                        helper.assertTrue(state.getValue(ComposterBlock.LEVEL) >= 1, "Composter should be filled");
-                    } else {
-                        helper.fail("Composter not found");
-                    }
+                    helper.assertTrue(state.getValue(ComposterBlock.LEVEL) >= 1, "Composter should be filled");
                     helper.assertTrue(testPlayer.getInventory().countItem(Items.WHEAT_SEEDS) == 0, "Wheat seeds should be used");
                 })
                 .thenExecute(() -> {
@@ -457,11 +449,10 @@ public class EntityPlayerActionPackGameTest {
                     testPlayer.getInventory().setItem(0, new ItemStack(Items.STONE, 1));
                     testPlayer.getInventory().selected = 0;
 
-                    testPlayer.lookAt(EntityAnchorArgument.Anchor.EYES, Vec3.atCenterOf(targetPos));
+                    testPlayer.lookAt(EntityAnchorArgument.Anchor.EYES, targetPos.getBottomCenter());
                     helper.assertTrue(level.getBlockState(targetPos).isAir(), "Stone should not have been placed yet");
                 })
                 .thenWaitUntil(() -> {
-                    testPlayer.tick();
                     helper.assertTrue(testPlayer.getInventory().countItem(Items.STONE) == 0, "Stone block should be used");
                     helper.assertTrue(level.getBlockState(targetPos).is(Blocks.STONE), "Stone should have been placed");
                 }).thenExecute(() -> {

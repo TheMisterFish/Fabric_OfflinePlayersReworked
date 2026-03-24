@@ -62,8 +62,8 @@ public class OfflinePlayersStorage extends SavedData {
         return new ArrayList<>(offlinePlayers);
     }
 
-    public void create(UUID offlinePlayerUUID, UUID playerUUID, String[] actions, double x, double y, double z) {
-        OfflinePlayerModel offlinePlayer = new OfflinePlayerModel(offlinePlayerUUID, playerUUID, actions, x, y, z);
+    public void create(UUID offlinePlayerUUID, UUID playerUUID, List<String> actions, double x, double y, double z, String skinValue, String skinSignature) {
+        OfflinePlayerModel offlinePlayer = new OfflinePlayerModel(offlinePlayerUUID, playerUUID, actions, x, y, z, skinValue, skinSignature);
         offlinePlayers.add(offlinePlayer);
         this.setDirty();
     }
