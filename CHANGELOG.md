@@ -1,7 +1,7 @@
-# OfflinePlayers-Reworked 1.2.1 (MC 1.21.5)
+# OfflinePlayers-Reworked 1.2.2 (MC 1.21.5)
 
 **Update:**
 
-- Updated to Loom 1.15
-- Added new option `autoOfflineOnDisconnect` to automatically generate offline players on disconnect.
-- Minor code change
+- Fixed bug where server restart recreates incorrect offline player (missing inventory + skin)
+  - *Recreating the cape doesn't seem to be possible.*
+- Updated tests to check inventory & skin values on recreated offline player

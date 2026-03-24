@@ -2,24 +2,15 @@ package com.offlineplayersreworked;
 
 import com.offlineplayersreworked.command.OfflinePlayerCommands;
 import com.offlineplayersreworked.config.ModConfigs;
-import com.offlineplayersreworked.core.EntityPlayerActionPack;
 import com.offlineplayersreworked.core.OfflinePlayer;
-import com.offlineplayersreworked.core.interfaces.ServerPlayerInterface;
 import com.offlineplayersreworked.storage.OfflinePlayersStorage;
 import lombok.extern.slf4j.Slf4j;
 import net.fabricmc.api.DedicatedServerModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerWorldEvents;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.level.ServerLevel;
-import net.minecraft.server.level.ServerPlayer;
 import org.jetbrains.annotations.TestOnly;
-
-import java.util.function.Consumer;
-
-import static net.minecraft.world.level.Level.OVERWORLD;
 
 @Slf4j
 public class OfflinePlayersReworked implements DedicatedServerModInitializer {
@@ -43,21 +34,16 @@ public class OfflinePlayersReworked implements DedicatedServerModInitializer {
             }
         });
 
-        ServerLifecycleEvents.SERVER_STARTING.register(this::onServerStarting);
         ServerLifecycleEvents.SERVER_STOPPED.register(this::onServerStopped);
-        ServerWorldEvents.LOAD.register(this::onWorldLoad);
+        ServerLifecycleEvents.SERVER_STARTED.register(this::onServerStarted);
         log.info("Hello from OfflinePlayersReworked!");
     }
 
-    private void onServerStarting(MinecraftServer server) {
+    private void onServerStarted(MinecraftServer server) {
         OfflinePlayersReworked.server = server;
-    }
+        storage = OfflinePlayersStorage.getStorage(server);
 
-    private void onWorldLoad(MinecraftServer server, ServerLevel world) {
-        if (world.dimension() == OVERWORLD) {
-            storage = OfflinePlayersStorage.getStorage(server);
-            respawnActiveOfflinePlayers();
-        }
+        respawnActiveOfflinePlayers();
     }
 
     private void onServerStopped(MinecraftServer server) {
@@ -85,10 +71,6 @@ public class OfflinePlayersReworked implements DedicatedServerModInitializer {
                 .filter(offlinePlayerModel -> ModConfigs.RESPAWN_KICKED_PLAYERS || !offlinePlayerModel.isKicked())
                 .filter(offlinePlayerModel -> getServer().getPlayerList().getPlayer(offlinePlayerModel.getId()) == null)
                 .forEach(offlinePlayerModel -> OfflinePlayer.recreateOfflinePlayer(getServer(), offlinePlayerModel));
-    }
-
-    public static void manipulate(ServerPlayer player, Consumer<EntityPlayerActionPack> action) {
-        action.accept(((ServerPlayerInterface) player).getActionPack());
     }
 
     @TestOnly

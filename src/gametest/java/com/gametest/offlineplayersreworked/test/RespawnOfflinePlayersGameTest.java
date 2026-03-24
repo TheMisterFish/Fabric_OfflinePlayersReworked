@@ -24,15 +24,6 @@ import java.util.UUID;
 @Slf4j
 public class RespawnOfflinePlayersGameTest {
 
-//    @AfterBatch(batch = "RespawnOfflinePlayersGameTest")
-//    public static void deletePlayerData(ServerLevel serverLevel) {
-//        Utils.clearOfflinePlayerStorageAndDisconnectPlayers(serverLevel);
-//        serverLevel.players().forEach(serverPlayer -> {
-//            MinecraftServer server = serverPlayer.getServer();
-//            server.getPlayerList().getPlayer(serverPlayer.getUUID()).disconnect();
-//        });
-//    }
-
     @GameTest
     public void testRespawnActiveOfflinePlayers(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
@@ -53,8 +44,8 @@ public class RespawnOfflinePlayersGameTest {
 
         UUID offlineId = offlinePlayer.getUUID();
         UUID playerUUID = testPlayer.getUUID();
-        List<String> actions = List.of("jump:20", "use:40");
-        storage.create(offlineId, playerUUID, actions, 0, 80, 0);
+        List<String> actions = List.of("jump:20");
+        storage.create(offlineId, playerUUID, actions, 0, 80, 0, "", "");
 
         helper.startSequence()
                 .thenExecute(() -> {
@@ -103,7 +94,7 @@ public class RespawnOfflinePlayersGameTest {
         UUID offlineId = offlinePlayer.getUUID();
         UUID playerUUID = testPlayer.getUUID();
         List<String> actions = List.of("jump:20", "use:40");
-        storage.create(offlineId, playerUUID, actions, 0, 80, 0);
+        storage.create(offlineId, playerUUID, actions, 0, 80, 0, "", "");
         storage.killByIdWithDeathMessage(offlineId, offlinePlayer.getPosition(1f), "Died test");
 
         helper.startSequence()
@@ -131,6 +122,8 @@ public class RespawnOfflinePlayersGameTest {
         FakePlayer testPlayer = new TestPlayerBuilder().buildFakePlayer(server);
         OfflinePlayer offlinePlayer = new TestPlayerBuilder()
                 .setName("KickRespawnTest")
+                .randomArmorAndWeapons()
+                .generateRandomInventory()
                 .placeOfflinePlayer(server);
         Utils.cloneInventory(testPlayer, offlinePlayer.getInventory());
 
@@ -139,7 +132,7 @@ public class RespawnOfflinePlayersGameTest {
 
         UUID offlineId = offlinePlayer.getUUID();
         UUID playerUUID = testPlayer.getUUID();
-        storage.create(offlineId, playerUUID, List.of(), 0, 80, 0);
+        storage.create(offlineId, playerUUID, List.of(), 0, 80, 0, "", "");
         storage.kick(offlineId);
 
         helper.startSequence()
@@ -152,7 +145,13 @@ public class RespawnOfflinePlayersGameTest {
                     new OfflinePlayersReworked().respawnActiveOfflinePlayersForTest();
                 })
                 .thenWaitUntil(() -> {
-                    helper.assertTrue(server.getPlayerList().getPlayer(offlineId) != null, Component.nullToEmpty("Kicked OfflinePlayer should have been respawned"));
+
+                    ServerPlayer rejoinedPlayer = server.getPlayerList().getPlayer(offlineId);
+                    helper.assertTrue(rejoinedPlayer != null, Component.nullToEmpty("Kicked OfflinePlayer should have been respawned"));
+
+                    Utils.ComparisonResult rejoinResult = Utils.compare(offlinePlayer, Objects.requireNonNull(rejoinedPlayer));
+                    helper.assertTrue(rejoinResult.matches(),
+                            Component.nullToEmpty("OfflinePlayer and rejoined-player match"));
 
                     ModConfigs.RESPAWN_KICKED_PLAYERS = oldRespawnKickedPlayers;
                 })
@@ -178,7 +177,7 @@ public class RespawnOfflinePlayersGameTest {
 
         UUID offlineId = offlinePlayer.getUUID();
         UUID playerUUID = testPlayer.getUUID();
-        storage.create(offlineId, playerUUID, List.of(), 0, 80, 0);
+        storage.create(offlineId, playerUUID, List.of(), 0, 80, 0, "", "");
 
         helper.startSequence()
                 .thenExecute(() -> {
