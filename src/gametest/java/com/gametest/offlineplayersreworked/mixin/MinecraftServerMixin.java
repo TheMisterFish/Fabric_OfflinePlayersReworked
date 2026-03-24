@@ -1,7 +1,6 @@
 package com.gametest.offlineplayersreworked.mixin;
 
 import com.mojang.datafixers.DataFixer;
-import com.offlineplayersreworked.storage.OfflinePlayersStorage;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.Services;
 import net.minecraft.server.WorldStem;

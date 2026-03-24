@@ -30,7 +30,6 @@ public class ModConfigProvider implements SimpleConfig.DefaultConfig {
     }
 
 
-
     @Override
     public String get(String namespace) {
         return configContents;

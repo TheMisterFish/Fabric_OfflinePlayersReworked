@@ -54,15 +54,14 @@ public class OfflinePlayersStorage extends SavedData {
     }
 
 
-
     public static OfflinePlayersStorage load(CompoundTag tag, HolderLookup.Provider provider) {
         OfflinePlayersStorage storage = new OfflinePlayersStorage();
         Optional<ListTag> playerList = tag.getList("OfflinePlayers");
 
-        if(playerList.isPresent()) {
+        if (playerList.isPresent()) {
             for (int i = 0; i < playerList.get().size(); i++) {
                 Optional<CompoundTag> playerTag = playerList.get().getCompound(i);
-                if(playerTag.isPresent()){
+                if (playerTag.isPresent()) {
                     OfflinePlayerModel player = OfflinePlayerModel.fromTag(playerTag.get());
                     storage.offlinePlayers.add(player);
                 }

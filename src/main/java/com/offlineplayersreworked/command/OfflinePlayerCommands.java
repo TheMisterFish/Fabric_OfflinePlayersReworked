@@ -18,7 +18,6 @@ import lombok.extern.slf4j.Slf4j;
 import net.minecraft.ChatFormatting;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.network.chat.Component;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 
 import java.util.ArrayList;
@@ -28,7 +27,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static com.mojang.brigadier.arguments.StringArgumentType.getString;
-import static com.offlineplayersreworked.OfflinePlayersReworked.*;
+import static com.offlineplayersreworked.OfflinePlayersReworked.MOD_ID;
+import static com.offlineplayersreworked.OfflinePlayersReworked.MOD_VERSION;
 import static com.offlineplayersreworked.utils.ActionMapper.getActionPackList;
 import static net.minecraft.commands.Commands.argument;
 import static net.minecraft.commands.Commands.literal;
