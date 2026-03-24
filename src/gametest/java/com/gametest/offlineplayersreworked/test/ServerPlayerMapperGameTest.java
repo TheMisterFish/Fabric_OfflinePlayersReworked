@@ -1,12 +1,9 @@
 package com.gametest.offlineplayersreworked.test;
 
 import com.gametest.offlineplayersreworked.TestPlayerBuilder;
-import com.gametest.offlineplayersreworked.Utils;
 import com.mojang.authlib.GameProfile;
 import com.offlineplayersreworked.config.ModConfigs;
 import com.offlineplayersreworked.utils.ServerPlayerMapper;
-import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
-import net.minecraft.gametest.framework.AfterBatch;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.server.MinecraftServer;
@@ -16,14 +13,11 @@ import net.minecraft.server.players.UserWhiteListEntry;
 
 import java.util.UUID;
 
+import static net.fabricmc.fabric.api.gametest.v1.FabricGameTest.EMPTY_STRUCTURE;
+
 public class ServerPlayerMapperGameTest {
 
-    @AfterBatch(batch = "ServerPlayerMapperGameTest")
-    public static void deletePlayerData(ServerLevel serverLevel) {
-        Utils.clearOfflinePlayerStorageAndDisconnectPlayers(serverLevel);
-    }
-
-    @GameTest(template = FabricGameTest.EMPTY_STRUCTURE, batch = "ServerPlayerMapperGameTest")
+    @GameTest(template = EMPTY_STRUCTURE, batch = "ServerPlayerMapperGameTest")
     public void testCopyPlayerData(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         MinecraftServer server = level.getServer();
@@ -59,7 +53,7 @@ public class ServerPlayerMapperGameTest {
         helper.succeed();
     }
 
-    @GameTest(template = FabricGameTest.EMPTY_STRUCTURE, batch = "ServerPlayerMapperGameTest")
+    @GameTest(template = EMPTY_STRUCTURE, batch = "ServerPlayerMapperGameTest")
     public void testCopyPlayerRights(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
         MinecraftServer server = level.getServer();
@@ -99,7 +93,7 @@ public class ServerPlayerMapperGameTest {
         helper.succeed();
     }
 
-    @GameTest(template = FabricGameTest.EMPTY_STRUCTURE, batch = "ServerPlayerMapperGameTest")
+    @GameTest(template = EMPTY_STRUCTURE, batch = "ServerPlayerMapperGameTest")
     public void testCopyPlayerSkin(GameTestHelper helper) {
         boolean oldCopySkin = ModConfigs.COPY_SKIN;
         ModConfigs.COPY_SKIN = true;

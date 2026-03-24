@@ -102,7 +102,7 @@ public class OfflinePlayerAutoDisconnectGameTest {
         ModConfigs.AUTO_OFFLINE_ON_DISCONNECT = oldAutoOfflineOnDisconnect;
     }
 
-    @GameTest(template = EMPTY_STRUCTURE, batch = "OfflinePlayerCreationGameTest")
+    @GameTest(template = EMPTY_STRUCTURE, batch = "OfflinePlayerAutoDisconnectGameTest")
     public void normalCreateOfflinePlayer(GameTestHelper helper) {
         boolean oldAutoOfflineOnDisconnect = ModConfigs.AUTO_OFFLINE_ON_DISCONNECT;
         ModConfigs.AUTO_OFFLINE_ON_DISCONNECT = true;
@@ -129,7 +129,9 @@ public class OfflinePlayerAutoDisconnectGameTest {
         Utils.ComparisonResult result = Utils.compare(testPlayer, Objects.requireNonNull(offlinePlayer));
 
         helper.startSequence()
-                .thenWaitUntil(() -> DisconnectTracker.hasReason(playerName))
+                .thenWaitUntil(() ->
+                        helper.assertTrue(DisconnectTracker.hasReason(playerName), "DisconnectTracker did not have a reason")
+                )
                 .thenExecute(() -> {
                     helper.assertTrue(DisconnectTracker.getReason(playerName).equals("Offline player generated"),
                             "Correct disconnect reason for /offline usage");

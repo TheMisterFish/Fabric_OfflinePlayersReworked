@@ -1,5 +1,6 @@
 package com.offlineplayersreworked.core;
 
+import it.unimi.dsi.fastutil.Pair;
 import com.mojang.authlib.GameProfile;
 import com.offlineplayersreworked.storage.model.OfflinePlayerModel;
 import com.offlineplayersreworked.utils.DamageSourceSerializer;
@@ -31,6 +32,8 @@ import net.minecraft.world.level.portal.DimensionTransition;
 import net.minecraft.world.scores.Team;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 import static com.offlineplayersreworked.OfflinePlayersReworked.getStorage;
@@ -44,7 +47,7 @@ public class OfflinePlayer extends ServerPlayer {
         super(server, worldIn, profile, cli);
     }
 
-    public static OfflinePlayer createAndSpawnNewOfflinePlayer(MinecraftServer server, ServerPlayer player, String[] actions) {
+    public static OfflinePlayer createAndSpawnNewOfflinePlayer(MinecraftServer server, ServerPlayer player, List<Pair<EntityPlayerActionPack.ActionType, EntityPlayerActionPack.Action>> actions) {
         return OfflinePlayerBuilder.create(server)
                 .fromOnlinePlayer(player)
                 .loadProfile()
@@ -58,15 +61,13 @@ public class OfflinePlayer extends ServerPlayer {
     public static void recreateOfflinePlayer(MinecraftServer server, OfflinePlayerModel offlinePlayerModel) {
         OfflinePlayerBuilder.create(server)
                 .fromStoredData(offlinePlayerModel.getId())
-                .withSkinFrom(offlinePlayerModel.getPlayer())
-                .loadProfile()
                 .loadPlayerData()
+                .loadProfile()
+                .applySkinOverride(offlinePlayerModel.getSkinValue(), offlinePlayerModel.getSkinSignature())
                 .resolveDimension()
                 .createOfflinePlayer()
-                .applyStoredPosition()
-                .applySkinOverride()
                 .spawn()
-                .startActions(offlinePlayerModel.getActions())
+                .startActionsFromStringList(offlinePlayerModel.getActions())
                 .build();
     }
 

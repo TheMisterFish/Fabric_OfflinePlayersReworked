@@ -47,7 +47,7 @@ public abstract class MinecraftServerMixin {
 
     @Inject(method = "loadLevel", at = @At("TAIL"))
     private void load(CallbackInfo ci) {
-        MinecraftServer server = (MinecraftServer)(Object)this;
+        MinecraftServer server = (MinecraftServer) (Object) this;
 
         OfflinePlayersStorage storage = OfflinePlayersStorage.getStorage(server);
         storage.findAll().forEach(offlinePlayerModel -> {

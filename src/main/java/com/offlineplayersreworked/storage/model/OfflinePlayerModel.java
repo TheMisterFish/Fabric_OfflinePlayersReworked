@@ -1,45 +1,37 @@
 package com.offlineplayersreworked.storage.model;
 
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
+import net.minecraft.core.UUIDUtil;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.StringTag;
 
+import java.util.List;
 import java.util.UUID;
 
+@Setter
+@Getter
 @RequiredArgsConstructor
+@AllArgsConstructor
 public class OfflinePlayerModel {
-    @Getter
-    @Setter
     private UUID id;
-    @Getter
-    @Setter
     private UUID player;
-    @Getter
-    @Setter
-    private String[] actions;
-    @Getter
-    @Setter
+    private List<String> actions;
     private boolean kicked = false;
-    @Getter
-    @Setter
     private boolean died = false;
-    @Getter
-    @Setter
     private String deathMessage;
-    @Getter
-    @Setter
     private double x;
-    @Getter
-    @Setter
     private double y;
-    @Getter
-    @Setter
     private double z;
+    private String skinValue = "";
+    private String skinSignature = "";
 
-    public OfflinePlayerModel(UUID id, UUID player, String[] actions, double x, double y, double z) {
+    public OfflinePlayerModel(UUID id, UUID player, List<String> actions, double x, double y, double z, String skinValue, String skinSignature) {
         this.id = id;
         this.player = player;
         this.actions = actions;
@@ -48,6 +40,8 @@ public class OfflinePlayerModel {
         this.x = x;
         this.y = y;
         this.z = z;
+        this.skinValue = skinValue;
+        this.skinSignature = skinSignature;
     }
 
     public CompoundTag toTag() {
@@ -65,6 +59,8 @@ public class OfflinePlayerModel {
         tag.putBoolean("died", died);
         tag.putString("deathMessage", deathMessage);
         tag.putBoolean("kicked", kicked);
+        tag.putString("skinValue", skinValue);
+        tag.putString("skinSignature", skinSignature);
         return tag;
     }
 
@@ -80,7 +76,10 @@ public class OfflinePlayerModel {
         double y = tag.getDouble("y");
         double z = tag.getDouble("z");
 
-        OfflinePlayerModel model = new OfflinePlayerModel(id, player, actions, x, y, z);
+        String skinValue = tag.getString("skinValue");
+        String skinSignature = tag.getString("skinSignature");
+
+        OfflinePlayerModel model = new OfflinePlayerModel(id, player, List.of(actions), x, y, z, skinValue, skinSignature);
         model.setDied(tag.getBoolean("died"));
         model.setDeathMessage(tag.getString("deathMessage"));
         model.setKicked(tag.getBoolean("kicked"));
