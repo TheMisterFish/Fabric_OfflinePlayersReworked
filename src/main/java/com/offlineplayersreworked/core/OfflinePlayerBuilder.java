@@ -1,50 +1,42 @@
 package com.offlineplayersreworked.core;
 
-import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.Multimap;
 import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.properties.Property;
-import com.mojang.authlib.properties.PropertyMap;
 import com.offlineplayersreworked.config.ModConfigs;
 import com.offlineplayersreworked.core.connection.FakeClientConnection;
-import com.offlineplayersreworked.core.connection.NetHandlerPlayServerFake;
 import com.offlineplayersreworked.core.interfaces.ServerPlayerInterface;
-import com.offlineplayersreworked.storage.model.OfflinePlayerModel;
 import com.offlineplayersreworked.utils.ServerPlayerMapper;
 import it.unimi.dsi.fastutil.Pair;
 import lombok.extern.slf4j.Slf4j;
-import net.fabricmc.fabric.api.entity.FakePlayer;
-import net.fabricmc.fabric.impl.event.interaction.FakePlayerNetworkHandler;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.NbtAccounter;
 import net.minecraft.nbt.NbtIo;
-import net.minecraft.network.Connection;
 import net.minecraft.network.protocol.PacketFlow;
 import net.minecraft.network.protocol.game.ClientboundPlayerInfoUpdatePacket;
 import net.minecraft.network.protocol.game.ClientboundRotateHeadPacket;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.level.*;
+import net.minecraft.server.level.ClientInformation;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.CommonListenerCookie;
-import net.minecraft.util.Mth;
 import net.minecraft.util.ProblemReporter;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.HumanoidArm;
-import net.minecraft.world.entity.Relative;
 import net.minecraft.world.entity.ai.attributes.Attributes;
-import net.minecraft.world.entity.player.ChatVisiblity;
-import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.storage.*;
-import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.level.storage.LevelResource;
+import net.minecraft.world.level.storage.TagValueInput;
+import net.minecraft.world.level.storage.TagValueOutput;
+import net.minecraft.world.level.storage.ValueInput;
 import org.apache.commons.lang3.StringUtils;
 
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
+import java.util.UUID;
 import java.util.function.Consumer;
 
 import static com.offlineplayersreworked.utils.ActionMapper.getActionPackList;
@@ -286,23 +278,20 @@ public class OfflinePlayerBuilder {
 
     public OfflinePlayerBuilder spawn() {
         if (failed()) return this;
+        if (offlinePlayer == null) {
+            fail("spawn() called but offlinePlayer is null");
+            return this;
+        }
 
-        ServerLevel level = offlinePlayer.level();
-        CommonListenerCookie cookie = new CommonListenerCookie(offlinePlayer.getGameProfile(), 0, ClientInformation.createDefault(), false);
-
-        offlinePlayer.connection = new NetHandlerPlayServerFake(
-                server,
+        server.getPlayerList().placeNewPlayer(
                 new FakeClientConnection(PacketFlow.SERVERBOUND),
                 offlinePlayer,
-                cookie
+                new CommonListenerCookie(profile, 0, offlinePlayer.clientInformation(), false)
         );
-
-        level.addNewPlayer(offlinePlayer);
-        server.getPlayerList().getPlayers().add(offlinePlayer);
-        offlinePlayer.fixStartingPosition.run();
 
         return this;
     }
+
 
     public OfflinePlayerBuilder startActionsFromStringList(List<String> actions) {
         if (failed()) return this;
