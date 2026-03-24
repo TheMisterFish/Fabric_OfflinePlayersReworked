@@ -60,7 +60,6 @@ public class OfflinePlayer extends ServerPlayer {
                 .createOfflinePlayer()
                 .applyPlayerData()
                 .spawn()
-                .applyStoredPosition()
                 .startActionsFromStringList(offlinePlayerModel.getActions())
                 .build();
     }

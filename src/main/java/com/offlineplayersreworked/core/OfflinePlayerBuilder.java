@@ -13,7 +13,6 @@ import it.unimi.dsi.fastutil.Pair;
 import lombok.extern.slf4j.Slf4j;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.NbtAccounter;
 import net.minecraft.nbt.NbtIo;
 import net.minecraft.network.protocol.PacketFlow;
@@ -23,16 +22,12 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ClientInformation;
-import net.minecraft.server.level.ParticleStatus;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.CommonListenerCookie;
 import net.minecraft.server.players.NameAndId;
-import net.minecraft.util.Mth;
 import net.minecraft.util.ProblemReporter;
-import net.minecraft.world.entity.HumanoidArm;
 import net.minecraft.world.entity.ai.attributes.Attributes;
-import net.minecraft.world.entity.player.ChatVisiblity;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.storage.LevelResource;
 import net.minecraft.world.level.storage.TagValueInput;
@@ -43,8 +38,8 @@ import org.apache.commons.lang3.StringUtils;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.function.Consumer;
 
-import static com.offlineplayersreworked.OfflinePlayersReworked.manipulate;
 import static com.offlineplayersreworked.utils.ActionMapper.getActionPackList;
 
 @Slf4j
@@ -55,7 +50,7 @@ public class OfflinePlayerBuilder {
     private ServerPlayer sourcePlayer;
     private UUID offlinePlayerUUID;
 
-    private GameProfile profile;
+    private GameProfile profile = new GameProfile(UUID.randomUUID(), "");
     private CompoundTag playerData;
     private ServerLevel world;
     private OfflinePlayer offlinePlayer;
@@ -188,34 +183,6 @@ public class OfflinePlayerBuilder {
         return this;
     }
 
-    public OfflinePlayerBuilder applyStoredPosition() {
-        if (failed() || sourcePlayer != null) return this;
-
-        if (!playerData.contains("Pos")) {
-            fail("Could not find Pos for offline player with UUID " + offlinePlayerUUID);
-            return this;
-        }
-
-        ListTag pos = playerData.getList("Pos").orElseThrow(NullPointerException::new);
-        ListTag rot = playerData.getList("Rotation").orElseThrow(NullPointerException::new);
-
-        offlinePlayer.setYRot(rot.getFloat(0).orElseThrow(NullPointerException::new) % 360);
-        offlinePlayer.setXRot(Mth.clamp(rot.getFloat(1).orElseThrow(NullPointerException::new), -90, 90));
-
-        offlinePlayer.teleportTo(
-                offlinePlayer.level(),
-                pos.getDouble(0).orElseThrow(NullPointerException::new),
-                pos.getDouble(1).orElseThrow(NullPointerException::new),
-                pos.getDouble(2).orElseThrow(NullPointerException::new),
-                Set.of(),
-                rot.getFloat(0).orElseThrow(NullPointerException::new),
-                rot.getFloat(1).orElseThrow(NullPointerException::new),
-                true
-        );
-
-        return this;
-    }
-
     public OfflinePlayerBuilder applySkinOverride(String skinValue, String skinSignature) {
         if (failed() || offlinePlayerUUID == null) return this;
 
@@ -323,14 +290,14 @@ public class OfflinePlayerBuilder {
     public OfflinePlayerBuilder spawn() {
         if (failed()) return this;
 
-        var clientInformation = new ClientInformation("", 0, ChatVisiblity.FULL, true, 0, HumanoidArm.RIGHT, false, false, ParticleStatus.ALL);
         server.getPlayerList().placeNewPlayer(
                 new FakeClientConnection(PacketFlow.SERVERBOUND),
                 offlinePlayer,
-                new CommonListenerCookie(offlinePlayer.getGameProfile(), 0, clientInformation, true)
+                new CommonListenerCookie(offlinePlayer.getGameProfile(), 0, ClientInformation.createDefault(), false)
         );
 
         offlinePlayer.fixStartingPosition.run();
+
         return this;
     }
 
@@ -347,5 +314,9 @@ public class OfflinePlayerBuilder {
                 actionTypeActionPair.second()
         )));
         return this;
+    }
+
+    private static void manipulate(ServerPlayer player, Consumer<EntityPlayerActionPack> action) {
+        action.accept(((ServerPlayerInterface) player).getActionPack());
     }
 }
