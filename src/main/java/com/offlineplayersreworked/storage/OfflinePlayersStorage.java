@@ -13,7 +13,6 @@ import net.minecraft.world.level.saveddata.SavedData;
 import net.minecraft.world.level.saveddata.SavedDataType;
 import net.minecraft.world.level.storage.DimensionDataStorage;
 import net.minecraft.world.phys.Vec3;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -54,15 +53,14 @@ public class OfflinePlayersStorage extends SavedData {
     }
 
 
-
     public static OfflinePlayersStorage load(CompoundTag tag, HolderLookup.Provider provider) {
         OfflinePlayersStorage storage = new OfflinePlayersStorage();
         Optional<ListTag> playerList = tag.getList("OfflinePlayers");
 
-        if(playerList.isPresent()) {
+        if (playerList.isPresent()) {
             for (int i = 0; i < playerList.get().size(); i++) {
                 Optional<CompoundTag> playerTag = playerList.get().getCompound(i);
-                if(playerTag.isPresent()){
+                if (playerTag.isPresent()) {
                     OfflinePlayerModel player = OfflinePlayerModel.fromTag(playerTag.get());
                     storage.offlinePlayers.add(player);
                 }

@@ -16,8 +16,6 @@ import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.storage.LevelResource;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -25,7 +23,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
-import static com.offlineplayersreworked.OfflinePlayersReworked.*;
+import static com.offlineplayersreworked.OfflinePlayersReworked.getServer;
+import static com.offlineplayersreworked.OfflinePlayersReworked.getStorage;
 
 @Slf4j
 public class PlayerJoined {

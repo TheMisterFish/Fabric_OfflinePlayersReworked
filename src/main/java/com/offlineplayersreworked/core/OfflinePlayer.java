@@ -5,16 +5,11 @@ import com.offlineplayersreworked.storage.model.OfflinePlayerModel;
 import com.offlineplayersreworked.utils.DamageSourceSerializer;
 import it.unimi.dsi.fastutil.Pair;
 import lombok.extern.slf4j.Slf4j;
-import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.DisconnectionDetails;
-import net.minecraft.network.PacketSendListener;
-import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.network.chat.contents.TranslatableContents;
-import net.minecraft.network.protocol.game.ClientboundPlayerCombatKillPacket;
 import net.minecraft.network.protocol.game.ServerboundClientCommandPacket;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ClientInformation;
@@ -31,7 +26,6 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.portal.TeleportTransition;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -81,8 +75,7 @@ public class OfflinePlayer extends ServerPlayer {
     }
 
     @Override
-    public void kill(ServerLevel level)
-    {
+    public void kill(ServerLevel level) {
         kill(Component.literal("Killed"));
     }
 
@@ -93,7 +86,7 @@ public class OfflinePlayer extends ServerPlayer {
         if (reason.getContents() instanceof TranslatableContents text && text.getKey().equals("multiplayer.disconnect.duplicate_login")) {
             this.connection.onDisconnect(new DisconnectionDetails(reason));
         } else {
-            this.server.execute(() -> this.connection.onDisconnect(new DisconnectionDetails(reason)) );
+            this.server.execute(() -> this.connection.onDisconnect(new DisconnectionDetails(reason)));
         }
     }
 
@@ -140,8 +133,7 @@ public class OfflinePlayer extends ServerPlayer {
     }
 
     @Override
-    public void die(DamageSource cause)
-    {
+    public void die(DamageSource cause) {
         getStorage().killByIdWithDeathMessage(this.getGameProfile().getId(), this.getPosition(1f), DamageSourceSerializer.serializeDamageSource(cause));
         shakeOff();
         super.die(cause);
@@ -166,8 +158,7 @@ public class OfflinePlayer extends ServerPlayer {
     }
 
     @Override
-    public ServerPlayer teleport(TeleportTransition serverLevel)
-    {
+    public ServerPlayer teleport(TeleportTransition serverLevel) {
         super.teleport(serverLevel);
         if (wonGame) {
             ServerboundClientCommandPacket p = new ServerboundClientCommandPacket(ServerboundClientCommandPacket.Action.PERFORM_RESPAWN);
@@ -181,8 +172,6 @@ public class OfflinePlayer extends ServerPlayer {
         }
         return connection.player;
     }
-
-
 
 
 }
