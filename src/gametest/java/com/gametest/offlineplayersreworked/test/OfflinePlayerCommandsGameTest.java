@@ -1,12 +1,10 @@
 package com.gametest.offlineplayersreworked.test;
 
 import com.gametest.offlineplayersreworked.TestPlayerBuilder;
-import com.gametest.offlineplayersreworked.Utils;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.offlineplayersreworked.command.OfflinePlayerCommands;
 import com.offlineplayersreworked.config.ModConfigs;
 import net.minecraft.commands.CommandSourceStack;
-import net.minecraft.gametest.framework.AfterBatch;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.server.MinecraftServer;

@@ -1,8 +1,8 @@
 package com.offlineplayersreworked.mixin;
 
+import com.mojang.authlib.GameProfile;
 import com.offlineplayersreworked.core.EntityPlayerActionPack;
 import com.offlineplayersreworked.core.interfaces.ServerPlayerInterface;
-import com.mojang.authlib.GameProfile;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ClientInformation;
 import net.minecraft.server.level.ServerLevel;

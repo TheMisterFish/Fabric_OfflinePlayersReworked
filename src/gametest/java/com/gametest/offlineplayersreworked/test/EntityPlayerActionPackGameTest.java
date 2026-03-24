@@ -1,7 +1,6 @@
 package com.gametest.offlineplayersreworked.test;
 
 import com.gametest.offlineplayersreworked.TestPlayerBuilder;
-import com.gametest.offlineplayersreworked.Utils;
 import com.gametest.offlineplayersreworked.tracker.DisconnectTracker;
 import com.offlineplayersreworked.core.EntityPlayerActionPack;
 import com.offlineplayersreworked.core.EntityPlayerActionPack.Action;
@@ -9,7 +8,6 @@ import com.offlineplayersreworked.core.EntityPlayerActionPack.ActionType;
 import com.offlineplayersreworked.core.interfaces.ServerPlayerInterface;
 import net.minecraft.commands.arguments.EntityAnchorArgument;
 import net.minecraft.core.BlockPos;
-import net.minecraft.gametest.framework.AfterBatch;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.server.MinecraftServer;
@@ -36,7 +34,6 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
 import java.util.Collection;
-import java.util.Objects;
 
 import static net.fabricmc.fabric.api.gametest.v1.FabricGameTest.EMPTY_STRUCTURE;
 

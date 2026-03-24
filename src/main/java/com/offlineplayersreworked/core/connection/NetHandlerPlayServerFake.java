@@ -11,8 +11,6 @@ import net.minecraft.server.network.CommonListenerCookie;
 import net.minecraft.server.network.ServerGamePacketListenerImpl;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Set;
-
 public class NetHandlerPlayServerFake extends ServerGamePacketListenerImpl {
     public NetHandlerPlayServerFake(final MinecraftServer minecraftServer, final Connection connection, final ServerPlayer serverPlayer, final CommonListenerCookie i) {
         super(minecraftServer, connection, serverPlayer, i);
