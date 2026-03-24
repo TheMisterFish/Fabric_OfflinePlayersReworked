@@ -29,7 +29,6 @@ import net.minecraft.world.phys.Vec3;
 
 import java.util.*;
 import java.util.function.Consumer;
-import java.util.logging.Logger;
 
 import static net.minecraft.world.level.Level.OVERWORLD;
 
