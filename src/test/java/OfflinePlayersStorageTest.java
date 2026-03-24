@@ -23,7 +23,7 @@ public class OfflinePlayersStorageTest {
         UUID offlineId = UUID.randomUUID();
         UUID playerId = UUID.randomUUID();
 
-        storage.create(offlineId, playerId, sampleActions(), 1.0, 2.0, 3.0);
+        storage.create(offlineId, playerId, sampleActions(), 1.0, 2.0, 3.0, "", "");
 
         List<OfflinePlayerModel> all = storage.findAll();
         assertEquals(1, all.size(), "There should be one stored offline player");
@@ -44,7 +44,7 @@ public class OfflinePlayersStorageTest {
         UUID offlineId = UUID.randomUUID();
         UUID playerId = UUID.randomUUID();
 
-        storage.create(offlineId, playerId, sampleActions(), 0, 0, 0);
+        storage.create(offlineId, playerId, sampleActions(), 0, 0, 0, "", "");
         assertEquals(1, storage.findAll().size());
 
         storage.remove(offlineId);
@@ -58,7 +58,7 @@ public class OfflinePlayersStorageTest {
         UUID offlineId = UUID.randomUUID();
         UUID playerId = UUID.randomUUID();
 
-        storage.create(offlineId, playerId, sampleActions(), 0.0, 0.0, 0.0);
+        storage.create(offlineId, playerId, sampleActions(), 0.0, 0.0, 0.0, "", "");
 
         Vec3 pos = new Vec3(10.5, 64.0, -3.25);
         String deathMessage = "fell into the void";
@@ -81,7 +81,7 @@ public class OfflinePlayersStorageTest {
         UUID offlineId = UUID.randomUUID();
         UUID playerId = UUID.randomUUID();
 
-        storage.create(offlineId, playerId, sampleActions(), 0.0, 0.0, 0.0);
+        storage.create(offlineId, playerId, sampleActions(), 0.0, 0.0, 0.0, "", "");
 
         storage.kick(offlineId);
 
@@ -96,11 +96,11 @@ public class OfflinePlayersStorageTest {
 
         UUID offlineId1 = UUID.randomUUID();
         UUID playerId1 = UUID.randomUUID();
-        storage.create(offlineId1, playerId1, List.of("a", "b"), 1.1, 2.2, 3.3);
+        storage.create(offlineId1, playerId1, List.of("a", "b"), 1.1, 2.2, 3.3, "skinValue1", "skinSignature1");
 
         UUID offlineId2 = UUID.randomUUID();
         UUID playerId2 = UUID.randomUUID();
-        storage.create(offlineId2, playerId2, List.of("x"), -1.0, -2.0, -3.0);
+        storage.create(offlineId2, playerId2, List.of("x"), -1.0, -2.0, -3.0, "skinValue2", "skinSignature2");
 
         storage.killByIdWithDeathMessage(offlineId1, new Vec3(5, 6, 7), "boom");
         storage.kick(offlineId2);
@@ -123,6 +123,8 @@ public class OfflinePlayersStorageTest {
         assertEquals(5.0, loaded1.getX(), 1e-9);
         assertEquals(6.0, loaded1.getY(), 1e-9);
         assertEquals(7.0, loaded1.getZ(), 1e-9);
+        assertEquals("skinValue1", loaded1.getSkinValue());
+        assertEquals("skinSignature1", loaded1.getSkinSignature());
 
         OfflinePlayerModel loaded2 = loaded.findByPlayerUUID(playerId2);
         assertNotNull(loaded2);
@@ -131,5 +133,7 @@ public class OfflinePlayersStorageTest {
         assertEquals(-1.0, loaded2.getX(), 1e-9);
         assertEquals(-2.0, loaded2.getY(), 1e-9);
         assertEquals(-3.0, loaded2.getZ(), 1e-9);
+        assertEquals("skinValue2", loaded2.getSkinValue());
+        assertEquals("skinSignature2", loaded2.getSkinSignature());
     }
 }
