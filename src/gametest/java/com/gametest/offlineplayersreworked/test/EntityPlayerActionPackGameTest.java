@@ -314,7 +314,7 @@ public class EntityPlayerActionPackGameTest {
 
         Vec3 targetPos = correctVec3.add(0, 0, 2);
         target.teleportTo(level, targetPos.x, targetPos.y, targetPos.z, Set.of(), 0f, 0f, true);
-        testPlayer.lookAt( EntityAnchorArgument.Anchor.EYES, target.position().add(0, 0.5, 0) );
+        testPlayer.lookAt(EntityAnchorArgument.Anchor.EYES, target.position().add(0, 0.5, 0));
 
         EntityPlayerActionPack ap = ((ServerPlayerInterface) testPlayer).getActionPack();
         ap.start(ActionType.ATTACK, Action.interval(5));
@@ -422,7 +422,7 @@ public class EntityPlayerActionPackGameTest {
                 .thenWaitUntil(() -> assertVehicleScenario(helper, testPlayer, EntityType.OAK_BOAT))
                 .thenWaitUntil(() -> {
                     Entity vehicle = testPlayer.getVehicle();
-                    if(vehicle != null) {
+                    if (vehicle != null) {
                         vehicle.discard();
                     }
                     helper.assertTrue(testPlayer.getVehicle() == null, Component.nullToEmpty("Boat should be removed"));
@@ -432,7 +432,7 @@ public class EntityPlayerActionPackGameTest {
                 .thenWaitUntil(() -> assertVehicleScenario(helper, testPlayer, EntityType.MINECART))
                 .thenWaitUntil(() -> {
                     Entity vehicle = testPlayer.getVehicle();
-                    if(vehicle != null) {
+                    if (vehicle != null) {
                         vehicle.discard();
                     }
                     helper.assertTrue(testPlayer.getVehicle() == null, Component.nullToEmpty("Minecart should be removed"));
