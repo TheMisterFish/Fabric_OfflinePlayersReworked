@@ -1,6 +1,7 @@
 package com.offlineplayersreworked.core;
 
 import com.mojang.authlib.GameProfile;
+import com.offlineplayersreworked.config.ModConfigs;
 import com.offlineplayersreworked.storage.model.OfflinePlayerModel;
 import com.offlineplayersreworked.utils.DamageSourceSerializer;
 import it.unimi.dsi.fastutil.Pair;
@@ -70,7 +71,7 @@ public class OfflinePlayer extends ServerPlayer {
     }
 
     @Override
-    public void kill(ServerLevel level) {
+    public void kill(@NotNull ServerLevel level) {
         kill(Component.literal("Killed"));
     }
 
@@ -127,7 +128,15 @@ public class OfflinePlayer extends ServerPlayer {
     }
 
     @Override
-    public void die(DamageSource cause) {
+    public boolean hurtServer(@NotNull ServerLevel serverLevel, @NotNull DamageSource damageSource, float f) {
+        if (ModConfigs.INVINCIBLE) {
+            return false;
+        }
+        return super.hurtServer(serverLevel, damageSource, f);
+    }
+
+    @Override
+    public void die(@NotNull DamageSource cause) {
         getStorage().killByIdWithDeathMessage(this.getGameProfile().id(), this.getPosition(1f), DamageSourceSerializer.serializeDamageSource(cause));
         shakeOff();
         super.die(cause);

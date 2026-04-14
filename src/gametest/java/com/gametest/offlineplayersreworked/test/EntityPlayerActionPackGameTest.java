@@ -39,11 +39,6 @@ import java.util.Set;
 
 public class EntityPlayerActionPackGameTest {
 
-//    @AfterBatch(batch = "")
-//    public static void deletePlayerData(ServerLevel serverLevel) {
-//        Utils.clearOfflinePlayerStorageAndDisconnectPlayers(serverLevel);
-//    }
-
     @GameTest(maxTicks = 100)
     public void sneakingAndSprintingAreExclusive(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
