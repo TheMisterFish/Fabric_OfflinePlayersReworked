@@ -39,8 +39,8 @@ jobs:
         id: vars
         run: |
           MC_VERSION="${{ github.ref_name }}"
-          VERSION="1.2.2-mc.${MC_VERSION}"
-          RELEASE_NAME="OfflinePlayersReworked 1.2.2 for Minecraft ${MC_VERSION}"
+          VERSION="1.3.0-mc.${MC_VERSION}"
+          RELEASE_NAME="OfflinePlayersReworked 1.3.0 for Minecraft ${MC_VERSION}"
 
           echo "MC_VERSION=$MC_VERSION" >> $GITHUB_OUTPUT
           echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
