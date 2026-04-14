@@ -24,15 +24,6 @@ import java.util.UUID;
 @Slf4j
 public class RespawnOfflinePlayersGameTest {
 
-//    @AfterBatch(batch = "RespawnOfflinePlayersGameTest")
-//    public static void deletePlayerData(ServerLevel serverLevel) {
-//        Utils.clearOfflinePlayerStorageAndDisconnectPlayers(serverLevel);
-//        serverLevel.players().forEach(serverPlayer -> {
-//            MinecraftServer server = serverPlayer.level().getServer();
-//            server.getPlayerList().getPlayer(serverPlayer.getUUID()).disconnect();
-//        });
-//    }
-
     @GameTest
     public void testRespawnActiveOfflinePlayers(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
