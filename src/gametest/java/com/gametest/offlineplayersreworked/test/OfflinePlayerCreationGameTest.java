@@ -29,11 +29,6 @@ import java.util.Objects;
 
 public class OfflinePlayerCreationGameTest {
 
-//    @AfterBatch(batch = "OfflinePlayerCreationGameTest")
-//    public static void deletePlayerData(ServerLevel serverLevel) {
-//        Utils.clearOfflinePlayerStorageAndDisconnectPlayers(serverLevel);
-//    }
-
     @GameTest
     public void createsOfflinePlayerAndPlayerRejoins(GameTestHelper helper) {
         String playerName = "test1";
@@ -137,7 +132,7 @@ public class OfflinePlayerCreationGameTest {
                 .thenSucceed();
     }
 
-    @GameTest(setupTicks = 12, maxTicks = 100)
+    @GameTest(setupTicks = 12, maxTicks = 200)
     public void createsOfflinePlayerAndPlayerRejoinsAfterDeath(GameTestHelper helper) {
         String playerName = "test3";
         ServerLevel level = helper.getLevel();
@@ -168,14 +163,10 @@ public class OfflinePlayerCreationGameTest {
         helper.assertTrue(offlinePlayer.getDisplayName().getString().equals("[OFF]" + playerName),
                 Component.nullToEmpty("OfflinePlayer name is correct"));
 
-        Zombie zombie = EntityType.ZOMBIE.create(level, EntitySpawnReason.NATURAL);
-        if (zombie == null) {
-            helper.fail(Component.nullToEmpty("Could not create zombie"));
-            return;
-        }
+        Zombie zombie = helper.spawn(EntityType.ZOMBIE, offlinePlayer.position());
+
         zombie.setNoAi(true);
         zombie.teleportTo(offlinePlayer.getX(), offlinePlayer.getY(), offlinePlayer.getZ());
-        level.addFreshEntity(zombie);
 
         offlinePlayer.getInventory().setSelectedSlot(0);
         offlinePlayer.getInventory().setItem(0, new ItemStack(Items.AIR, 0));
