@@ -30,7 +30,6 @@ import static net.fabricmc.fabric.api.gametest.v1.FabricGameTest.EMPTY_STRUCTURE
 
 public class OfflinePlayerCreationGameTest {
 
-
     @GameTest(template = EMPTY_STRUCTURE, batch = "OfflinePlayerCreationGameTest")
     public void createsOfflinePlayerAndPlayerRejoins(GameTestHelper helper) {
         String playerName = "test1";
@@ -169,14 +168,10 @@ public class OfflinePlayerCreationGameTest {
         helper.assertTrue(offlinePlayer.getDisplayName().getString().equals("[OFF]" + playerName),
                 "OfflinePlayer name is correct");
 
-        Zombie zombie = EntityType.ZOMBIE.create(level, EntitySpawnReason.NATURAL);
-        if (zombie == null) {
-            helper.fail("Could not create zombie");
-            return;
-        }
+        Zombie zombie = helper.spawn(EntityType.ZOMBIE, offlinePlayer.position());
+
         zombie.setNoAi(true);
         zombie.moveTo(offlinePlayer.getX(), offlinePlayer.getY(), offlinePlayer.getZ(), 0.0F, 0.0F);
-        level.addFreshEntity(zombie);
 
         offlinePlayer.getInventory().selected = 0;
         offlinePlayer.getInventory().setItem(0, new ItemStack(Items.AIR, 0));
