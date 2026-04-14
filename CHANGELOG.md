@@ -1,7 +1,6 @@
-# OfflinePlayers-Reworked 1.2.2 (MC 1.21.6 - 1.21.8)
+# OfflinePlayers-Reworked 1.3.0 (MC 1.21.6 - 1.21.8)
 
 **Update:**
 
-- Fixed bug where server restart recreates incorrect offline player (missing inventory + skin)
-  - *Recreating the cape doesn't seem to be possible.*
-- Updated tests to check inventory & skin values on recreated offline player
+- Added option to make offline players immune to any damage.
+  + `offlinePlayerInvincible` allows the offline player to be invincible.

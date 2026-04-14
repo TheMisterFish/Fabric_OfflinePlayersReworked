@@ -15,7 +15,8 @@
       "com.gametest.offlineplayersreworked.test.DamageSourceSerializerGameTest",
       "com.gametest.offlineplayersreworked.test.ServerPlayerMapperGameTest",
       "com.gametest.offlineplayersreworked.test.RespawnOfflinePlayersGameTest",
-      "com.gametest.offlineplayersreworked.test.OfflinePlayerAutoDisconnectGameTest"
+      "com.gametest.offlineplayersreworked.test.OfflinePlayerAutoDisconnectGameTest",
+      "com.gametest.offlineplayersreworked.test.OfflinePlayerNoDamageGameTest"
     ]
   },
   "mixins": [
