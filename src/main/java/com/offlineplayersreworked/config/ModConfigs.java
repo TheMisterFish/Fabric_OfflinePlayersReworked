@@ -23,6 +23,7 @@ public class ModConfigs {
     public static List<String> AVAILABLE_OPTIONS;
     public static boolean IGNORE_SLEEPING_PERCENTAGE;
     public static boolean AUTO_OFFLINE_ON_DISCONNECT;
+    public static boolean INVINCIBLE;
 
     public static void registerConfigs() {
         configs = new ModConfigProvider();
@@ -44,6 +45,7 @@ public class ModConfigs {
         configs.addKeyValuePair(new Pair<>("copySkin", true), "                 - If true, offline players copy the original player's skin.");
         configs.addKeyValuePair(new Pair<>("ignoreSleepingPercentage", true), " - If true, offline players will not be counted towards the sleeping percentage rule.");
         configs.addKeyValuePair(new Pair<>("autoOfflineOnDisconnect", false), " - If true, offline players automatically be created on disconnect.");
+        configs.addKeyValuePair(new Pair<>("offlinePlayerInvincible", false), " - If true, offline players are invincible. Mobs won't target the offline player.");
         configs.addKeyValuePair(new Pair<>("offlinePlayerPrefix", "[OFF]"), "     - Sets the prefix for the offline player.");
 
         configs.addEmptyLine();
@@ -63,6 +65,7 @@ public class ModConfigs {
         COPY_SKIN = CONFIG.getOrDefault("copySkin", true);
         IGNORE_SLEEPING_PERCENTAGE = CONFIG.getOrDefault("ignoreSleepingPercentage", true);
         AUTO_OFFLINE_ON_DISCONNECT = CONFIG.getOrDefault("autoOfflineOnDisconnect", false);
+        INVINCIBLE = CONFIG.getOrDefault("offlinePlayerInvincible", false);
         OFFLINE_PLAYER_PREFIX = CONFIG.getOrDefault("offlinePlayerPrefix", "[OFF]");
 
         String optionsString = CONFIG.getOrDefault("availableOptions", "attack,break,place,use,crouch,jump,eat,drop_item,drop_stack,move_forward,move_backward,disconnect");

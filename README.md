@@ -79,7 +79,8 @@ informAboutKickedPlayer=true #   - If true, if offline player was kicked and pla
 copySkin=true #                  - If true, offline players copy the original player's skin. | default: true
 ignoreSleepingPercentage=true #  - If true, offline players will not be counted towards the sleeping percentage rule. | default: true
 autoOfflineOnDisconnect=false #  - If true, offline players automatically be created on disconnect. | default: false
-offlinePlayerPrefix=[OFF] #      - Sets the prefix for the offline player. | default: OFF_
+offlinePlayerInvincible=false #  - If true, offline players are invincible. Mobs won't target the offline player. | default: false
+offlinePlayerPrefix=[OFF] #      - Sets the prefix for the offline player. | default: [OFF]
 
 availableOptions=attack,break,place,use,crouch,jump,eat,drop_item,drop_stack,move_forward,move_backward,disconnect #  | default: attack,break,place,use,crouch,jump,eat,drop_item,drop_stack,move_forward,move_backward,disconnect
 # ^ A comma-separated list of the available action options that can be used.
