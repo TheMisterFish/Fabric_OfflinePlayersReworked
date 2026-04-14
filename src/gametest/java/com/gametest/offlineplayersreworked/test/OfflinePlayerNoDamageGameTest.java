@@ -2,21 +2,15 @@ package com.gametest.offlineplayersreworked.test;
 
 import com.gametest.offlineplayersreworked.TestPlayerBuilder;
 import com.gametest.offlineplayersreworked.Utils;
-import com.gametest.offlineplayersreworked.tracker.DeathTracker;
 import com.gametest.offlineplayersreworked.tracker.DisconnectTracker;
 import com.offlineplayersreworked.config.ModConfigs;
 import net.fabricmc.fabric.api.gametest.v1.GameTest;
 import net.minecraft.commands.CommandSourceStack;
-import net.minecraft.core.Holder;
-import net.minecraft.core.registries.Registries;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.damagesource.DamageSource;
-import net.minecraft.world.damagesource.DamageType;
-import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntitySpawnReason;
 import net.minecraft.world.entity.EntityType;
@@ -30,6 +24,7 @@ import net.minecraft.world.phys.Vec3;
 import java.util.Objects;
 
 public class OfflinePlayerNoDamageGameTest {
+
     @GameTest(setupTicks = 200, maxTicks = 200)
     public void offlinePlayerIsInvincible(GameTestHelper helper) {
         boolean prevInvincible = ModConfigs.INVINCIBLE;
@@ -43,7 +38,7 @@ public class OfflinePlayerNoDamageGameTest {
                 .setHealth(1f)
                 .setFood(14)
                 .randomArmorAndWeapons()
-                .setMoveTo(helper.absoluteVec(new Vec3(0,0,0)))
+                .setMoveTo(helper.absoluteVec(new Vec3(0, 0, 0)))
                 .setGamemode(GameType.SURVIVAL);
 
         server.getWorldData().setGameType(GameType.SURVIVAL);
@@ -84,9 +79,9 @@ public class OfflinePlayerNoDamageGameTest {
                     helper.assertTrue(correctTarget, Component.nullToEmpty("Zombie target is incorrect"));
                 })
                 .thenExecuteFor(60, zombie::tick)
-                .thenExecute(() ->  {
+                .thenExecute(() -> {
                     boolean correctLastHurt = zombie.getLastHurtMob() != null && zombie.getLastHurtMob().is(offlinePlayer);
-                    helper.assertFalse(correctLastHurt,Component.nullToEmpty("Zombie last hurt is incorrect"));
+                    helper.assertFalse(correctLastHurt, Component.nullToEmpty("Zombie last hurt is incorrect"));
 
                     zombie.remove(Entity.RemovalReason.DISCARDED);
                     testPlayerBuilder.placeFakePlayer(server);

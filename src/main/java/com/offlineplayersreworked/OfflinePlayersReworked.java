@@ -2,22 +2,15 @@ package com.offlineplayersreworked;
 
 import com.offlineplayersreworked.command.OfflinePlayerCommands;
 import com.offlineplayersreworked.config.ModConfigs;
-import com.offlineplayersreworked.core.EntityPlayerActionPack;
 import com.offlineplayersreworked.core.OfflinePlayer;
-import com.offlineplayersreworked.core.interfaces.ServerPlayerInterface;
 import com.offlineplayersreworked.storage.OfflinePlayersStorage;
 import lombok.extern.slf4j.Slf4j;
 import net.fabricmc.api.DedicatedServerModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerChunkEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerWorldEvents;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.level.ServerPlayer;
 import org.jetbrains.annotations.TestOnly;
-
-import java.util.function.Consumer;
 
 @Slf4j
 public class OfflinePlayersReworked implements DedicatedServerModInitializer {

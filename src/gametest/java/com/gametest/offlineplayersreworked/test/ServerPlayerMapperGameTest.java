@@ -20,11 +20,6 @@ import java.util.UUID;
 
 public class ServerPlayerMapperGameTest {
 
-//    @AfterBatch(batch = "ServerPlayerMapperGameTest")
-//    public static void deletePlayerData(ServerLevel serverLevel) {
-//        Utils.clearOfflinePlayerStorageAndDisconnectPlayers(serverLevel);
-//    }
-
     @GameTest
     public void testCopyPlayerData(GameTestHelper helper) {
         ServerLevel level = helper.getLevel();
