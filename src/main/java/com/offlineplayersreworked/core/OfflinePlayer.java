@@ -1,6 +1,7 @@
 package com.offlineplayersreworked.core;
 
 import com.mojang.authlib.GameProfile;
+import com.offlineplayersreworked.config.ModConfigs;
 import com.offlineplayersreworked.storage.model.OfflinePlayerModel;
 import com.offlineplayersreworked.utils.DamageSourceSerializer;
 import it.unimi.dsi.fastutil.Pair;
@@ -120,6 +121,14 @@ public class OfflinePlayer extends ServerPlayer {
         for (Entity passenger : getIndirectPassengers()) {
             if (passenger instanceof Player) passenger.stopRiding();
         }
+    }
+
+    @Override
+    public boolean hurt(DamageSource damageSource, float f) {
+        if (ModConfigs.INVINCIBLE) {
+            return false;
+        }
+        return super.hurt(damageSource, f);
     }
 
     @Override
