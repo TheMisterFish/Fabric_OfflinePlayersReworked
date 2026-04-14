@@ -108,7 +108,7 @@ public class DamageSourceSerializer {
                             UUID.fromString(sourceEntityTag.getStringOr("playerUUID", "")),
                             sourceEntityTag.getString("playerName").orElse("Unknown")
                     );
-                } else if(sourceEntityTag != null) {
+                } else if (sourceEntityTag != null) {
                     ValueInput in = TagValueInput.create(
                             ProblemReporter.DISCARDING,
                             level.registryAccess(),

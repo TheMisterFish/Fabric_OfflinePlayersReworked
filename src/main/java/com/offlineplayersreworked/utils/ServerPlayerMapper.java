@@ -10,12 +10,10 @@ import lombok.extern.slf4j.Slf4j;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.players.UserWhiteListEntry;
-import net.minecraft.util.ExceptionCollector;
 import net.minecraft.util.ProblemReporter;
 import net.minecraft.world.level.storage.TagValueInput;
 import net.minecraft.world.level.storage.TagValueOutput;
 import net.minecraft.world.level.storage.ValueInput;
-import org.apache.commons.lang3.concurrent.Computable;
 
 import java.util.Collection;
 import java.util.Objects;
