@@ -7,17 +7,17 @@ import com.offlineplayersreworked.storage.model.OfflinePlayerModel;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.datafix.DataFixTypes;
 import net.minecraft.world.level.saveddata.SavedData;
 import net.minecraft.world.level.saveddata.SavedDataType;
-import net.minecraft.world.level.storage.DimensionDataStorage;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 public class OfflinePlayersStorage extends SavedData {
@@ -42,33 +42,21 @@ public class OfflinePlayersStorage extends SavedData {
 
     public static final SavedDataType<@NotNull OfflinePlayersStorage> TYPE =
             new SavedDataType<>(
-                    OfflinePlayersReworked.MOD_ID + "_storage",
+                    Identifier.parse((OfflinePlayersReworked.MOD_ID + "storage").toLowerCase()),
                     OfflinePlayersStorage::new,
                     OfflinePlayersStorage.CODEC,
                     DataFixTypes.PLAYER
             );
 
-    public static OfflinePlayersStorage getStorage(MinecraftServer server) {
-        DimensionDataStorage storage = server.overworld().getDataStorage();
-        return storage.computeIfAbsent(TYPE);
-    }
-
-
     public static OfflinePlayersStorage load(CompoundTag tag, HolderLookup.Provider provider) {
         OfflinePlayersStorage storage = new OfflinePlayersStorage();
-        Optional<ListTag> playerList = tag.getList("OfflinePlayers");
-
-        if (playerList.isPresent()) {
-            for (int i = 0; i < playerList.get().size(); i++) {
-                Optional<CompoundTag> playerTag = playerList.get().getCompound(i);
-                if (playerTag.isPresent()) {
-                    OfflinePlayerModel player = OfflinePlayerModel.fromTag(playerTag.get());
-                    storage.offlinePlayers.add(player);
-                }
+        tag.getList("OfflinePlayers").ifPresent(playerList -> {
+            for (int i = 0; i < playerList.size(); i++) {
+                playerList.getCompound(i).ifPresent(playerTag ->
+                        storage.offlinePlayers.add(OfflinePlayerModel.fromTag(playerTag))
+                );
             }
-        }
-
-
+        });
         return storage;
     }
 
@@ -78,6 +66,14 @@ public class OfflinePlayersStorage extends SavedData {
             playerList.add(player.toTag());
         }
         tag.put("OfflinePlayers", playerList);
+    }
+
+    public static OfflinePlayersStorage getStorage(MinecraftServer server) {
+        ServerLevel overworld = server.getLevel(ServerLevel.OVERWORLD);
+        if (overworld == null) {
+            throw new IllegalStateException("Overworld is not loaded!");
+        }
+        return overworld.getDataStorage().computeIfAbsent(TYPE);
     }
 
     public List<OfflinePlayerModel> findAll() {

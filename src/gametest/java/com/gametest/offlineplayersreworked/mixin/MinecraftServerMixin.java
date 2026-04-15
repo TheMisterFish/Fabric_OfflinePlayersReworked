@@ -6,6 +6,7 @@ import net.minecraft.server.Services;
 import net.minecraft.server.WorldStem;
 import net.minecraft.server.level.progress.LevelLoadListener;
 import net.minecraft.server.packs.repository.PackRepository;
+import net.minecraft.world.level.gamerules.GameRules;
 import net.minecraft.world.level.storage.LevelResource;
 import net.minecraft.world.level.storage.LevelStorageSource;
 import org.spongepowered.asm.mixin.Mixin;
@@ -19,6 +20,7 @@ import java.net.Proxy;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Optional;
 
 @Mixin(MinecraftServer.class)
 public abstract class MinecraftServerMixin {
@@ -29,7 +31,7 @@ public abstract class MinecraftServerMixin {
     public abstract Path getServerDirectory();
 
     @Inject(method = "<init>", at = @At("TAIL"))
-    private void init(Thread thread, LevelStorageSource.LevelStorageAccess levelStorageAccess, PackRepository packRepository, WorldStem worldStem, Proxy proxy, DataFixer dataFixer, Services services, LevelLoadListener levelLoadListener, CallbackInfo ci) {
+    private void init(Thread serverThread, LevelStorageSource.LevelStorageAccess storageSource, PackRepository packRepository, WorldStem worldStem, Optional<GameRules> gameRules, Proxy proxy, DataFixer fixerUpper, Services services, LevelLoadListener levelLoadListener, boolean propagatesCrashes, CallbackInfo ci) {
         Path playerDataDir = this.getWorldPath(LevelResource.PLAYER_DATA_DIR);
         List<Path> cachefiles = List.of(this.getServerDirectory().resolve("usercache.json"),
                 this.getServerDirectory().resolve("ops.json"),
