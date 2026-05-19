@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>OfflinePlayersReworked.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Fabric_OfflinePlayersReworked</a> &gt; <a href="index.source.html" class="el_package">com.offlineplayersreworked</a> &gt; <span class="el_source">OfflinePlayersReworked.java</span></div><h1>OfflinePlayersReworked.java</h1><pre class="source lang-java linenums">package com.offlineplayersreworked;
+
+import com.offlineplayersreworked.command.OfflinePlayerCommands;
+import com.offlineplayersreworked.config.ModConfigs;
+import com.offlineplayersreworked.core.OfflinePlayer;
+import com.offlineplayersreworked.storage.OfflinePlayersStorage;
+import lombok.extern.slf4j.Slf4j;
+import net.fabricmc.api.DedicatedServerModInitializer;
+import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
+import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.server.MinecraftServer;
+import org.jetbrains.annotations.TestOnly;
+
+<span class="fc" id="L15">@Slf4j</span>
+<span class="fc" id="L16">public class OfflinePlayersReworked implements DedicatedServerModInitializer {</span>
+    private static OfflinePlayersStorage storage;
+    private static MinecraftServer server;
+    public static final String MOD_ID = &quot;OfflinePlayersReworked&quot;;
+<span class="fc" id="L20">    public static final String MOD_VERSION = FabricLoader.getInstance()</span>
+<span class="fc" id="L21">            .getModContainer(MOD_ID.toLowerCase())</span>
+<span class="fc" id="L22">            .map(modContainer -&gt; modContainer.getMetadata().getVersion().getFriendlyString())</span>
+<span class="fc" id="L23">            .orElse(&quot;Unknown&quot;);</span>
+
+    @Override
+    public void onInitializeServer() {
+<span class="fc" id="L27">        ModConfigs.registerConfigs();</span>
+
+<span class="fc" id="L29">        CommandRegistrationCallback.EVENT.register((dispatcher, commandRegistryAccess, dedicated) -&gt; {</span>
+            try {
+<span class="fc" id="L31">                OfflinePlayerCommands.register(dispatcher);</span>
+<span class="nc" id="L32">            } catch (Exception exception) {</span>
+<span class="nc" id="L33">                log.error(&quot;Exception while generating offline player:&quot;, exception);</span>
+<span class="fc" id="L34">            }</span>
+<span class="fc" id="L35">        });</span>
+
+<span class="fc" id="L37">        ServerLifecycleEvents.SERVER_STOPPED.register(this::onServerStopped);</span>
+<span class="fc" id="L38">        ServerLifecycleEvents.SERVER_STARTED.register(this::onServerStarted);</span>
+<span class="fc" id="L39">        log.info(&quot;Hello from OfflinePlayersReworked!&quot;);</span>
+<span class="fc" id="L40">    }</span>
+
+    private void onServerStarted(MinecraftServer server) {
+<span class="fc" id="L43">        OfflinePlayersReworked.server = server;</span>
+<span class="fc" id="L44">        storage = OfflinePlayersStorage.getStorage(server);</span>
+
+<span class="fc" id="L46">        respawnActiveOfflinePlayers();</span>
+<span class="fc" id="L47">    }</span>
+
+    private void onServerStopped(MinecraftServer server) {
+<span class="fc" id="L50">        OfflinePlayersReworked.server = null;</span>
+<span class="fc" id="L51">        storage = null;</span>
+<span class="fc" id="L52">    }</span>
+
+    public static OfflinePlayersStorage getStorage() {
+<span class="pc bpc" id="L55" title="1 of 2 branches missed.">        if (storage == null) {</span>
+<span class="nc" id="L56">            throw new IllegalStateException(&quot;Storage accessed before server start or after server stop&quot;);</span>
+        }
+<span class="fc" id="L58">        return storage;</span>
+    }
+
+    public static MinecraftServer getServer() {
+<span class="pc bpc" id="L62" title="1 of 2 branches missed.">        if (server == null) {</span>
+<span class="nc" id="L63">            throw new IllegalStateException(&quot;Server accessed before start or after stop&quot;);</span>
+        }
+<span class="fc" id="L65">        return server;</span>
+    }
+
+    private static void respawnActiveOfflinePlayers() {
+<span class="fc" id="L69">        storage.findAll().stream()</span>
+<span class="fc bfc" id="L70" title="All 2 branches covered.">                .filter(offlinePlayerModel -&gt; !offlinePlayerModel.isDied())</span>
+<span class="fc bfc" id="L71" title="All 4 branches covered.">                .filter(offlinePlayerModel -&gt; ModConfigs.RESPAWN_KICKED_PLAYERS || !offlinePlayerModel.isKicked())</span>
+<span class="fc bfc" id="L72" title="All 2 branches covered.">                .filter(offlinePlayerModel -&gt; getServer().getPlayerList().getPlayer(offlinePlayerModel.getId()) == null)</span>
+<span class="fc" id="L73">                .forEach(offlinePlayerModel -&gt; OfflinePlayer.recreateOfflinePlayer(getServer(), offlinePlayerModel));</span>
+<span class="fc" id="L74">    }</span>
+
+    @TestOnly
+    public void respawnActiveOfflinePlayersForTest() {
+<span class="fc" id="L78">        respawnActiveOfflinePlayers();</span>
+<span class="fc" id="L79">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

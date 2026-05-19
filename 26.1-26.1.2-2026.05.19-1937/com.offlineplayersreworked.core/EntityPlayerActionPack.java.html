@@ -1,0 +1,565 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>EntityPlayerActionPack.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Fabric_OfflinePlayersReworked</a> &gt; <a href="index.source.html" class="el_package">com.offlineplayersreworked.core</a> &gt; <span class="el_source">EntityPlayerActionPack.java</span></div><h1>EntityPlayerActionPack.java</h1><pre class="source lang-java linenums">package com.offlineplayersreworked.core;
+
+import com.offlineplayersreworked.core.interfaces.ServerPlayerInterface;
+import com.offlineplayersreworked.utils.ActionMapper;
+import com.offlineplayersreworked.utils.Tracer;
+import it.unimi.dsi.fastutil.Pair;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.network.DisconnectionDetails;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.protocol.game.ServerboundPlayerActionPacket;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.Mth;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.MoverType;
+import net.minecraft.world.entity.decoration.ItemFrame;
+import net.minecraft.world.food.FoodProperties;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.PotionItem;
+import net.minecraft.world.item.SplashPotionItem;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.EntityHitResult;
+import net.minecraft.world.phys.HitResult;
+import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.TestOnly;
+
+import java.util.EnumMap;
+import java.util.HashMap;
+import java.util.Map;
+
+public class EntityPlayerActionPack {
+    private final ServerPlayer player;
+<span class="fc" id="L41">    private final Map&lt;ActionType, Action&gt; actions = new EnumMap&lt;&gt;(ActionType.class);</span>
+    private BlockPos currentBlock;
+    private int blockHitDelay;
+    private boolean isHittingBlock;
+    private float curBlockDamageMP;
+    private boolean sneaking;
+    private boolean sprinting;
+    private float forward;
+    private float strafing;
+    private int itemUseCooldown;
+
+<span class="fc" id="L52">    public EntityPlayerActionPack(ServerPlayer playerIn) {</span>
+<span class="fc" id="L53">        player = playerIn;</span>
+<span class="fc" id="L54">        stopAll();</span>
+<span class="fc" id="L55">    }</span>
+
+    public void copyFrom(EntityPlayerActionPack other) {
+<span class="fc" id="L58">        actions.putAll(other.actions);</span>
+<span class="fc" id="L59">        currentBlock = other.currentBlock;</span>
+<span class="fc" id="L60">        blockHitDelay = other.blockHitDelay;</span>
+<span class="fc" id="L61">        isHittingBlock = other.isHittingBlock;</span>
+<span class="fc" id="L62">        curBlockDamageMP = other.curBlockDamageMP;</span>
+
+<span class="fc" id="L64">        sneaking = other.sneaking;</span>
+<span class="fc" id="L65">        sprinting = other.sprinting;</span>
+<span class="fc" id="L66">        forward = other.forward;</span>
+<span class="fc" id="L67">        strafing = other.strafing;</span>
+
+<span class="fc" id="L69">        itemUseCooldown = other.itemUseCooldown;</span>
+<span class="fc" id="L70">    }</span>
+
+    public EntityPlayerActionPack start(ActionType type, Action action) {
+<span class="fc" id="L73">        Action previous = actions.remove(type);</span>
+<span class="pc bpc" id="L74" title="1 of 2 branches missed.">        if (previous != null) type.stop(player, previous);</span>
+<span class="pc bpc" id="L75" title="1 of 2 branches missed.">        if (action != null) {</span>
+<span class="fc" id="L76">            actions.put(type, action);</span>
+<span class="fc" id="L77">            type.start(player, action); // noop</span>
+        }
+<span class="fc" id="L79">        return this;</span>
+    }
+
+    public EntityPlayerActionPack setSneaking(boolean doSneak) {
+<span class="fc" id="L83">        sneaking = doSneak;</span>
+<span class="fc" id="L84">        player.setShiftKeyDown(doSneak);</span>
+<span class="pc bpc" id="L85" title="1 of 4 branches missed.">        if (sprinting &amp;&amp; sneaking)</span>
+<span class="nc" id="L86">            setSprinting(false);</span>
+<span class="fc" id="L87">        return this;</span>
+    }
+
+    public EntityPlayerActionPack setSprinting(boolean doSprint) {
+<span class="fc" id="L91">        sprinting = doSprint;</span>
+<span class="fc" id="L92">        player.setSprinting(doSprint);</span>
+<span class="pc bpc" id="L93" title="1 of 4 branches missed.">        if (sneaking &amp;&amp; sprinting)</span>
+<span class="fc" id="L94">            setSneaking(false);</span>
+<span class="fc" id="L95">        return this;</span>
+    }
+
+    public EntityPlayerActionPack look(float yaw, float pitch) {
+<span class="fc" id="L99">        player.setYRot(yaw % 360); //setYaw</span>
+<span class="fc" id="L100">        player.setXRot(Mth.clamp(pitch, -90, 90)); // setPitch</span>
+<span class="fc" id="L101">        return this;</span>
+    }
+
+    public EntityPlayerActionPack stopMovement() {
+<span class="fc" id="L105">        setSneaking(false);</span>
+<span class="fc" id="L106">        setSprinting(false);</span>
+<span class="fc" id="L107">        forward = 0.0F;</span>
+<span class="fc" id="L108">        strafing = 0.0F;</span>
+<span class="fc" id="L109">        return this;</span>
+    }
+
+
+    public EntityPlayerActionPack stopAll() {
+<span class="fc bfc" id="L114" title="All 2 branches covered.">        for (ActionType type : actions.keySet()) type.stop(player, actions.get(type));</span>
+<span class="fc" id="L115">        actions.clear();</span>
+<span class="fc" id="L116">        return stopMovement();</span>
+    }
+
+    public void onUpdate() {
+<span class="fc" id="L120">        Map&lt;ActionType, Boolean&gt; actionAttempts = new HashMap&lt;&gt;();</span>
+<span class="fc" id="L121">        actions.values().removeIf(e -&gt; e.done);</span>
+<span class="fc bfc" id="L122" title="All 2 branches covered.">        for (Map.Entry&lt;ActionType, Action&gt; e : actions.entrySet()) {</span>
+<span class="fc" id="L123">            ActionType type = e.getKey();</span>
+<span class="fc" id="L124">            Action action = e.getValue();</span>
+            // skipping attack if use was successful
+<span class="pc bpc" id="L126" title="3 of 4 branches missed.">            if (!(actionAttempts.getOrDefault(ActionType.USE, false) &amp;&amp; type == ActionType.ATTACK)) {</span>
+<span class="fc" id="L127">                Boolean actionStatus = action.tick(this, type);</span>
+<span class="fc bfc" id="L128" title="All 2 branches covered.">                if (actionStatus != null)</span>
+<span class="fc" id="L129">                    actionAttempts.put(type, actionStatus);</span>
+            }
+            // optionally retrying use after successful attack and unsuccessful use
+<span class="fc bfc" id="L132" title="All 2 branches covered.">            if (type == ActionType.ATTACK</span>
+<span class="fc bfc" id="L133" title="All 2 branches covered.">                    &amp;&amp; actionAttempts.getOrDefault(ActionType.ATTACK, false)</span>
+<span class="pc bpc" id="L134" title="1 of 2 branches missed.">                    &amp;&amp; !actionAttempts.getOrDefault(ActionType.USE, true)) {</span>
+                // according to MinecraftClient.handleInputEvents
+<span class="nc" id="L136">                Action using = actions.get(ActionType.USE);</span>
+<span class="nc bnc" id="L137" title="All 2 branches missed.">                if (using != null) // this is always true - we know use worked, but just in case</span>
+                {
+<span class="nc" id="L139">                    using.retry(this, ActionType.USE);</span>
+                }
+            }
+<span class="fc" id="L142">        }</span>
+
+<span class="fc" id="L144">        Vec3 movement = Vec3.ZERO;</span>
+<span class="fc bfc" id="L145" title="All 2 branches covered.">        if (actions.containsKey(ActionType.MOVE_FORWARD)) {</span>
+<span class="fc" id="L146">            movement = movement.add(player.getLookAngle().normalize());</span>
+        }
+<span class="fc bfc" id="L148" title="All 2 branches covered.">        if (actions.containsKey(ActionType.MOVE_BACKWARD)) {</span>
+<span class="fc" id="L149">            movement = movement.subtract(player.getLookAngle().normalize());</span>
+        }
+
+<span class="fc bfc" id="L152" title="All 2 branches covered.">        if (!movement.equals(Vec3.ZERO)) {</span>
+<span class="fc" id="L153">            double walkingSpeed = 0.175;</span>
+<span class="fc" id="L154">            movement = movement.normalize().scale(walkingSpeed);</span>
+
+<span class="fc" id="L156">            player.move(MoverType.PLAYER, movement);</span>
+        }
+
+<span class="pc bpc" id="L159" title="1 of 2 branches missed.">        float vel = sneaking ? 0.3F : 1.0F;</span>
+        // The != 0.0F checks are needed given else real players can't control minecarts, however it works with fakes and else they don't stop immediately
+<span class="pc bpc" id="L161" title="2 of 4 branches missed.">        if (forward != 0.0F || player instanceof OfflinePlayer) {</span>
+<span class="fc" id="L162">            player.zza = forward * vel;</span>
+        }
+<span class="pc bpc" id="L164" title="2 of 4 branches missed.">        if (strafing != 0.0F || player instanceof OfflinePlayer) {</span>
+<span class="fc" id="L165">            player.xxa = strafing * vel;</span>
+        }
+<span class="fc" id="L167">    }</span>
+
+    static HitResult getTarget(ServerPlayer player) {
+<span class="fc bfc" id="L170" title="All 2 branches covered.">        double reach = player.gameMode.isCreative() ? 5 : 4.5f;</span>
+<span class="fc" id="L171">        return Tracer.rayTrace(player, 1, reach, false);</span>
+    }
+
+<span class="fc" id="L174">    public enum ActionType {</span>
+<span class="fc" id="L175">        USE(true) {</span>
+            @Override
+            boolean execute(ServerPlayer player, Action action) {
+<span class="fc" id="L178">                EntityPlayerActionPack ap = ((ServerPlayerInterface) player).getActionPack();</span>
+<span class="fc bfc" id="L179" title="All 2 branches covered.">                if (ap.itemUseCooldown &gt; 0) {</span>
+<span class="fc" id="L180">                    ap.itemUseCooldown--;</span>
+<span class="fc" id="L181">                    return true;</span>
+                }
+<span class="pc bpc" id="L183" title="1 of 2 branches missed.">                if (player.isUsingItem()) {</span>
+<span class="nc" id="L184">                    return true;</span>
+                }
+<span class="fc" id="L186">                HitResult hit = getTarget(player);</span>
+<span class="fc bfc" id="L187" title="All 2 branches covered.">                for (InteractionHand hand : InteractionHand.values()) {</span>
+<span class="fc bfc" id="L188" title="All 3 branches covered.">                    switch (hit.getType()) {</span>
+                        case BLOCK -&gt; {
+<span class="fc" id="L190">                            player.resetLastActionTime();</span>
+<span class="fc" id="L191">                            ServerLevel world = player.level();</span>
+<span class="fc" id="L192">                            BlockHitResult blockHit = (BlockHitResult) hit;</span>
+<span class="fc" id="L193">                            BlockPos pos = blockHit.getBlockPos();</span>
+<span class="fc" id="L194">                            Direction side = blockHit.getDirection();</span>
+<span class="pc bpc" id="L195" title="2 of 6 branches missed.">                            if (pos.getY() &lt; player.level().getMaxY() - (side == Direction.UP ? 1 : 0) &amp;&amp; world.mayInteract(player, pos)) {</span>
+<span class="fc" id="L196">                                InteractionResult result = player.gameMode.useItemOn(player, world, player.getItemInHand(hand), hand, blockHit);</span>
+<span class="fc bfc" id="L197" title="All 2 branches covered.">                                if (result.consumesAction()) {</span>
+<span class="fc" id="L198">                                    ap.itemUseCooldown = 3;</span>
+<span class="fc" id="L199">                                    return true;</span>
+                                }
+                            }
+<span class="fc" id="L202">                        }</span>
+                        case ENTITY -&gt; {
+<span class="fc" id="L204">                            player.resetLastActionTime();</span>
+<span class="fc" id="L205">                            EntityHitResult entityHit = (EntityHitResult) hit;</span>
+<span class="fc" id="L206">                            Entity entity = entityHit.getEntity();</span>
+<span class="fc" id="L207">                            boolean handWasEmpty = player.getItemInHand(hand).isEmpty();</span>
+<span class="pc bpc" id="L208" title="3 of 4 branches missed.">                            boolean itemFrameEmpty = (entity instanceof ItemFrame) &amp;&amp; ((ItemFrame) entity).getItem().isEmpty();</span>
+<span class="fc" id="L209">                            Vec3 relativeHitPos = entityHit.getLocation().subtract(entity.getX(), entity.getY(), entity.getZ());</span>
+<span class="fc" id="L210">                            InteractionResult result = entity.interact(player, hand, relativeHitPos);</span>
+<span class="fc bfc" id="L211" title="All 2 branches covered.">                            if (result instanceof InteractionResult.Success) {</span>
+<span class="fc" id="L212">                                ap.itemUseCooldown = 3;</span>
+<span class="fc" id="L213">                                return true;</span>
+                            }
+                            // fix for SS itemframe always returns CONSUME even if no action is performed
+<span class="pc bpc" id="L216" title="5 of 6 branches missed.">                            if (player.interactOn(entity, hand, relativeHitPos).consumesAction() &amp;&amp; !(handWasEmpty &amp;&amp; itemFrameEmpty)) {</span>
+<span class="nc" id="L217">                                ap.itemUseCooldown = 3;</span>
+<span class="nc" id="L218">                                return true;</span>
+                            }
+                        }
+                    }
+<span class="fc" id="L222">                    ItemStack handItem = player.getItemInHand(hand);</span>
+<span class="pc bpc" id="L223" title="1 of 2 branches missed.">                    if (player.gameMode.useItem(player, player.level(), handItem, hand).consumesAction()) {</span>
+<span class="nc" id="L224">                        ap.itemUseCooldown = 3;</span>
+<span class="nc" id="L225">                        return true;</span>
+                    }
+                }
+<span class="fc" id="L228">                return false;</span>
+            }
+
+            @Override
+            void inactiveTick(ServerPlayer player, Action action) {
+<span class="nc" id="L233">                EntityPlayerActionPack ap = ((ServerPlayerInterface) player).getActionPack();</span>
+<span class="nc" id="L234">                ap.itemUseCooldown = 0;</span>
+<span class="nc" id="L235">                player.releaseUsingItem();</span>
+<span class="nc" id="L236">            }</span>
+        },
+<span class="fc" id="L238">        ATTACK(true) {</span>
+            @Override
+            boolean execute(ServerPlayer player, Action action) {
+<span class="fc" id="L241">                HitResult hit = getTarget(player);</span>
+
+<span class="fc bfc" id="L243" title="All 3 branches covered.">                switch (hit.getType()) {</span>
+                    case ENTITY -&gt; {
+<span class="fc" id="L245">                        EntityHitResult entityHit = (EntityHitResult) hit;</span>
+<span class="fc" id="L246">                        Entity target = entityHit.getEntity();</span>
+
+<span class="pc bpc" id="L248" title="1 of 2 branches missed.">                        LivingEntity living = (target instanceof LivingEntity le) ? le : null;</span>
+<span class="pc bpc" id="L249" title="1 of 2 branches missed.">                        float beforeHealth = (living != null) ? living.getHealth() : Float.NaN;</span>
+
+<span class="pc bpc" id="L251" title="1 of 2 branches missed.">                        if (!action.isContinuous) {</span>
+<span class="fc" id="L252">                            player.attack(target);</span>
+<span class="fc" id="L253">                            player.swing(InteractionHand.MAIN_HAND);</span>
+                        }
+
+<span class="pc bpc" id="L256" title="1 of 4 branches missed.">                        if (living != null &amp;&amp; living.getHealth() != beforeHealth) {</span>
+<span class="fc" id="L257">                            player.resetAttackStrengthTicker();</span>
+                        }
+<span class="fc" id="L259">                        player.resetLastActionTime();</span>
+
+<span class="fc" id="L261">                        return true;</span>
+                    }
+                    case BLOCK -&gt; {
+<span class="fc" id="L264">                        EntityPlayerActionPack ap = ((ServerPlayerInterface) player).getActionPack();</span>
+<span class="fc bfc" id="L265" title="All 2 branches covered.">                        if (ap.blockHitDelay &gt; 0) {</span>
+<span class="fc" id="L266">                            ap.blockHitDelay--;</span>
+<span class="fc" id="L267">                            return false;</span>
+                        }
+<span class="fc" id="L269">                        BlockHitResult blockHit = (BlockHitResult) hit;</span>
+<span class="fc" id="L270">                        BlockPos pos = blockHit.getBlockPos();</span>
+<span class="fc" id="L271">                        Direction side = blockHit.getDirection();</span>
+<span class="pc bpc" id="L272" title="1 of 2 branches missed.">                        if (player.blockActionRestricted(player.level(), pos, player.gameMode.getGameModeForPlayer()))</span>
+<span class="nc" id="L273">                            return false;</span>
+<span class="pc bpc" id="L274" title="1 of 4 branches missed.">                        if (ap.currentBlock != null &amp;&amp; player.level().getBlockState(ap.currentBlock).isAir()) {</span>
+<span class="nc" id="L275">                            ap.currentBlock = null;</span>
+<span class="nc" id="L276">                            return false;</span>
+                        }
+<span class="fc" id="L278">                        BlockState state = player.level().getBlockState(pos);</span>
+<span class="fc" id="L279">                        boolean blockBroken = false;</span>
+<span class="fc bfc" id="L280" title="All 2 branches covered.">                        if (player.gameMode.getGameModeForPlayer().isCreative()) {</span>
+<span class="fc" id="L281">                            player.gameMode.handleBlockBreakAction(pos, ServerboundPlayerActionPacket.Action.START_DESTROY_BLOCK, side, player.level().getMaxY(), -1);</span>
+<span class="fc" id="L282">                            ap.blockHitDelay = 5;</span>
+<span class="fc" id="L283">                            blockBroken = true;</span>
+<span class="pc bpc" id="L284" title="1 of 4 branches missed.">                        } else if (ap.currentBlock == null || !ap.currentBlock.equals(pos)) {</span>
+<span class="pc bpc" id="L285" title="1 of 2 branches missed.">                            if (ap.currentBlock != null) {</span>
+<span class="nc" id="L286">                                player.gameMode.handleBlockBreakAction(ap.currentBlock, ServerboundPlayerActionPacket.Action.ABORT_DESTROY_BLOCK, side, player.level().getMaxY(), -1);</span>
+                            }
+<span class="fc" id="L288">                            player.gameMode.handleBlockBreakAction(pos, ServerboundPlayerActionPacket.Action.START_DESTROY_BLOCK, side, player.level().getMaxY(), -1);</span>
+<span class="pc bpc" id="L289" title="1 of 2 branches missed.">                            boolean notAir = !state.isAir();</span>
+<span class="pc bpc" id="L290" title="1 of 4 branches missed.">                            if (notAir &amp;&amp; ap.curBlockDamageMP == 0) {</span>
+<span class="fc" id="L291">                                state.attack(player.level(), pos, player);</span>
+                            }
+<span class="pc bpc" id="L293" title="2 of 4 branches missed.">                            if (notAir &amp;&amp; state.getDestroyProgress(player, player.level(), pos) &gt;= 1) {</span>
+<span class="nc" id="L294">                                ap.currentBlock = null;</span>
+                                //instamine??
+<span class="nc" id="L296">                                blockBroken = true;</span>
+                            } else {
+<span class="fc" id="L298">                                ap.currentBlock = pos;</span>
+<span class="fc" id="L299">                                ap.curBlockDamageMP = 0;</span>
+                            }
+<span class="fc" id="L301">                        } else {</span>
+<span class="fc" id="L302">                            ap.curBlockDamageMP += state.getDestroyProgress(player, player.level(), pos);</span>
+<span class="fc bfc" id="L303" title="All 2 branches covered.">                            if (ap.curBlockDamageMP &gt;= 1) {</span>
+<span class="fc" id="L304">                                player.gameMode.handleBlockBreakAction(pos, ServerboundPlayerActionPacket.Action.STOP_DESTROY_BLOCK, side, player.level().getMaxY(), -1);</span>
+<span class="fc" id="L305">                                ap.currentBlock = null;</span>
+<span class="fc" id="L306">                                ap.blockHitDelay = 5;</span>
+<span class="fc" id="L307">                                blockBroken = true;</span>
+                            }
+<span class="fc" id="L309">                            player.level().destroyBlockProgress(-1, pos, (int) (ap.curBlockDamageMP * 10));</span>
+
+                        }
+<span class="fc" id="L312">                        player.resetLastActionTime();</span>
+<span class="fc" id="L313">                        player.swing(InteractionHand.MAIN_HAND);</span>
+<span class="fc" id="L314">                        return blockBroken;</span>
+                    }
+                }
+<span class="fc" id="L317">                return false;</span>
+            }
+
+            @Override
+            void inactiveTick(ServerPlayer player, Action action) {
+<span class="fc" id="L322">                EntityPlayerActionPack ap = ((ServerPlayerInterface) player).getActionPack();</span>
+<span class="fc bfc" id="L323" title="All 2 branches covered.">                if (ap.currentBlock == null) return;</span>
+<span class="fc" id="L324">                player.level().destroyBlockProgress(-1, ap.currentBlock, -1);</span>
+<span class="fc" id="L325">                player.gameMode.handleBlockBreakAction(ap.currentBlock, ServerboundPlayerActionPacket.Action.ABORT_DESTROY_BLOCK, Direction.DOWN, player.level().getMaxY(), -1);</span>
+<span class="fc" id="L326">                ap.currentBlock = null;</span>
+<span class="fc" id="L327">            }</span>
+        },
+<span class="fc" id="L329">        JUMP(true) {</span>
+            @Override
+            boolean execute(ServerPlayer player, Action action) {
+<span class="fc bfc" id="L332" title="All 2 branches covered.">                if (player.onGround()) {</span>
+<span class="fc" id="L333">                    player.jumpFromGround(); // onGround</span>
+<span class="fc" id="L334">                    player.setJumping(true);</span>
+                }
+<span class="fc" id="L336">                return false;</span>
+            }
+
+            @Override
+            void inactiveTick(ServerPlayer player, Action action) {
+<span class="fc" id="L341">                player.setJumping(false);</span>
+<span class="fc" id="L342">            }</span>
+        },
+<span class="fc" id="L344">        CROUCH(true) {</span>
+            @Override
+            boolean execute(ServerPlayer player, Action action) {
+<span class="fc" id="L347">                player.setShiftKeyDown(true);</span>
+<span class="fc" id="L348">                player.resetLastActionTime();</span>
+<span class="fc" id="L349">                return false;</span>
+            }
+        },
+<span class="fc" id="L352">        EAT(true) {</span>
+            @Override
+            boolean execute(ServerPlayer player, Action action) {
+<span class="fc" id="L355">                ItemStack mainHandItemStack = player.getMainHandItem();</span>
+<span class="fc" id="L356">                ItemStack offHandItemStack = player.getOffhandItem();</span>
+
+<span class="fc bfc" id="L358" title="All 2 branches covered.">                if (canConsumeItem(player, mainHandItemStack)) {</span>
+<span class="fc bfc" id="L359" title="All 2 branches covered.">                    if (!player.isUsingItem()) {</span>
+<span class="fc" id="L360">                        player.startUsingItem(InteractionHand.MAIN_HAND);</span>
+                    }
+<span class="fc bfc" id="L362" title="All 2 branches covered.">                } else if (canConsumeItem(player, offHandItemStack)) {</span>
+<span class="pc bpc" id="L363" title="1 of 2 branches missed.">                    if (!player.isUsingItem()) {</span>
+<span class="fc" id="L364">                        player.startUsingItem(InteractionHand.OFF_HAND);</span>
+                    }
+                }
+
+<span class="fc" id="L368">                player.resetLastActionTime();</span>
+<span class="fc" id="L369">                return false;</span>
+            }
+        },
+<span class="fc" id="L372">        DROP_ITEM(true) {</span>
+            @Override
+            boolean execute(ServerPlayer player, Action action) {
+<span class="fc" id="L375">                player.resetLastActionTime();</span>
+<span class="fc" id="L376">                player.drop(false); // dropSelectedItem</span>
+<span class="fc" id="L377">                return false;</span>
+            }
+        },
+<span class="fc" id="L380">        DROP_STACK(true) {</span>
+            @Override
+            boolean execute(ServerPlayer player, Action action) {
+<span class="fc" id="L383">                player.resetLastActionTime();</span>
+<span class="fc" id="L384">                player.drop(true); // dropSelectedItem</span>
+<span class="fc" id="L385">                return false;</span>
+            }
+        },
+<span class="fc" id="L388">        MOVE_FORWARD(true) {</span>
+            @Override
+            boolean execute(ServerPlayer player, Action action) {
+<span class="fc" id="L391">                return false;</span>
+            }
+        },
+<span class="fc" id="L394">        MOVE_BACKWARD(true) {</span>
+            @Override
+            boolean execute(ServerPlayer player, Action action) {
+<span class="fc" id="L397">                return false;</span>
+            }
+        },
+<span class="fc" id="L400">        DISCONNECT(false) {</span>
+            @Override
+            boolean execute(ServerPlayer player, Action action) {
+<span class="fc" id="L403">                Component reason = Component.literal(player.getName().getString() + &quot; automatically disconnected.&quot;);</span>
+<span class="fc" id="L404">                player.connection.onDisconnect(new DisconnectionDetails(reason));</span>
+<span class="fc" id="L405">                player.disconnect();</span>
+<span class="fc" id="L406">                return true;</span>
+            }
+        };
+
+        public final boolean preventSpectator;
+
+<span class="fc" id="L412">        ActionType(boolean preventSpectator) {</span>
+<span class="fc" id="L413">            this.preventSpectator = preventSpectator;</span>
+<span class="fc" id="L414">        }</span>
+
+        void start(ServerPlayer player, Action action) {
+<span class="fc" id="L417">        }</span>
+
+        abstract boolean execute(ServerPlayer player, Action action);
+
+        void inactiveTick(ServerPlayer player, Action action) {
+<span class="fc" id="L422">        }</span>
+
+        void stop(ServerPlayer player, Action action) {
+<span class="fc" id="L425">            inactiveTick(player, action);</span>
+<span class="fc" id="L426">        }</span>
+
+        private static boolean canConsumeItem(ServerPlayer player, ItemStack itemStack) {
+<span class="fc bfc" id="L429" title="All 2 branches covered.">            if (itemStack.isEmpty()) {</span>
+<span class="fc" id="L430">                return false;</span>
+            }
+
+<span class="fc" id="L433">            Item item = itemStack.getItem();</span>
+
+<span class="fc bfc" id="L435" title="All 2 branches covered.">            if (isAlwaysConsumableItem(item, player)) {</span>
+<span class="fc" id="L436">                return true;</span>
+            }
+
+<span class="fc" id="L439">            FoodProperties foodProperties = itemStack.get(DataComponents.FOOD);</span>
+<span class="pc bpc" id="L440" title="1 of 2 branches missed.">            if (foodProperties != null) {</span>
+<span class="fc" id="L441">                return player.canEat(foodProperties.canAlwaysEat());</span>
+            }
+
+<span class="nc" id="L444">            return false;</span>
+        }
+
+        private static boolean isAlwaysConsumableItem(Item item, ServerPlayer player) {
+<span class="pc bpc" id="L448" title="3 of 4 branches missed.">            if (item instanceof PotionItem &amp;&amp; !(item instanceof SplashPotionItem)) {</span>
+<span class="nc" id="L449">                return true;</span>
+            }
+<span class="fc bfc" id="L451" title="All 2 branches covered.">            if (item.toString().equals(&quot;minecraft:ominous_bottle&quot;)) {</span>
+<span class="pc bpc" id="L452" title="2 of 4 branches missed.">                return !player.hasEffect(MobEffects.BAD_OMEN) &amp;&amp; !player.hasEffect(MobEffects.RAID_OMEN);</span>
+            }
+<span class="pc bpc" id="L454" title="2 of 4 branches missed.">            return item.toString().equals(&quot;minecraft:honey_bottle&quot;) || item.toString().equals(&quot;minecraft:milk_bucket&quot;);</span>
+        }
+
+    }
+
+    public static class Action {
+<span class="fc" id="L460">        public boolean done = false;</span>
+        public final int limit;
+        public final int interval;
+        public final int offset;
+        private int count;
+        private int next;
+        private final boolean isContinuous;
+        public boolean isBreakAction;
+
+<span class="fc" id="L469">        private Action(int limit, int interval, int offset, boolean continuous) {</span>
+<span class="fc" id="L470">            this.limit = limit;</span>
+<span class="fc" id="L471">            this.interval = interval;</span>
+<span class="fc" id="L472">            this.offset = offset;</span>
+<span class="fc" id="L473">            next = interval + offset;</span>
+<span class="fc" id="L474">            isContinuous = continuous;</span>
+<span class="fc" id="L475">            isBreakAction = false;</span>
+<span class="fc" id="L476">        }</span>
+
+        public static Action once() {
+<span class="fc" id="L479">            return new Action(1, 1, 0, false);</span>
+        }
+
+        public static Action continuous() {
+<span class="fc" id="L483">            return new Action(-1, 1, 0, true);</span>
+        }
+
+        public static Action interval(int interval) {
+<span class="fc" id="L487">            return new Action(-1, interval, 0, false);</span>
+        }
+
+        public static Action interval(int interval, int offset) {
+<span class="fc" id="L491">            return new Action(-1, interval, offset, false);</span>
+        }
+
+        Boolean tick(EntityPlayerActionPack actionPack, ActionType type) {
+<span class="fc" id="L495">            next--;</span>
+<span class="fc" id="L496">            Boolean cancel = null;</span>
+<span class="fc bfc" id="L497" title="All 2 branches covered.">            if (next &lt;= 0) {</span>
+<span class="fc bfc" id="L498" title="All 4 branches covered.">                if (interval == 1 &amp;&amp; !isContinuous) {</span>
+                    // need to allow entity to tick, otherwise won't have effect (bow)
+                    // actions are 20 tps, so need to clear status mid tick, allowing entities process it till next time
+<span class="pc bpc" id="L501" title="1 of 4 branches missed.">                    if (!type.preventSpectator || !actionPack.player.isSpectator()) {</span>
+<span class="fc" id="L502">                        type.inactiveTick(actionPack.player, this);</span>
+                    }
+                }
+
+<span class="pc bpc" id="L506" title="1 of 4 branches missed.">                if (!type.preventSpectator || !actionPack.player.isSpectator()) {</span>
+<span class="fc" id="L507">                    cancel = type.execute(actionPack.player, this);</span>
+                }
+<span class="fc" id="L509">                count++;</span>
+
+                // If it's not a break action OR if the block was successfully broken set next as interval.
+                // Otherwise (it's a break action and the block wasn't broken), set next to 0.
+<span class="pc bpc" id="L513" title="5 of 6 branches missed.">                next = (!isBreakAction || (cancel != null &amp;&amp; cancel)) ? interval : 0;</span>
+
+<span class="pc bpc" id="L515" title="1 of 4 branches missed.">                if (count == limit &amp;&amp; next == interval) {</span>
+<span class="fc" id="L516">                    type.stop(actionPack.player, null);</span>
+<span class="fc" id="L517">                    done = true;</span>
+                }
+            } else {
+<span class="pc bpc" id="L520" title="2 of 4 branches missed.">                if (!type.preventSpectator || !actionPack.player.isSpectator()) {</span>
+<span class="fc" id="L521">                    type.inactiveTick(actionPack.player, this);</span>
+                }
+            }
+
+<span class="fc" id="L525">            return cancel;</span>
+        }
+
+        void retry(EntityPlayerActionPack actionPack, ActionType type) {
+            //assuming action run but was unsuccessful that tick, but opportunity emerged to retry it, lets retry it.
+<span class="nc bnc" id="L530" title="All 4 branches missed.">            if (!type.preventSpectator || !actionPack.player.isSpectator()) {</span>
+<span class="nc" id="L531">                type.execute(actionPack.player, this);</span>
+            }
+<span class="nc" id="L533">            count++;</span>
+<span class="nc bnc" id="L534" title="All 2 branches missed.">            if (count == limit) {</span>
+<span class="nc" id="L535">                type.stop(actionPack.player, null);</span>
+<span class="nc" id="L536">                done = true;</span>
+            }
+<span class="nc" id="L538">        }</span>
+    }
+
+    public static Pair&lt;ActionType, Action&gt; getActionPair(String actionString, int intervalInteger, int offsetInteger) {
+<span class="fc" id="L542">        Action actionInterval = Action.once();</span>
+
+<span class="pc bpc" id="L544" title="1 of 2 branches missed.">        if (intervalInteger &gt; 0) {</span>
+<span class="fc bfc" id="L545" title="All 2 branches covered.">            if (offsetInteger &gt; 0) {</span>
+<span class="fc" id="L546">                actionInterval = Action.interval(intervalInteger, offsetInteger);</span>
+            } else {
+<span class="fc" id="L548">                actionInterval = Action.interval(intervalInteger);</span>
+            }
+<span class="nc bnc" id="L550" title="All 2 branches missed.">        } else if (intervalInteger == 0) {</span>
+<span class="nc" id="L551">            actionInterval = Action.continuous();</span>
+        }
+
+<span class="fc" id="L554">        ActionType actionType = ActionMapper.getActionType(actionString);</span>
+<span class="fc" id="L555">        actionInterval.isBreakAction = actionString.equalsIgnoreCase(&quot;break&quot;);</span>
+
+<span class="fc" id="L557">        return Pair.of(actionType, actionInterval);</span>
+    }
+
+    @TestOnly
+    public Map&lt;ActionType, Action&gt; getActions() {
+<span class="fc" id="L562">        return actions;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

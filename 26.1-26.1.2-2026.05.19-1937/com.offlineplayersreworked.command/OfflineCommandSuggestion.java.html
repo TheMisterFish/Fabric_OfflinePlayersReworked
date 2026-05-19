@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>OfflineCommandSuggestion.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Fabric_OfflinePlayersReworked</a> &gt; <a href="index.source.html" class="el_package">com.offlineplayersreworked.command</a> &gt; <span class="el_source">OfflineCommandSuggestion.java</span></div><h1>OfflineCommandSuggestion.java</h1><pre class="source lang-java linenums">package com.offlineplayersreworked.command;
+
+import com.mojang.brigadier.context.CommandContext;
+import com.mojang.brigadier.suggestion.Suggestions;
+import com.mojang.brigadier.suggestion.SuggestionsBuilder;
+import com.offlineplayersreworked.config.ModConfigs;
+import com.offlineplayersreworked.utils.ActionMapper;
+import net.minecraft.commands.CommandSourceStack;
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
+
+<span class="nc" id="L16">public class OfflineCommandSuggestion {</span>
+<span class="nc" id="L17">    private static final List&lt;String&gt; TIME_UNITS = Arrays.asList(&quot;d&quot;, &quot;h&quot;, &quot;m&quot;, &quot;s&quot;, &quot;ms&quot;);</span>
+
+    public static CompletableFuture&lt;Suggestions&gt; suggestArguments(CommandContext&lt;CommandSourceStack&gt; context, SuggestionsBuilder builder) {
+<span class="nc" id="L20">        String fullInput = builder.getInput();</span>
+<span class="nc" id="L21">        String[] args = fullInput.substring(fullInput.indexOf(' ') + 1).split(&quot;\\s+&quot;);</span>
+<span class="nc" id="L22">        int lastArgStart = fullInput.lastIndexOf(' ') + 1;</span>
+<span class="nc" id="L23">        String currentArg = args[args.length - 1];</span>
+<span class="nc" id="L24">        String[] parts = currentArg.split(&quot;:&quot;);</span>
+
+<span class="nc" id="L26">        Set&lt;String&gt; usedOptions = Arrays.stream(args)</span>
+<span class="nc" id="L27">                .map(arg -&gt; arg.split(&quot;:&quot;)[0])</span>
+<span class="nc" id="L28">                .collect(Collectors.toSet());</span>
+
+<span class="nc" id="L30">        List&lt;String&gt; filteredOptions = ModConfigs.AVAILABLE_OPTIONS.stream()</span>
+<span class="nc bnc" id="L31" title="All 2 branches missed.">                .filter(option -&gt; ActionMapper.getActionType(option) != null)</span>
+<span class="nc bnc" id="L32" title="All 2 branches missed.">                .filter(option -&gt; !usedOptions.contains(option))</span>
+<span class="nc" id="L33">                .toList();</span>
+
+<span class="nc" id="L35">        SuggestionsBuilder newBuilder = builder.createOffset(lastArgStart);</span>
+
+<span class="nc bnc" id="L37" title="All 2 branches missed.">        if (fullInput.endsWith(&quot; &quot;)) {</span>
+            // If the input ends with a space, suggest new options
+<span class="nc" id="L39">            filteredOptions.forEach(newBuilder::suggest);</span>
+<span class="nc bnc" id="L40" title="All 4 branches missed.">        } else if (parts.length == 1 &amp;&amp; !currentArg.endsWith(&quot;:&quot;)) {</span>
+            // Suggest actions
+<span class="nc" id="L42">            filteredOptions.stream()</span>
+<span class="nc" id="L43">                    .filter(action -&gt; action.startsWith(currentArg))</span>
+<span class="nc" id="L44">                    .forEach(newBuilder::suggest);</span>
+<span class="nc bnc" id="L45" title="All 6 branches missed.">        } else if (parts.length == 1 || (parts.length == 2 &amp;&amp; !currentArg.endsWith(&quot;:&quot;))) {</span>
+            // Suggest interval
+<span class="nc bnc" id="L47" title="All 2 branches missed.">            suggestTimeValue(parts.length == 2 ? parts[1] : &quot;&quot;, newBuilder, parts[0] + &quot;:&quot;);</span>
+<span class="nc bnc" id="L48" title="All 6 branches missed.">        } else if (parts.length == 3 || (parts.length == 2 &amp;&amp; currentArg.endsWith(&quot;:&quot;))) {</span>
+            // Suggest offset
+<span class="nc bnc" id="L50" title="All 2 branches missed.">            suggestTimeValue(parts.length == 3 ? parts[2] : &quot;&quot;, newBuilder, parts[0] + &quot;:&quot; + parts[1] + &quot;:&quot;);</span>
+        }
+
+<span class="nc" id="L53">        return newBuilder.buildFuture();</span>
+    }
+
+    private static void suggestTimeValue(String input, SuggestionsBuilder builder, String prefix) {
+<span class="nc bnc" id="L57" title="All 2 branches missed.">        if (input.isEmpty()) {</span>
+<span class="nc" id="L58">            TIME_UNITS.forEach(unit -&gt; builder.suggest(prefix + &quot;1&quot; + unit));</span>
+<span class="nc" id="L59">            builder.suggest(prefix + &quot;20&quot;);</span>
+        } else {
+<span class="nc" id="L61">            String numberPart = input.replaceAll(&quot;[^0-9.]&quot;, &quot;&quot;);</span>
+<span class="nc bnc" id="L62" title="All 2 branches missed.">            if (!numberPart.isEmpty()) {</span>
+<span class="nc" id="L63">                TIME_UNITS.forEach(unit -&gt; {</span>
+<span class="nc" id="L64">                    String suggestion = prefix + numberPart + unit;</span>
+<span class="nc bnc" id="L65" title="All 2 branches missed.">                    if (suggestion.startsWith(prefix + input)) {</span>
+<span class="nc" id="L66">                        builder.suggest(suggestion);</span>
+                    }
+<span class="nc" id="L68">                });</span>
+            }
+            // Suggest the input as-is if it's a valid number
+<span class="nc bnc" id="L71" title="All 2 branches missed.">            if (input.matches(&quot;\\d+(\\.\\d*)?&quot;)) {</span>
+<span class="nc" id="L72">                builder.suggest(prefix + input);</span>
+            }
+        }
+<span class="nc" id="L75">    }</span>
+}
+
+
+
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

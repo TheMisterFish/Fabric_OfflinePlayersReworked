@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>DamageSourceSerializer.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Fabric_OfflinePlayersReworked</a> &gt; <a href="index.source.html" class="el_package">com.offlineplayersreworked.utils</a> &gt; <span class="el_source">DamageSourceSerializer.java</span></div><h1>DamageSourceSerializer.java</h1><pre class="source lang-java linenums">package com.offlineplayersreworked.utils;
+
+import com.mojang.authlib.GameProfile;
+import lombok.extern.slf4j.Slf4j;
+import net.minecraft.core.Holder;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtUtils;
+import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.ProblemReporter;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.damagesource.DamageType;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntitySpawnReason;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.GameType;
+import net.minecraft.world.level.storage.TagValueInput;
+import net.minecraft.world.level.storage.TagValueOutput;
+import net.minecraft.world.level.storage.ValueInput;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.Objects;
+import java.util.UUID;
+
+<span class="fc" id="L28">@Slf4j</span>
+<span class="nc" id="L29">public class DamageSourceSerializer {</span>
+
+    public static String serializeDamageSource(DamageSource damageSource) {
+<span class="fc" id="L32">        CompoundTag tag = new CompoundTag();</span>
+<span class="fc" id="L33">        tag.putString(&quot;damageType&quot;, damageSource.typeHolder().getRegisteredName());</span>
+
+<span class="pc bpc" id="L35" title="1 of 2 branches missed.">        if (damageSource.getEntity() != null) {</span>
+<span class="fc" id="L36">            Entity entity = damageSource.getEntity();</span>
+<span class="fc" id="L37">            CompoundTag entityTag = new CompoundTag();</span>
+
+<span class="pc bpc" id="L39" title="1 of 2 branches missed.">            if (entity instanceof Player player) {</span>
+<span class="nc" id="L40">                entityTag.putString(&quot;playerName&quot;, player.getName().getString());</span>
+<span class="nc" id="L41">                entityTag.putString(&quot;playerUUID&quot;, player.getUUID().toString());</span>
+<span class="nc" id="L42">                entityTag.putString(&quot;entityType&quot;, &quot;player&quot;);</span>
+            } else {
+<span class="fc" id="L44">                TagValueOutput out = TagValueOutput.createWithContext(</span>
+                        ProblemReporter.DISCARDING,
+<span class="fc" id="L46">                        Objects.requireNonNull(entity.level().getServer()).registryAccess()</span>
+                );
+<span class="fc" id="L48">                entity.saveWithoutId(out);</span>
+<span class="fc" id="L49">                entityTag = out.buildResult();</span>
+
+<span class="fc" id="L51">                entityTag.putString(&quot;id&quot;,</span>
+<span class="fc" id="L52">                        EntityType.getKey(entity.getType()).toString());</span>
+            }
+
+<span class="fc" id="L55">            tag.put(&quot;sourceEntity&quot;, entityTag);</span>
+        }
+
+<span class="pc bpc" id="L58" title="1 of 2 branches missed.">        if (damageSource.getDirectEntity() != null &amp;&amp;</span>
+<span class="pc bpc" id="L59" title="1 of 2 branches missed.">                damageSource.getDirectEntity() != damageSource.getEntity()) {</span>
+
+<span class="nc" id="L61">            Entity direct = damageSource.getDirectEntity();</span>
+
+<span class="nc" id="L63">            TagValueOutput out = TagValueOutput.createWithContext(</span>
+                    ProblemReporter.DISCARDING,
+<span class="nc" id="L65">                    Objects.requireNonNull(direct.level().getServer()).registryAccess()</span>
+            );
+<span class="nc" id="L67">            direct.saveWithoutId(out);</span>
+<span class="nc" id="L68">            CompoundTag directTag = out.buildResult();</span>
+
+<span class="nc" id="L70">            directTag.putString(&quot;id&quot;,</span>
+<span class="nc" id="L71">                    EntityType.getKey(direct.getType()).toString());</span>
+
+<span class="nc" id="L73">            tag.put(&quot;directEntity&quot;, directTag);</span>
+        }
+
+<span class="fc" id="L76">        return tag.toString();</span>
+    }
+
+    public static DamageSource deserializeDamageSource(String serialized, ServerLevel level) {
+        try {
+<span class="fc" id="L81">            CompoundTag tag = NbtUtils.snbtToStructure(serialized);</span>
+<span class="fc" id="L82">            String damageTypeId = tag.getString(&quot;damageType&quot;).orElse(null);</span>
+
+<span class="pc bpc" id="L84" title="1 of 2 branches missed.">            Identifier damageIdentifier = Identifier.tryParse(damageTypeId != null ? damageTypeId : &quot;&quot;);</span>
+
+<span class="pc bpc" id="L86" title="1 of 2 branches missed.">            if (damageIdentifier == null) {</span>
+<span class="nc" id="L87">                log.warn(&quot;Invalid damage type ID: {}. Using generic damage.&quot;, damageTypeId);</span>
+<span class="nc" id="L88">                return level.damageSources().generic();</span>
+            }
+
+<span class="fc" id="L91">            Holder&lt;DamageType&gt; damageTypeHolder =</span>
+<span class="fc" id="L92">                    level.holderLookup(Registries.DAMAGE_TYPE)</span>
+<span class="fc" id="L93">                            .get(ResourceKey.create(Registries.DAMAGE_TYPE, damageIdentifier))</span>
+<span class="fc" id="L94">                            .orElse(null);</span>
+
+<span class="pc bpc" id="L96" title="1 of 2 branches missed.">            if (damageTypeHolder == null) {</span>
+<span class="nc" id="L97">                log.warn(&quot;Unknown damage type: {}. Using generic damage.&quot;, damageTypeId);</span>
+<span class="nc" id="L98">                return level.damageSources().generic();</span>
+            }
+
+<span class="fc" id="L101">            Entity sourceEntity = null;</span>
+<span class="pc bpc" id="L102" title="1 of 2 branches missed.">            if (tag.contains(&quot;sourceEntity&quot;)) {</span>
+<span class="fc" id="L103">                CompoundTag sourceEntityTag = tag.getCompound(&quot;sourceEntity&quot;).orElse(null);</span>
+
+<span class="pc bpc" id="L105" title="2 of 4 branches missed.">                if (sourceEntityTag != null &amp;&amp; &quot;player&quot;.equals(sourceEntityTag.getString(&quot;entityType&quot;).orElse(null))) {</span>
+<span class="nc" id="L106">                    sourceEntity = new DamageSourcePlayer(</span>
+                            level,
+<span class="nc" id="L108">                            UUID.fromString(sourceEntityTag.getStringOr(&quot;playerUUID&quot;, &quot;&quot;)),</span>
+<span class="nc" id="L109">                            sourceEntityTag.getString(&quot;playerName&quot;).orElse(&quot;Unknown&quot;)</span>
+                    );
+<span class="pc bpc" id="L111" title="1 of 2 branches missed.">                } else if (sourceEntityTag != null) {</span>
+<span class="fc" id="L112">                    ValueInput in = TagValueInput.create(</span>
+                            ProblemReporter.DISCARDING,
+<span class="fc" id="L114">                            level.registryAccess(),</span>
+                            sourceEntityTag
+                    );
+
+<span class="fc" id="L118">                    sourceEntity = EntityType.loadEntityRecursive(</span>
+                            in,
+                            level,
+                            EntitySpawnReason.NATURAL,
+<span class="fc" id="L122">                            e -&gt; e</span>
+                    );
+                }
+            }
+
+<span class="fc" id="L127">            Entity directEntity = null;</span>
+<span class="pc bpc" id="L128" title="1 of 2 branches missed.">            if (tag.contains(&quot;directEntity&quot;) &amp;&amp;</span>
+<span class="nc bnc" id="L129" title="All 2 branches missed.">                    tag.getCompound(&quot;directEntity&quot;).isPresent()) {</span>
+
+<span class="nc" id="L131">                CompoundTag directTag = tag.getCompound(&quot;directEntity&quot;).get();</span>
+
+<span class="nc" id="L133">                ValueInput in = TagValueInput.create(</span>
+                        ProblemReporter.DISCARDING,
+<span class="nc" id="L135">                        level.registryAccess(),</span>
+                        directTag
+                );
+
+<span class="nc" id="L139">                directEntity = EntityType.loadEntityRecursive(</span>
+                        in,
+                        level,
+                        EntitySpawnReason.NATURAL,
+<span class="nc" id="L143">                        e -&gt; e</span>
+                );
+            }
+
+<span class="pc bpc" id="L147" title="3 of 4 branches missed.">            if (sourceEntity == null &amp;&amp; directEntity == null) {</span>
+<span class="nc" id="L148">                return level.damageSources().generic();</span>
+            }
+
+<span class="fc" id="L151">            return new DamageSource(damageTypeHolder, directEntity, sourceEntity);</span>
+
+<span class="nc" id="L153">        } catch (Exception e) {</span>
+<span class="nc" id="L154">            log.error(&quot;Failed to deserialize DamageSource: &quot; + serialized, e);</span>
+<span class="nc" id="L155">            return level.damageSources().generic();</span>
+        }
+    }
+
+    static class DamageSourcePlayer extends Player {
+        public DamageSourcePlayer(ServerLevel level, UUID uuid, String name) {
+<span class="nc" id="L161">            super(level, new GameProfile(uuid, name));</span>
+<span class="nc" id="L162">        }</span>
+
+        @Override
+        public @Nullable GameType gameMode() {
+<span class="nc" id="L166">            return GameType.SURVIVAL;</span>
+        }
+
+        @Override
+        public boolean isSpectator() {
+<span class="nc" id="L171">            return false;</span>
+        }
+
+        @Override
+        public boolean isCreative() {
+<span class="nc" id="L176">            return false;</span>
+        }
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>NetHandlerPlayServerFake.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Fabric_OfflinePlayersReworked</a> &gt; <a href="index.source.html" class="el_package">com.offlineplayersreworked.core.connection</a> &gt; <span class="el_source">NetHandlerPlayServerFake.java</span></div><h1>NetHandlerPlayServerFake.java</h1><pre class="source lang-java linenums">package com.offlineplayersreworked.core.connection;
+
+import com.offlineplayersreworked.core.OfflinePlayer;
+import net.minecraft.network.Connection;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.contents.TranslatableContents;
+import net.minecraft.network.protocol.Packet;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.network.CommonListenerCookie;
+import net.minecraft.server.network.ServerGamePacketListenerImpl;
+import org.jetbrains.annotations.NotNull;
+
+public class NetHandlerPlayServerFake extends ServerGamePacketListenerImpl {
+    public NetHandlerPlayServerFake(final MinecraftServer minecraftServer, final Connection connection, final ServerPlayer serverPlayer, final CommonListenerCookie i) {
+<span class="fc" id="L16">        super(minecraftServer, connection, serverPlayer, i);</span>
+<span class="fc" id="L17">    }</span>
+
+    @Override
+    public void send(final @NotNull Packet&lt;?&gt; packetIn) {
+<span class="fc" id="L21">    }</span>
+
+    @Override
+    public void disconnect(Component message) {
+<span class="pc bpc" id="L25" title="3 of 6 branches missed.">        if (message.getContents() instanceof TranslatableContents text &amp;&amp; (text.getKey().equals(&quot;multiplayer.disconnect.idling&quot;) || text.getKey().equals(&quot;multiplayer.disconnect.duplicate_login&quot;))) {</span>
+<span class="nc" id="L26">            ((OfflinePlayer) player).kill(message);</span>
+        }
+<span class="fc" id="L28">    }</span>
+
+    @Override
+    public void teleport(double d, double e, double f, float g, float h) {
+<span class="nc" id="L32">        super.teleport(d, e, f, g, h);</span>
+<span class="nc bnc" id="L33" title="All 2 branches missed.">        if (player.level().getPlayerByUUID(player.getUUID()) != null) {</span>
+<span class="nc" id="L34">            resetPosition();</span>
+<span class="nc" id="L35">            player.level().getChunkSource().move(player);</span>
+        }
+<span class="nc" id="L37">    }</span>
+}
+
+
+
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>OfflinePlayerCommands.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Fabric_OfflinePlayersReworked</a> &gt; <a href="index.source.html" class="el_package">com.offlineplayersreworked.command</a> &gt; <span class="el_source">OfflinePlayerCommands.java</span></div><h1>OfflinePlayerCommands.java</h1><pre class="source lang-java linenums">package com.offlineplayersreworked.command;
+
+import com.mojang.authlib.properties.Property;
+import com.mojang.brigadier.CommandDispatcher;
+import com.mojang.brigadier.arguments.StringArgumentType;
+import com.mojang.brigadier.context.CommandContext;
+import com.offlineplayersreworked.OfflinePlayersReworked;
+import com.offlineplayersreworked.config.ModConfigs;
+import com.offlineplayersreworked.core.EntityPlayerActionPack;
+import com.offlineplayersreworked.core.OfflinePlayer;
+import com.offlineplayersreworked.exception.InvalidActionException;
+import com.offlineplayersreworked.exception.InvalidIntervalException;
+import com.offlineplayersreworked.exception.InvalidOffsetException;
+import com.offlineplayersreworked.exception.UnavailableActionException;
+import com.offlineplayersreworked.utils.ActionMapper;
+import it.unimi.dsi.fastutil.Pair;
+import lombok.extern.slf4j.Slf4j;
+import net.minecraft.ChatFormatting;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerPlayer;
+
+import java.util.ArrayList;
+import java.util.Base64;
+import java.util.Collection;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import static com.mojang.brigadier.arguments.StringArgumentType.getString;
+import static com.offlineplayersreworked.OfflinePlayersReworked.MOD_ID;
+import static com.offlineplayersreworked.OfflinePlayersReworked.MOD_VERSION;
+import static com.offlineplayersreworked.utils.ActionMapper.getActionPackList;
+import static net.minecraft.commands.Commands.argument;
+import static net.minecraft.commands.Commands.literal;
+
+<span class="fc" id="L36">@Slf4j</span>
+<span class="nc" id="L37">public class OfflinePlayerCommands {</span>
+
+    public static void register(CommandDispatcher&lt;CommandSourceStack&gt; dispatcher) {
+<span class="fc" id="L40">        dispatcher.register(literal(&quot;offline&quot;)</span>
+<span class="fc" id="L41">                .executes(commandSourceStackCommandContext -&gt; spawn(commandSourceStackCommandContext, List.of()))</span>
+<span class="fc" id="L42">                .then(argument(&quot;arguments&quot;, StringArgumentType.greedyString())</span>
+<span class="fc" id="L43">                        .suggests(OfflineCommandSuggestion::suggestArguments)</span>
+<span class="fc" id="L44">                        .executes(OfflinePlayerCommands::spawnWithArguments)</span>
+                )
+<span class="fc" id="L46">                .then(literal(&quot;actions&quot;)</span>
+<span class="fc" id="L47">                        .executes(context -&gt; {</span>
+<span class="fc" id="L48">                            var allOptions = ModConfigs.AVAILABLE_OPTIONS.stream()</span>
+<span class="pc bpc" id="L49" title="1 of 2 branches missed.">                                    .filter(option -&gt; ActionMapper.getActionType(option) != null)</span>
+<span class="fc" id="L50">                                    .collect(Collectors.joining(&quot;, &quot;));</span>
+<span class="fc" id="L51">                            context</span>
+<span class="fc" id="L52">                                    .getSource()</span>
+<span class="fc" id="L53">                                    .sendSystemMessage(Component.empty()</span>
+<span class="fc" id="L54">                                            .append(Component.literal(&quot;The following action types are available: \n&quot;))</span>
+<span class="fc" id="L55">                                            .append(Component.literal(allOptions).withStyle(ChatFormatting.AQUA))</span>
+                                    );
+
+<span class="fc" id="L58">                            return 1;</span>
+                        })
+                )
+<span class="fc" id="L61">                .then(literal(&quot;example&quot;)</span>
+<span class="fc" id="L62">                        .executes(context -&gt; {</span>
+<span class="fc" id="L63">                            context</span>
+<span class="fc" id="L64">                                    .getSource()</span>
+<span class="fc" id="L65">                                    .sendSystemMessage(Component.empty()</span>
+<span class="fc" id="L66">                                            .append(Component.literal(&quot;The following example will spawn a offline-player which will attack every second: \n\n&quot;))</span>
+<span class="fc" id="L67">                                            .append(Component.literal(&quot;/offline attack:20 \n&quot;).withStyle(ChatFormatting.AQUA))</span>
+<span class="fc" id="L68">                                            .append(Component.literal(&quot;or: \n&quot;))</span>
+<span class="fc" id="L69">                                            .append(Component.literal(&quot;/offline attack:1s \n\n&quot;).withStyle(ChatFormatting.AQUA))</span>
+<span class="fc" id="L70">                                            .append(Component.literal(&quot;[Please note that the action:interval:offset arguments are optional, using /offline would spawn a offline player doing nothing] \n&quot;)</span>
+<span class="fc" id="L71">                                                    .withStyle(ChatFormatting.ITALIC)</span>
+<span class="fc" id="L72">                                                    .withStyle(ChatFormatting.DARK_GRAY))</span>
+                                    );
+
+<span class="fc" id="L75">                            return 1;</span>
+                        })
+                )
+<span class="fc" id="L78">                .then(literal(&quot;version&quot;)</span>
+<span class="fc" id="L79">                        .executes(context -&gt; {</span>
+<span class="fc" id="L80">                            context</span>
+<span class="fc" id="L81">                                    .getSource()</span>
+<span class="fc" id="L82">                                    .sendSystemMessage(Component.empty()</span>
+<span class="fc" id="L83">                                            .append(Component.literal(MOD_ID + &quot; version: &quot; + MOD_VERSION))</span>
+                                    );
+
+<span class="fc" id="L86">                            return 1;</span>
+                        })
+                )
+        );
+<span class="fc" id="L90">    }</span>
+
+    public static int spawnWithArguments(CommandContext&lt;CommandSourceStack&gt; context) {
+<span class="fc" id="L93">        String options = getString(context, &quot;arguments&quot;);</span>
+<span class="fc" id="L94">        CommandSourceStack source = context.getSource();</span>
+
+<span class="fc" id="L96">        String[] pairs = options.split(&quot; &quot;);</span>
+        ArrayList&lt;Pair&lt;EntityPlayerActionPack.ActionType, EntityPlayerActionPack.Action&gt;&gt; actionList;
+
+        try {
+<span class="fc" id="L100">            actionList = getActionPackList(List.of(pairs));</span>
+<span class="fc" id="L101">        } catch (InvalidActionException | UnavailableActionException | InvalidIntervalException |</span>
+                 InvalidOffsetException e) {
+<span class="fc" id="L103">            source.sendFailure(Component.literal(e.getMessage()));</span>
+<span class="fc" id="L104">            return 0;</span>
+<span class="nc" id="L105">        } catch (Exception e) {</span>
+<span class="nc" id="L106">            log.error(&quot;Unexcpeted exception&quot;, e);</span>
+<span class="nc" id="L107">            source.sendFailure(Component.literal(&quot;Something went wrong while spawning a offline player.&quot;));</span>
+<span class="nc" id="L108">            return 0;</span>
+<span class="fc" id="L109">        }</span>
+
+<span class="fc" id="L111">        spawn(context, actionList);</span>
+<span class="fc" id="L112">        return 1;</span>
+    }
+
+    public static int spawn(CommandContext&lt;CommandSourceStack&gt; context, List&lt;Pair&lt;EntityPlayerActionPack.ActionType, EntityPlayerActionPack.Action&gt;&gt; actionList) {
+<span class="fc" id="L116">        var source = context.getSource();</span>
+
+<span class="fc" id="L118">        ServerPlayer player = source.getPlayer();</span>
+
+<span class="pc bpc" id="L120" title="1 of 2 branches missed.">        if (player == null) {</span>
+<span class="nc" id="L121">            log.error(&quot;Could not create offline player as source player is null&quot;);</span>
+<span class="nc" id="L122">            return 0;</span>
+        }
+
+<span class="fc bfc" id="L125" title="All 4 branches covered.">        if (ModConfigs.OP_REQUIRED &amp;&amp; !OfflinePlayersReworked.getServer().getPlayerList().isOp(player.nameAndId())) {</span>
+<span class="fc" id="L126">            source.sendFailure(Component.literal(&quot;You need to be OP to be able to use this command.&quot;));</span>
+<span class="fc" id="L127">            return 0;</span>
+        }
+
+<span class="fc" id="L130">        log.debug(&quot;Adding new offline player&quot;);</span>
+
+<span class="fc" id="L132">        String[] arguments = new String[0];</span>
+<span class="fc bfc" id="L133" title="All 2 branches covered.">        if (!actionList.isEmpty()) {</span>
+<span class="fc" id="L134">            arguments = getString(context, &quot;arguments&quot;).split(&quot; &quot;);</span>
+        }
+
+<span class="fc" id="L137">        var offlinePlayer = OfflinePlayer.createAndSpawnNewOfflinePlayer(player.level().getServer(), player, actionList);</span>
+
+<span class="pc bpc" id="L139" title="1 of 2 branches missed.">        if (offlinePlayer == null) {</span>
+<span class="nc" id="L140">            source.sendFailure(Component.literal(&quot;Offline player could not be created.&quot;));</span>
+<span class="nc" id="L141">            return 0;</span>
+        }
+
+<span class="fc" id="L144">        Collection&lt;Property&gt; textures = offlinePlayer.getGameProfile().properties().get(&quot;textures&quot;);</span>
+<span class="fc" id="L145">        String textureValue = &quot;&quot;;</span>
+<span class="fc" id="L146">        String textureSignature = &quot;&quot;;</span>
+<span class="pc bpc" id="L147" title="1 of 2 branches missed.">        if (!textures.isEmpty()) {</span>
+<span class="nc" id="L148">            Property texture = textures.iterator().next();</span>
+<span class="nc" id="L149">            textureValue = texture.value();</span>
+<span class="nc" id="L150">            textureSignature = texture.signature();</span>
+<span class="nc" id="L151">            String decoded = new String(Base64.getDecoder().decode(texture.value()));</span>
+        }
+
+<span class="fc" id="L154">        OfflinePlayersReworked.getStorage().create(offlinePlayer.getUUID(), player.getUUID(), List.of(arguments), player.getX(), player.getY(), player.getZ(), textureValue, textureSignature);</span>
+
+<span class="pc bpc" id="L156" title="1 of 2 branches missed.">        if (ModConfigs.AUTO_DISCONNECT) {</span>
+<span class="fc" id="L157">            player.connection.disconnect(Component.literal(&quot;Offline player generated&quot;));</span>
+        }
+
+<span class="fc" id="L160">        return 1;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

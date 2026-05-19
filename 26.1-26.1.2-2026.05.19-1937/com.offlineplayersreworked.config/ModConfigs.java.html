@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ModConfigs.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Fabric_OfflinePlayersReworked</a> &gt; <a href="index.source.html" class="el_package">com.offlineplayersreworked.config</a> &gt; <span class="el_source">ModConfigs.java</span></div><h1>ModConfigs.java</h1><pre class="source lang-java linenums">package com.offlineplayersreworked.config;
+
+import com.mojang.datafixers.util.Pair;
+
+import java.util.Arrays;
+import java.util.List;
+
+import static com.offlineplayersreworked.OfflinePlayersReworked.MOD_ID;
+
+<span class="nc" id="L10">public class ModConfigs {</span>
+    public static SimpleConfig CONFIG;
+    private static ModConfigProvider configs;
+
+    public static boolean OP_REQUIRED;
+    public static boolean AUTO_OP;
+    public static boolean AUTO_WHITELIST;
+    public static boolean AUTO_DISCONNECT;
+    public static boolean KILL_ON_DEATH;
+    public static boolean RESPAWN_KICKED_PLAYERS;
+    public static boolean INFORM_ABOUT_KICKED_PLAYER;
+    public static boolean COPY_SKIN;
+    public static String OFFLINE_PLAYER_PREFIX;
+    public static List&lt;String&gt; AVAILABLE_OPTIONS;
+    public static boolean IGNORE_SLEEPING_PERCENTAGE;
+    public static boolean AUTO_OFFLINE_ON_DISCONNECT;
+    public static boolean INVINCIBLE;
+
+    public static void registerConfigs() {
+<span class="fc" id="L29">        configs = new ModConfigProvider();</span>
+<span class="fc" id="L30">        createConfigs();</span>
+
+<span class="fc" id="L32">        CONFIG = SimpleConfig.of(MOD_ID).provider(configs).request();</span>
+
+<span class="fc" id="L34">        assignConfigs();</span>
+<span class="fc" id="L35">    }</span>
+
+    private static void createConfigs() {
+<span class="fc" id="L38">        configs.addKeyValuePair(new Pair&lt;&gt;(&quot;opRequired&quot;, false), &quot;              - If true, only OPs can use `/offline`.&quot;);</span>
+<span class="fc" id="L39">        configs.addKeyValuePair(new Pair&lt;&gt;(&quot;autoOp&quot;, true), &quot;                   - If true, offline players of OPs are automatically made OPs.&quot;);</span>
+<span class="fc" id="L40">        configs.addKeyValuePair(new Pair&lt;&gt;(&quot;autoWhitelist&quot;, false), &quot;           - If true and whitelist is enabled, offline players are auto-whitelisted.&quot;);</span>
+<span class="fc" id="L41">        configs.addKeyValuePair(new Pair&lt;&gt;(&quot;autoDisconnect&quot;, true), &quot;           - If true, players automatically disconnect after using `/offline`. (Use false at your own risk)&quot;);</span>
+<span class="fc" id="L42">        configs.addKeyValuePair(new Pair&lt;&gt;(&quot;killOnDeath&quot;, true), &quot;              - If true, players automatically die upon reconnecting if their offline player died.&quot;);</span>
+<span class="fc" id="L43">        configs.addKeyValuePair(new Pair&lt;&gt;(&quot;respawnKickedPlayers&quot;, true), &quot;     - If true, offline players automatically respawn on server restart when kicked&quot;);</span>
+<span class="fc" id="L44">        configs.addKeyValuePair(new Pair&lt;&gt;(&quot;informAboutKickedPlayer&quot;, true), &quot;  - If true, if offline player was kicked and player rejoins, player will be informed about offline player being kicked&quot;);</span>
+<span class="fc" id="L45">        configs.addKeyValuePair(new Pair&lt;&gt;(&quot;copySkin&quot;, true), &quot;                 - If true, offline players copy the original player's skin.&quot;);</span>
+<span class="fc" id="L46">        configs.addKeyValuePair(new Pair&lt;&gt;(&quot;ignoreSleepingPercentage&quot;, true), &quot; - If true, offline players will not be counted towards the sleeping percentage rule.&quot;);</span>
+<span class="fc" id="L47">        configs.addKeyValuePair(new Pair&lt;&gt;(&quot;autoOfflineOnDisconnect&quot;, false), &quot; - If true, offline players automatically be created on disconnect.&quot;);</span>
+<span class="fc" id="L48">        configs.addKeyValuePair(new Pair&lt;&gt;(&quot;offlinePlayerInvincible&quot;, false), &quot; - If true, offline players are invincible. Mobs won't target the offline player.&quot;);</span>
+<span class="fc" id="L49">        configs.addKeyValuePair(new Pair&lt;&gt;(&quot;offlinePlayerPrefix&quot;, &quot;[OFF]&quot;), &quot;     - Sets the prefix for the offline player.&quot;);</span>
+
+<span class="fc" id="L51">        configs.addEmptyLine();</span>
+<span class="fc" id="L52">        String defaultOptions = String.join(&quot;,&quot;, &quot;attack&quot;, &quot;break&quot;, &quot;place&quot;, &quot;use&quot;, &quot;crouch&quot;, &quot;jump&quot;, &quot;eat&quot;, &quot;drop_item&quot;, &quot;drop_stack&quot;, &quot;move_forward&quot;, &quot;move_backward&quot;, &quot;disconnect&quot;);</span>
+<span class="fc" id="L53">        configs.addKeyValuePair(new Pair&lt;&gt;(&quot;availableOptions&quot;, defaultOptions), &quot;&quot;);</span>
+<span class="fc" id="L54">        configs.addComment(&quot;^ A comma-separated list of the available action options that can be used.&quot;);</span>
+<span class="fc" id="L55">    }</span>
+
+    private static void assignConfigs() {
+<span class="fc" id="L58">        OP_REQUIRED = CONFIG.getOrDefault(&quot;opRequired&quot;, false);</span>
+<span class="fc" id="L59">        AUTO_OP = CONFIG.getOrDefault(&quot;autoOp&quot;, true);</span>
+<span class="fc" id="L60">        AUTO_WHITELIST = CONFIG.getOrDefault(&quot;autoWhitelist&quot;, false);</span>
+<span class="fc" id="L61">        AUTO_DISCONNECT = CONFIG.getOrDefault(&quot;autoDisconnect&quot;, true);</span>
+<span class="fc" id="L62">        KILL_ON_DEATH = CONFIG.getOrDefault(&quot;killOnDeath&quot;, true);</span>
+<span class="fc" id="L63">        RESPAWN_KICKED_PLAYERS = CONFIG.getOrDefault(&quot;respawnKickedPlayers&quot;, true);</span>
+<span class="fc" id="L64">        INFORM_ABOUT_KICKED_PLAYER = CONFIG.getOrDefault(&quot;informAboutKickedPlayer&quot;, true);</span>
+<span class="fc" id="L65">        COPY_SKIN = CONFIG.getOrDefault(&quot;copySkin&quot;, true);</span>
+<span class="fc" id="L66">        IGNORE_SLEEPING_PERCENTAGE = CONFIG.getOrDefault(&quot;ignoreSleepingPercentage&quot;, true);</span>
+<span class="fc" id="L67">        AUTO_OFFLINE_ON_DISCONNECT = CONFIG.getOrDefault(&quot;autoOfflineOnDisconnect&quot;, false);</span>
+<span class="fc" id="L68">        INVINCIBLE = CONFIG.getOrDefault(&quot;offlinePlayerInvincible&quot;, false);</span>
+<span class="fc" id="L69">        OFFLINE_PLAYER_PREFIX = CONFIG.getOrDefault(&quot;offlinePlayerPrefix&quot;, &quot;[OFF]&quot;);</span>
+
+<span class="fc" id="L71">        String optionsString = CONFIG.getOrDefault(&quot;availableOptions&quot;, &quot;attack,break,place,use,crouch,jump,eat,drop_item,drop_stack,move_forward,move_backward,disconnect&quot;);</span>
+<span class="fc" id="L72">        AVAILABLE_OPTIONS = Arrays.asList(optionsString.split(&quot;,&quot;));</span>
+<span class="fc" id="L73">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

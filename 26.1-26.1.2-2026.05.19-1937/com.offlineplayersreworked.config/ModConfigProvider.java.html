@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ModConfigProvider.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Fabric_OfflinePlayersReworked</a> &gt; <a href="index.source.html" class="el_package">com.offlineplayersreworked.config</a> &gt; <span class="el_source">ModConfigProvider.java</span></div><h1>ModConfigProvider.java</h1><pre class="source lang-java linenums">package com.offlineplayersreworked.config;
+
+import com.mojang.datafixers.util.Pair;
+
+import java.util.ArrayList;
+import java.util.List;
+
+<span class="fc" id="L8">public class ModConfigProvider implements SimpleConfig.DefaultConfig {</span>
+
+<span class="fc" id="L10">    private String configContents = &quot;&quot;;</span>
+
+    public List&lt;Pair&gt; getConfigsList() {
+<span class="nc" id="L13">        return configsList;</span>
+    }
+
+<span class="fc" id="L16">    private final List&lt;Pair&gt; configsList = new ArrayList&lt;&gt;();</span>
+
+    public void addKeyValuePair(Pair&lt;String, ?&gt; keyValuePair, String comment) {
+<span class="fc" id="L19">        configsList.add(keyValuePair);</span>
+<span class="fc" id="L20">        configContents += keyValuePair.getFirst() + &quot;=&quot; + keyValuePair.getSecond() + &quot; # &quot;</span>
+<span class="fc" id="L21">                + comment + &quot; | default: &quot; + keyValuePair.getSecond() + &quot;\n&quot;;</span>
+<span class="fc" id="L22">    }</span>
+
+    public void addComment(String comment) {
+<span class="fc" id="L25">        configContents += &quot;# &quot; + comment + &quot;\n&quot;;</span>
+<span class="fc" id="L26">    }</span>
+
+    public void addEmptyLine() {
+<span class="fc" id="L29">        configContents += &quot;\n&quot;;</span>
+<span class="fc" id="L30">    }</span>
+
+
+    @Override
+    public String get(String namespace) {
+<span class="fc" id="L35">        return configContents;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

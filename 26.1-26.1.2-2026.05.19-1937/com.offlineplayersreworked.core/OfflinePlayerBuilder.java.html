@@ -1,0 +1,323 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>OfflinePlayerBuilder.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Fabric_OfflinePlayersReworked</a> &gt; <a href="index.source.html" class="el_package">com.offlineplayersreworked.core</a> &gt; <span class="el_source">OfflinePlayerBuilder.java</span></div><h1>OfflinePlayerBuilder.java</h1><pre class="source lang-java linenums">package com.offlineplayersreworked.core;
+
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.Multimap;
+import com.mojang.authlib.GameProfile;
+import com.mojang.authlib.properties.Property;
+import com.mojang.authlib.properties.PropertyMap;
+import com.offlineplayersreworked.config.ModConfigs;
+import com.offlineplayersreworked.core.connection.FakeClientConnection;
+import com.offlineplayersreworked.core.interfaces.ServerPlayerInterface;
+import com.offlineplayersreworked.utils.ServerPlayerMapper;
+import it.unimi.dsi.fastutil.Pair;
+import lombok.extern.slf4j.Slf4j;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtAccounter;
+import net.minecraft.nbt.NbtIo;
+import net.minecraft.network.protocol.PacketFlow;
+import net.minecraft.network.protocol.game.ClientboundPlayerInfoUpdatePacket;
+import net.minecraft.network.protocol.game.ClientboundRotateHeadPacket;
+import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ClientInformation;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.network.CommonListenerCookie;
+import net.minecraft.server.players.NameAndId;
+import net.minecraft.util.ProblemReporter;
+import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.storage.LevelResource;
+import net.minecraft.world.level.storage.TagValueInput;
+import net.minecraft.world.level.storage.TagValueOutput;
+import net.minecraft.world.level.storage.ValueInput;
+import org.apache.commons.lang3.StringUtils;
+
+import java.nio.file.NoSuchFileException;
+import java.nio.file.Path;
+import java.util.*;
+import java.util.function.Consumer;
+
+import static com.offlineplayersreworked.utils.ActionMapper.getActionPackList;
+
+<span class="fc" id="L45">@Slf4j</span>
+public class OfflinePlayerBuilder {
+
+    private final MinecraftServer server;
+
+    private ServerPlayer sourcePlayer;
+    private UUID offlinePlayerUUID;
+
+<span class="fc" id="L53">    private GameProfile profile = new GameProfile(UUID.randomUUID(), &quot;&quot;);</span>
+    private CompoundTag playerData;
+    private ServerLevel world;
+    private OfflinePlayer offlinePlayer;
+    private String error;
+
+<span class="fc" id="L59">    private OfflinePlayerBuilder(MinecraftServer server) {</span>
+<span class="fc" id="L60">        this.server = server;</span>
+<span class="fc" id="L61">    }</span>
+
+    public static OfflinePlayerBuilder create(MinecraftServer server) {
+<span class="fc" id="L64">        return new OfflinePlayerBuilder(server);</span>
+    }
+
+    private boolean failed() {
+<span class="pc bpc" id="L68" title="1 of 2 branches missed.">        return error != null;</span>
+    }
+
+    private void fail(String msg) {
+<span class="nc" id="L72">        log.error(msg);</span>
+<span class="nc" id="L73">        this.error = msg;</span>
+<span class="nc" id="L74">    }</span>
+
+    public OfflinePlayerBuilder fromOnlinePlayer(ServerPlayer player) {
+<span class="pc bpc" id="L77" title="1 of 2 branches missed.">        if (failed()) return this;</span>
+<span class="fc" id="L78">        this.sourcePlayer = player;</span>
+<span class="fc" id="L79">        return this;</span>
+    }
+
+    public OfflinePlayerBuilder fromStoredData(UUID offlinePlayerUUID) {
+<span class="pc bpc" id="L83" title="1 of 2 branches missed.">        if (failed()) return this;</span>
+<span class="fc" id="L84">        this.offlinePlayerUUID = offlinePlayerUUID;</span>
+
+<span class="fc" id="L86">        return this;</span>
+    }
+
+    public OfflinePlayerBuilder loadProfile() {
+<span class="pc bpc" id="L90" title="1 of 2 branches missed.">        if (failed()) return this;</span>
+
+<span class="fc bfc" id="L92" title="All 2 branches covered.">        if (sourcePlayer != null) {</span>
+<span class="fc" id="L93">            var reversed = UUID.fromString(StringUtils.reverse(sourcePlayer.getUUID().toString()));</span>
+<span class="fc" id="L94">            var name = StringUtils.truncate(</span>
+<span class="fc" id="L95">                    ModConfigs.OFFLINE_PLAYER_PREFIX + sourcePlayer.getName().getString(),</span>
+                    0, 15
+            );
+<span class="fc" id="L98">            profile = ServerPlayerMapper.copyPlayerSkin(</span>
+<span class="fc" id="L99">                    sourcePlayer.getGameProfile(),</span>
+                    new GameProfile(reversed, name)
+            );
+<span class="fc" id="L102">            return this;</span>
+        }
+
+<span class="fc" id="L105">        Optional&lt;GameProfile&gt; profileResult = server.services().profileResolver().fetchById(offlinePlayerUUID);</span>
+<span class="pc bpc" id="L106" title="1 of 2 branches missed.">        if (profileResult.isPresent()) {</span>
+<span class="nc" id="L107">            profile = profileResult.get();</span>
+<span class="nc" id="L108">            return this;</span>
+        }
+
+<span class="fc" id="L111">        log.warn(&quot;Could not get GameProfile from profileResolver for profile {}. Trying nameToIdCache fallback.&quot;, offlinePlayerUUID);</span>
+<span class="fc" id="L112">        Optional&lt;NameAndId&gt; nameAndIdResult = server.services().nameToIdCache().get(offlinePlayerUUID);</span>
+<span class="pc bpc" id="L113" title="1 of 2 branches missed.">        if (nameAndIdResult.isPresent()) {</span>
+<span class="fc" id="L114">            profile = new GameProfile(offlinePlayerUUID, nameAndIdResult.get().name());</span>
+<span class="fc" id="L115">            return this;</span>
+        }
+
+<span class="nc" id="L118">        fail(&quot;Failed to respawn offline player: GameProfile not found for UUID &quot; + offlinePlayerUUID);</span>
+<span class="nc" id="L119">        return this;</span>
+    }
+
+    public OfflinePlayerBuilder loadPlayerData() {
+<span class="pc bpc" id="L123" title="2 of 4 branches missed.">        if (failed() || sourcePlayer != null) return this;</span>
+
+<span class="fc" id="L125">        Path file = server.getWorldPath(LevelResource.PLAYER_DATA_DIR)</span>
+<span class="fc" id="L126">                .resolve(offlinePlayerUUID + &quot;.dat&quot;);</span>
+
+        try {
+<span class="fc" id="L129">            playerData = NbtIo.readCompressed(file, NbtAccounter.unlimitedHeap());</span>
+
+<span class="nc" id="L131">        } catch (NoSuchFileException e) {</span>
+<span class="nc" id="L132">            fail(&quot;Failed to load player data for &quot; + profile.name() + &quot;, no player data found.&quot;);</span>
+<span class="nc" id="L133">        } catch (Exception e) {</span>
+<span class="nc" id="L134">            fail(&quot;Failed to load player data for &quot; + profile.name() + &quot;: &quot; + e.getMessage());</span>
+<span class="pc" id="L135">        }</span>
+
+<span class="pc bpc" id="L137" title="3 of 4 branches missed.">        if (playerData == null &amp;&amp; !failed()) {</span>
+<span class="nc" id="L138">            fail(&quot;No player data found for &quot; + profile.name());</span>
+        }
+
+<span class="fc" id="L141">        return this;</span>
+    }
+
+    public OfflinePlayerBuilder resolveDimension() {
+<span class="pc bpc" id="L145" title="1 of 2 branches missed.">        if (failed()) return this;</span>
+
+<span class="fc bfc" id="L147" title="All 2 branches covered.">        if (sourcePlayer != null) {</span>
+<span class="fc" id="L148">            world = sourcePlayer.level();</span>
+<span class="fc" id="L149">            return this;</span>
+        }
+
+<span class="pc bpc" id="L152" title="1 of 2 branches missed.">        if (!playerData.contains(&quot;Dimension&quot;)) {</span>
+<span class="nc" id="L153">            fail(&quot;No Dimension key found in player data for &quot; + profile.name());</span>
+<span class="nc" id="L154">            return this;</span>
+        }
+
+<span class="pc bpc" id="L157" title="1 of 2 branches missed.">        Identifier dimLoc = playerData.getString(&quot;Dimension&quot;).isPresent()</span>
+<span class="fc" id="L158">                ? Identifier.tryParse(playerData.getString(&quot;Dimension&quot;).get())</span>
+<span class="pc" id="L159">                : null;</span>
+<span class="pc bpc" id="L160" title="1 of 2 branches missed.">        if (dimLoc == null) {</span>
+<span class="nc" id="L161">            fail(&quot;Invalid dimension string in player data for &quot; + profile.name());</span>
+<span class="nc" id="L162">            return this;</span>
+        }
+
+<span class="fc" id="L165">        ResourceKey&lt;Level&gt; key = ResourceKey.create(Registries.DIMENSION, dimLoc);</span>
+<span class="fc" id="L166">        world = server.getLevel(key);</span>
+
+<span class="pc bpc" id="L168" title="1 of 2 branches missed.">        if (world == null) {</span>
+<span class="nc" id="L169">            fail(&quot;Dimension &quot; + key + &quot; not found for &quot; + profile.name());</span>
+        }
+
+<span class="fc" id="L172">        return this;</span>
+    }
+
+    public OfflinePlayerBuilder createOfflinePlayer() {
+<span class="pc bpc" id="L176" title="1 of 2 branches missed.">        if (failed()) return this;</span>
+
+<span class="fc bfc" id="L178" title="All 2 branches covered.">        ClientInformation info = sourcePlayer != null</span>
+<span class="fc" id="L179">                ? sourcePlayer.clientInformation()</span>
+<span class="fc" id="L180">                : ClientInformation.createDefault();</span>
+
+<span class="fc" id="L182">        offlinePlayer = new OfflinePlayer(server, world, profile, info);</span>
+<span class="fc" id="L183">        return this;</span>
+    }
+
+    public OfflinePlayerBuilder applySkinOverride(String skinValue, String skinSignature) {
+<span class="pc bpc" id="L187" title="2 of 4 branches missed.">        if (failed() || offlinePlayerUUID == null) return this;</span>
+
+<span class="pc bpc" id="L189" title="1 of 2 branches missed.">        if (skinValue != null) {</span>
+<span class="fc" id="L190">            Property texture = new Property(&quot;textures&quot;, skinValue, skinSignature);</span>
+<span class="fc" id="L191">            Multimap&lt;String, Property&gt; multimap = ArrayListMultimap.create();</span>
+<span class="fc" id="L192">            multimap.put(&quot;textures&quot;, texture);</span>
+<span class="fc" id="L193">            profile = new GameProfile(profile.id(), profile.name(), new PropertyMap(multimap));</span>
+        }
+
+<span class="fc" id="L196">        return this;</span>
+    }
+
+    public OfflinePlayerBuilder applyPlayerData() {
+<span class="pc bpc" id="L200" title="2 of 4 branches missed.">        if (failed() || sourcePlayer != null) return this;</span>
+
+<span class="fc" id="L202">        ValueInput in = TagValueInput.create(</span>
+                ProblemReporter.DISCARDING,
+<span class="fc" id="L204">                Objects.requireNonNull(offlinePlayer.level().getServer()).registryAccess(),</span>
+                playerData
+        );
+<span class="fc" id="L207">        offlinePlayer.load(in);</span>
+
+<span class="fc" id="L209">        return this;</span>
+    }
+
+    public OfflinePlayerBuilder spawnFromSourcePlayer() {
+<span class="pc bpc" id="L213" title="2 of 4 branches missed.">        if (failed() || sourcePlayer == null) return this;</span>
+
+<span class="fc" id="L215">        TagValueOutput out = TagValueOutput.createWithContext(</span>
+                ProblemReporter.DISCARDING,
+<span class="fc" id="L217">                Objects.requireNonNull(sourcePlayer.level().getServer()).registryAccess()</span>
+        );
+<span class="fc" id="L219">        sourcePlayer.saveWithoutId(out);</span>
+<span class="fc" id="L220">        CompoundTag tag = out.buildResult();</span>
+
+<span class="fc" id="L222">        ValueInput in = TagValueInput.create(</span>
+                ProblemReporter.DISCARDING,
+<span class="fc" id="L224">                Objects.requireNonNull(offlinePlayer.level().getServer()).registryAccess(),</span>
+                tag
+        );
+<span class="fc" id="L227">        offlinePlayer.load(in);</span>
+
+<span class="fc" id="L229">        offlinePlayer.setCustomNameVisible(true);</span>
+
+<span class="pc bpc" id="L231" title="1 of 2 branches missed.">        if (sourcePlayer.getChatSession() != null) {</span>
+<span class="nc" id="L232">            offlinePlayer.setChatSession(sourcePlayer.getChatSession());</span>
+        } else {
+<span class="fc" id="L234">            log.warn(&quot;Chat session was null for '{}', not setting chat session for '{}'&quot;,</span>
+<span class="fc" id="L235">                    sourcePlayer.getName().getString(),</span>
+<span class="fc" id="L236">                    offlinePlayer.getName().getString());</span>
+        }
+
+<span class="fc" id="L239">        server.getPlayerList().placeNewPlayer(</span>
+                new FakeClientConnection(PacketFlow.SERVERBOUND),
+                offlinePlayer,
+<span class="fc" id="L242">                new CommonListenerCookie(profile, 0, sourcePlayer.clientInformation(), true)</span>
+        );
+
+<span class="fc" id="L245">        ServerPlayerMapper.copyPlayerRights(sourcePlayer, offlinePlayer);</span>
+<span class="fc" id="L246">        ServerPlayerMapper.copyPlayerData(sourcePlayer, offlinePlayer);</span>
+
+<span class="fc" id="L248">        offlinePlayer.teleportTo(</span>
+<span class="fc" id="L249">                sourcePlayer.level(),</span>
+<span class="fc" id="L250">                sourcePlayer.getX(),</span>
+<span class="fc" id="L251">                sourcePlayer.getY(),</span>
+<span class="fc" id="L252">                sourcePlayer.getZ(),</span>
+<span class="fc" id="L253">                Set.of(),</span>
+<span class="fc" id="L254">                sourcePlayer.getYRot(),</span>
+<span class="fc" id="L255">                sourcePlayer.getXRot(),</span>
+                false
+        );
+
+<span class="fc" id="L259">        ((ServerPlayerInterface) offlinePlayer).getActionPack()</span>
+<span class="fc" id="L260">                .copyFrom(((ServerPlayerInterface) sourcePlayer).getActionPack());</span>
+
+<span class="pc bpc" id="L262" title="1 of 2 branches missed.">        if (offlinePlayer.getAttribute(Attributes.STEP_HEIGHT) != null)</span>
+<span class="fc" id="L263">            Objects.requireNonNull(offlinePlayer.getAttribute(Attributes.STEP_HEIGHT)).setBaseValue(0.6F);</span>
+
+<span class="fc" id="L265">        server.getPlayerList().broadcastAll(</span>
+                new ClientboundRotateHeadPacket(offlinePlayer, (byte) (sourcePlayer.yHeadRot * 256 / 360)),
+<span class="fc" id="L267">                offlinePlayer.level().dimension()</span>
+        );
+
+<span class="fc" id="L270">        server.getPlayerList().broadcastAll(</span>
+                new ClientboundPlayerInfoUpdatePacket(
+                        ClientboundPlayerInfoUpdatePacket.Action.ADD_PLAYER,
+                        offlinePlayer
+                )
+        );
+
+<span class="fc" id="L277">        offlinePlayer.getAbilities().flying = sourcePlayer.getAbilities().flying;</span>
+<span class="fc" id="L278">        offlinePlayer.setGameMode(sourcePlayer.gameMode.getGameModeForPlayer());</span>
+
+<span class="fc" id="L280">        return this;</span>
+    }
+
+    public OfflinePlayer build() {
+<span class="pc bpc" id="L284" title="1 of 2 branches missed.">        if (failed()) return null;</span>
+
+<span class="fc" id="L286">        offlinePlayer.level().getServer().getPlayerList().saveAll();</span>
+<span class="fc" id="L287">        return offlinePlayer;</span>
+    }
+
+    public OfflinePlayerBuilder spawn() {
+<span class="pc bpc" id="L291" title="1 of 2 branches missed.">        if (failed()) return this;</span>
+
+<span class="fc" id="L293">        server.getPlayerList().placeNewPlayer(</span>
+                new FakeClientConnection(PacketFlow.SERVERBOUND),
+                offlinePlayer,
+<span class="fc" id="L296">                new CommonListenerCookie(offlinePlayer.getGameProfile(), 0, ClientInformation.createDefault(), false)</span>
+        );
+
+<span class="fc" id="L299">        offlinePlayer.fixStartingPosition.run();</span>
+
+<span class="fc" id="L301">        return this;</span>
+    }
+
+    public OfflinePlayerBuilder startActionsFromStringList(List&lt;String&gt; actions) {
+<span class="pc bpc" id="L305" title="1 of 2 branches missed.">        if (failed()) return this;</span>
+<span class="fc" id="L306">        return startActions(getActionPackList(actions));</span>
+    }
+
+    public OfflinePlayerBuilder startActions(List&lt;Pair&lt;EntityPlayerActionPack.ActionType, EntityPlayerActionPack.Action&gt;&gt; actionList) {
+<span class="pc bpc" id="L310" title="1 of 2 branches missed.">        if (failed()) return this;</span>
+
+<span class="fc" id="L312">        actionList.forEach(actionTypeActionPair -&gt; manipulate(offlinePlayer, ap -&gt; ap.start(</span>
+<span class="fc" id="L313">                actionTypeActionPair.first(),</span>
+<span class="fc" id="L314">                actionTypeActionPair.second()</span>
+        )));
+<span class="fc" id="L316">        return this;</span>
+    }
+
+    private static void manipulate(ServerPlayer player, Consumer&lt;EntityPlayerActionPack&gt; action) {
+<span class="fc" id="L320">        action.accept(((ServerPlayerInterface) player).getActionPack());</span>
+<span class="fc" id="L321">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

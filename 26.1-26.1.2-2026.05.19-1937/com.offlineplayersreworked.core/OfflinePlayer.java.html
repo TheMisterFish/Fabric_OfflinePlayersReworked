@@ -1,0 +1,181 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>OfflinePlayer.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Fabric_OfflinePlayersReworked</a> &gt; <a href="index.source.html" class="el_package">com.offlineplayersreworked.core</a> &gt; <span class="el_source">OfflinePlayer.java</span></div><h1>OfflinePlayer.java</h1><pre class="source lang-java linenums">package com.offlineplayersreworked.core;
+
+import com.mojang.authlib.GameProfile;
+import com.offlineplayersreworked.config.ModConfigs;
+import com.offlineplayersreworked.storage.model.OfflinePlayerModel;
+import com.offlineplayersreworked.utils.DamageSourceSerializer;
+import it.unimi.dsi.fastutil.Pair;
+import lombok.extern.slf4j.Slf4j;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.DisconnectionDetails;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.contents.TranslatableContents;
+import net.minecraft.network.protocol.game.ServerboundClientCommandPacket;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ClientInformation;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.vehicle.boat.AbstractBoat;
+import net.minecraft.world.food.FoodData;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.portal.TeleportTransition;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
+import java.util.Objects;
+
+import static com.offlineplayersreworked.OfflinePlayersReworked.getStorage;
+
+<span class="fc" id="L34">@Slf4j</span>
+public class OfflinePlayer extends ServerPlayer {
+<span class="fc" id="L36">    public Runnable fixStartingPosition = () -&gt; {</span>
+<span class="fc" id="L37">    };</span>
+
+    public OfflinePlayer(MinecraftServer server, ServerLevel worldIn, GameProfile profile, ClientInformation cli) {
+<span class="fc" id="L40">        super(server, worldIn, profile, cli);</span>
+<span class="fc" id="L41">    }</span>
+
+    public static OfflinePlayer createAndSpawnNewOfflinePlayer(MinecraftServer server, ServerPlayer player, List&lt;Pair&lt;EntityPlayerActionPack.ActionType, EntityPlayerActionPack.Action&gt;&gt; actions) {
+<span class="fc" id="L44">        return OfflinePlayerBuilder.create(server)</span>
+<span class="fc" id="L45">                .fromOnlinePlayer(player)</span>
+<span class="fc" id="L46">                .loadProfile()</span>
+<span class="fc" id="L47">                .resolveDimension()</span>
+<span class="fc" id="L48">                .createOfflinePlayer()</span>
+<span class="fc" id="L49">                .spawnFromSourcePlayer()</span>
+<span class="fc" id="L50">                .startActions(actions)</span>
+<span class="fc" id="L51">                .build();</span>
+    }
+
+    public static void recreateOfflinePlayer(MinecraftServer server, OfflinePlayerModel offlinePlayerModel) {
+<span class="fc" id="L55">        OfflinePlayerBuilder.create(server)</span>
+<span class="fc" id="L56">                .fromStoredData(offlinePlayerModel.getId())</span>
+<span class="fc" id="L57">                .loadPlayerData()</span>
+<span class="fc" id="L58">                .loadProfile()</span>
+<span class="fc" id="L59">                .applySkinOverride(offlinePlayerModel.getSkinValue(), offlinePlayerModel.getSkinSignature())</span>
+<span class="fc" id="L60">                .resolveDimension()</span>
+<span class="fc" id="L61">                .createOfflinePlayer()</span>
+<span class="fc" id="L62">                .applyPlayerData()</span>
+<span class="fc" id="L63">                .spawn()</span>
+<span class="fc" id="L64">                .startActionsFromStringList(offlinePlayerModel.getActions())</span>
+<span class="fc" id="L65">                .build();</span>
+<span class="fc" id="L66">    }</span>
+
+    @Override
+    public void onEquipItem(final @NotNull EquipmentSlot slot, final @NotNull ItemStack previous, final @NotNull ItemStack stack) {
+<span class="pc bpc" id="L70" title="1 of 2 branches missed.">        if (!isUsingItem()) super.onEquipItem(slot, previous, stack);</span>
+<span class="fc" id="L71">    }</span>
+
+    @Override
+    public void kill(@NotNull ServerLevel level) {
+<span class="nc" id="L75">        kill(Component.literal(&quot;Killed&quot;));</span>
+<span class="nc" id="L76">    }</span>
+
+
+    public void kill(Component reason) {
+<span class="fc" id="L80">        shakeOff();</span>
+
+<span class="pc bpc" id="L82" title="1 of 4 branches missed.">        if (reason.getContents() instanceof TranslatableContents text &amp;&amp; text.getKey().equals(&quot;multiplayer.disconnect.duplicate_login&quot;)) {</span>
+<span class="nc" id="L83">            this.connection.onDisconnect(new DisconnectionDetails(reason));</span>
+        } else {
+<span class="fc" id="L85">            Objects.requireNonNull(this.level().getServer()).execute(() -&gt; this.connection.onDisconnect(new DisconnectionDetails(reason)));</span>
+        }
+<span class="fc" id="L87">    }</span>
+
+    public void kickOfflinePlayer(Component reason) {
+<span class="fc" id="L90">        getStorage().kick(this.uuid);</span>
+<span class="fc" id="L91">        this.connection.onDisconnect(new DisconnectionDetails(reason));</span>
+<span class="fc" id="L92">    }</span>
+
+    @Override
+    public void tick() {
+<span class="fc bfc" id="L96" title="All 2 branches covered.">        if (Objects.requireNonNull(this.level().getServer()).getTickCount() % 10 == 0) {</span>
+<span class="fc" id="L97">            this.connection.resetPosition();</span>
+<span class="fc" id="L98">            this.level().getChunkSource().move(this);</span>
+        }
+        try {
+<span class="fc" id="L101">            super.tick();</span>
+<span class="fc" id="L102">            this.doTick();</span>
+<span class="nc" id="L103">        } catch (NullPointerException ignored) {</span>
+            // happens with that paper port thingy - not sure what that would fix, but hey
+            // the game not gonna crash violently.
+<span class="fc" id="L106">        }</span>
+<span class="fc" id="L107">    }</span>
+
+    public boolean startRiding(Entity entityToRide, boolean force) {
+<span class="nc bnc" id="L110" title="All 2 branches missed.">        if (super.startRiding(entityToRide)) {</span>
+            // from ClientPacketListener.handleSetEntityPassengersPacket
+<span class="nc bnc" id="L112" title="All 2 branches missed.">            if (entityToRide instanceof AbstractBoat) {</span>
+<span class="nc" id="L113">                this.yRotO = entityToRide.getYRot();</span>
+<span class="nc" id="L114">                this.setYRot(entityToRide.getYRot());</span>
+<span class="nc" id="L115">                this.setYHeadRot(entityToRide.getYRot());</span>
+            }
+<span class="nc" id="L117">            return true;</span>
+        } else {
+<span class="nc" id="L119">            return false;</span>
+        }
+    }
+
+    private void shakeOff() {
+<span class="pc bpc" id="L124" title="1 of 2 branches missed.">        if (getVehicle() instanceof Player) stopRiding();</span>
+<span class="pc bpc" id="L125" title="1 of 2 branches missed.">        for (Entity passenger : getIndirectPassengers()) {</span>
+<span class="nc bnc" id="L126" title="All 2 branches missed.">            if (passenger instanceof Player) passenger.stopRiding();</span>
+<span class="nc" id="L127">        }</span>
+<span class="fc" id="L128">    }</span>
+
+    @Override
+    public boolean hurtServer(@NotNull ServerLevel serverLevel, @NotNull DamageSource damageSource, float f) {
+<span class="fc bfc" id="L132" title="All 2 branches covered.">        if (ModConfigs.INVINCIBLE) {</span>
+<span class="fc" id="L133">            return false;</span>
+        }
+<span class="fc" id="L135">        return super.hurtServer(serverLevel, damageSource, f);</span>
+    }
+
+    @Override
+    public void die(@NotNull DamageSource cause) {
+<span class="fc" id="L140">        getStorage().killByIdWithDeathMessage(this.getGameProfile().id(), this.getPosition(1f), DamageSourceSerializer.serializeDamageSource(cause));</span>
+<span class="fc" id="L141">        shakeOff();</span>
+<span class="fc" id="L142">        super.die(cause);</span>
+<span class="fc" id="L143">        setHealth(20);</span>
+<span class="fc" id="L144">        this.foodData = new FoodData();</span>
+<span class="fc" id="L145">        kill(this.getCombatTracker().getDeathMessage());</span>
+<span class="fc" id="L146">    }</span>
+
+    @Override
+    public @NotNull String getIpAddress() {
+<span class="nc" id="L150">        return &quot;127.0.0.1&quot;;</span>
+    }
+
+    @Override
+    public boolean allowsListing() {
+<span class="fc" id="L155">        return true;</span>
+    }
+
+    @Override
+    protected void checkFallDamage(double y, boolean onGround, @NotNull BlockState state, @NotNull BlockPos pos) {
+<span class="nc" id="L160">        doCheckFallDamage(0.0, y, 0.0, onGround);</span>
+<span class="nc" id="L161">    }</span>
+
+    @Override
+    public ServerPlayer teleport(TeleportTransition serverLevel) {
+<span class="fc" id="L165">        super.teleport(serverLevel);</span>
+<span class="pc bpc" id="L166" title="1 of 2 branches missed.">        if (wonGame) {</span>
+<span class="nc" id="L167">            ServerboundClientCommandPacket p = new ServerboundClientCommandPacket(ServerboundClientCommandPacket.Action.PERFORM_RESPAWN);</span>
+<span class="nc" id="L168">            connection.handleClientCommand(p);</span>
+        }
+
+        // If above branch was taken, *this* has been removed and replaced, the new instance has been set
+        // on 'our' connection (which is now theirs, but we still have a ref).
+<span class="pc bpc" id="L173" title="1 of 2 branches missed.">        if (connection.player.isChangingDimension()) {</span>
+<span class="nc" id="L174">            connection.player.hasChangedDimension();</span>
+        }
+<span class="fc" id="L176">        return connection.player;</span>
+    }
+
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

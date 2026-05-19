@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>OfflinePlayerModel.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Fabric_OfflinePlayersReworked</a> &gt; <a href="index.source.html" class="el_package">com.offlineplayersreworked.storage.model</a> &gt; <span class="el_source">OfflinePlayerModel.java</span></div><h1>OfflinePlayerModel.java</h1><pre class="source lang-java linenums">package com.offlineplayersreworked.storage.model;
+
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import lombok.Setter;
+import net.minecraft.core.UUIDUtil;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.StringTag;
+
+import java.util.List;
+import java.util.UUID;
+
+@Setter
+@Getter
+@RequiredArgsConstructor
+@AllArgsConstructor
+public class OfflinePlayerModel {
+    private UUID id;
+    private UUID player;
+    private List&lt;String&gt; actions;
+<span class="fc" id="L25">    private boolean kicked = false;</span>
+<span class="fc" id="L26">    private boolean died = false;</span>
+    private String deathMessage;
+    private double x;
+    private double y;
+    private double z;
+<span class="fc" id="L31">    private String skinValue = &quot;&quot;;</span>
+<span class="fc" id="L32">    private String skinSignature = &quot;&quot;;</span>
+
+<span class="fc" id="L34">    public OfflinePlayerModel(UUID id, UUID player, List&lt;String&gt; actions, double x, double y, double z, String skinValue, String skinSignature) {</span>
+<span class="fc" id="L35">        this.id = id;</span>
+<span class="fc" id="L36">        this.player = player;</span>
+<span class="fc" id="L37">        this.actions = actions;</span>
+<span class="fc" id="L38">        this.died = false;</span>
+<span class="fc" id="L39">        this.deathMessage = &quot;&quot;;</span>
+<span class="fc" id="L40">        this.x = x;</span>
+<span class="fc" id="L41">        this.y = y;</span>
+<span class="fc" id="L42">        this.z = z;</span>
+<span class="fc" id="L43">        this.skinValue = skinValue;</span>
+<span class="fc" id="L44">        this.skinSignature = skinSignature;</span>
+<span class="fc" id="L45">    }</span>
+
+    public CompoundTag toTag() {
+<span class="nc" id="L48">        CompoundTag tag = new CompoundTag();</span>
+<span class="nc" id="L49">        tag.putString(&quot;id&quot;, id.toString());</span>
+<span class="nc" id="L50">        tag.putString(&quot;player&quot;, player.toString());</span>
+<span class="nc" id="L51">        ListTag actionsList = new ListTag();</span>
+<span class="nc bnc" id="L52" title="All 2 branches missed.">        for (String action : actions) {</span>
+<span class="nc" id="L53">            actionsList.add(StringTag.valueOf(action));</span>
+<span class="nc" id="L54">        }</span>
+<span class="nc" id="L55">        tag.put(&quot;actions&quot;, actionsList);</span>
+<span class="nc" id="L56">        tag.putDouble(&quot;x&quot;, x);</span>
+<span class="nc" id="L57">        tag.putDouble(&quot;y&quot;, y);</span>
+<span class="nc" id="L58">        tag.putDouble(&quot;z&quot;, z);</span>
+<span class="nc" id="L59">        tag.putBoolean(&quot;died&quot;, died);</span>
+<span class="nc" id="L60">        tag.putString(&quot;deathMessage&quot;, deathMessage);</span>
+<span class="nc" id="L61">        tag.putBoolean(&quot;kicked&quot;, kicked);</span>
+<span class="nc" id="L62">        tag.putString(&quot;skinValue&quot;, skinValue);</span>
+<span class="nc" id="L63">        tag.putString(&quot;skinSignature&quot;, skinSignature);</span>
+<span class="nc" id="L64">        return tag;</span>
+    }
+
+    public static OfflinePlayerModel fromTag(CompoundTag tag) {
+<span class="nc" id="L68">        UUID id = UUID.fromString(tag.getStringOr(&quot;id&quot;, null));</span>
+<span class="nc" id="L69">        UUID player = UUID.fromString(tag.getStringOr(&quot;player&quot;, null));</span>
+<span class="nc" id="L70">        ListTag actionsList = tag.getList(&quot;actions&quot;).orElseThrow(NullPointerException::new);</span>
+<span class="nc" id="L71">        String[] actions = new String[actionsList.size()];</span>
+<span class="nc bnc" id="L72" title="All 2 branches missed.">        for (int i = 0; i &lt; actionsList.size(); i++) {</span>
+<span class="nc" id="L73">            actions[i] = actionsList.getString(i).orElseThrow(NullPointerException::new);</span>
+        }
+<span class="nc" id="L75">        double x = tag.getDouble(&quot;x&quot;).orElseThrow(NullPointerException::new);</span>
+<span class="nc" id="L76">        double y = tag.getDouble(&quot;y&quot;).orElseThrow(NullPointerException::new);</span>
+<span class="nc" id="L77">        double z = tag.getDouble(&quot;z&quot;).orElseThrow(NullPointerException::new);</span>
+
+<span class="nc" id="L79">        String skinValue = tag.getString(&quot;skinValue&quot;).orElse(&quot;&quot;);</span>
+<span class="nc" id="L80">        String skinSignature = tag.getString(&quot;skinSignature&quot;).orElse(&quot;&quot;);</span>
+
+<span class="nc" id="L82">        OfflinePlayerModel model = new OfflinePlayerModel(id, player, List.of(actions), x, y, z, skinValue, skinSignature);</span>
+<span class="nc" id="L83">        model.setDied(tag.getBoolean(&quot;died&quot;).orElseThrow(NullPointerException::new));</span>
+<span class="nc" id="L84">        model.setDeathMessage(tag.getString(&quot;deathMessage&quot;).orElseThrow(NullPointerException::new));</span>
+<span class="nc" id="L85">        model.setKicked(tag.getBoolean(&quot;kicked&quot;).orElseThrow(NullPointerException::new));</span>
+<span class="nc" id="L86">        return model;</span>
+    }
+
+<span class="fc" id="L89">    public static final Codec&lt;OfflinePlayerModel&gt; CODEC =</span>
+<span class="fc" id="L90">            RecordCodecBuilder.create(instance -&gt; instance.group(</span>
+<span class="fc" id="L91">                    UUIDUtil.CODEC.fieldOf(&quot;id&quot;).forGetter(OfflinePlayerModel::getId),</span>
+<span class="fc" id="L92">                    UUIDUtil.CODEC.fieldOf(&quot;player&quot;).forGetter(OfflinePlayerModel::getPlayer),</span>
+<span class="fc" id="L93">                    Codec.STRING.listOf().fieldOf(&quot;actions&quot;).forGetter(OfflinePlayerModel::getActions),</span>
+<span class="fc" id="L94">                    Codec.BOOL.fieldOf(&quot;kicked&quot;).forGetter(OfflinePlayerModel::isKicked),</span>
+<span class="fc" id="L95">                    Codec.BOOL.fieldOf(&quot;died&quot;).forGetter(OfflinePlayerModel::isDied),</span>
+<span class="fc" id="L96">                    Codec.STRING.fieldOf(&quot;deathMessage&quot;).forGetter(OfflinePlayerModel::getDeathMessage),</span>
+<span class="fc" id="L97">                    Codec.DOUBLE.fieldOf(&quot;x&quot;).forGetter(OfflinePlayerModel::getX),</span>
+<span class="fc" id="L98">                    Codec.DOUBLE.fieldOf(&quot;y&quot;).forGetter(OfflinePlayerModel::getY),</span>
+<span class="fc" id="L99">                    Codec.DOUBLE.fieldOf(&quot;z&quot;).forGetter(OfflinePlayerModel::getZ),</span>
+<span class="fc" id="L100">                    Codec.STRING.optionalFieldOf(&quot;skinValue&quot;, &quot;&quot;).forGetter(OfflinePlayerModel::getSkinValue),</span>
+<span class="fc" id="L101">                    Codec.STRING.optionalFieldOf(&quot;skinSignature&quot;, &quot;&quot;).forGetter(OfflinePlayerModel::getSkinSignature)</span>
+<span class="fc" id="L102">            ).apply(instance, OfflinePlayerModel::new));</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>

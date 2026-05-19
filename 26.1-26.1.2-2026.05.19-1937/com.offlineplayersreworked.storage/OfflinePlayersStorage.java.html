@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>OfflinePlayersStorage.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Fabric_OfflinePlayersReworked</a> &gt; <a href="index.source.html" class="el_package">com.offlineplayersreworked.storage</a> &gt; <span class="el_source">OfflinePlayersStorage.java</span></div><h1>OfflinePlayersStorage.java</h1><pre class="source lang-java linenums">package com.offlineplayersreworked.storage;
+
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
+import com.offlineplayersreworked.OfflinePlayersReworked;
+import com.offlineplayersreworked.storage.model.OfflinePlayerModel;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.resources.Identifier;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.datafix.DataFixTypes;
+import net.minecraft.world.level.saveddata.SavedData;
+import net.minecraft.world.level.saveddata.SavedDataType;
+import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+
+public class OfflinePlayersStorage extends SavedData {
+<span class="fc" id="L24">    private final List&lt;OfflinePlayerModel&gt; offlinePlayers = new ArrayList&lt;&gt;();</span>
+
+    public OfflinePlayersStorage() {
+<span class="fc" id="L27">        super();</span>
+<span class="fc" id="L28">    }</span>
+
+<span class="fc" id="L30">    public static final Codec&lt;OfflinePlayersStorage&gt; CODEC =</span>
+<span class="fc" id="L31">            RecordCodecBuilder.create(instance -&gt; instance.group(</span>
+<span class="fc" id="L32">                    OfflinePlayerModel.CODEC.listOf()</span>
+<span class="fc" id="L33">                            .fieldOf(&quot;offline_players&quot;)</span>
+<span class="fc" id="L34">                            .forGetter(storage -&gt; storage.offlinePlayers)</span>
+<span class="fc" id="L35">            ).apply(instance, OfflinePlayersStorage::newFromList));</span>
+
+    private static OfflinePlayersStorage newFromList(List&lt;OfflinePlayerModel&gt; players) {
+<span class="nc" id="L38">        OfflinePlayersStorage storage = new OfflinePlayersStorage();</span>
+<span class="nc" id="L39">        storage.offlinePlayers.addAll(players);</span>
+<span class="nc" id="L40">        return storage;</span>
+    }
+
+<span class="fc" id="L43">    public static final SavedDataType&lt;@NotNull OfflinePlayersStorage&gt; TYPE =</span>
+            new SavedDataType&lt;&gt;(
+<span class="fc" id="L45">                    Identifier.parse((OfflinePlayersReworked.MOD_ID + &quot;storage&quot;).toLowerCase()),</span>
+                    OfflinePlayersStorage::new,
+                    OfflinePlayersStorage.CODEC,
+                    DataFixTypes.PLAYER
+            );
+
+    public static OfflinePlayersStorage load(CompoundTag tag, HolderLookup.Provider provider) {
+<span class="nc" id="L52">        OfflinePlayersStorage storage = new OfflinePlayersStorage();</span>
+<span class="nc" id="L53">        tag.getList(&quot;OfflinePlayers&quot;).ifPresent(playerList -&gt; {</span>
+<span class="nc bnc" id="L54" title="All 2 branches missed.">            for (int i = 0; i &lt; playerList.size(); i++) {</span>
+<span class="nc" id="L55">                playerList.getCompound(i).ifPresent(playerTag -&gt;</span>
+<span class="nc" id="L56">                        storage.offlinePlayers.add(OfflinePlayerModel.fromTag(playerTag))</span>
+                );
+            }
+<span class="nc" id="L59">        });</span>
+<span class="nc" id="L60">        return storage;</span>
+    }
+
+    public void save(CompoundTag tag, HolderLookup.Provider provider) {
+<span class="nc" id="L64">        ListTag playerList = new ListTag();</span>
+<span class="nc bnc" id="L65" title="All 2 branches missed.">        for (OfflinePlayerModel player : offlinePlayers) {</span>
+<span class="nc" id="L66">            playerList.add(player.toTag());</span>
+<span class="nc" id="L67">        }</span>
+<span class="nc" id="L68">        tag.put(&quot;OfflinePlayers&quot;, playerList);</span>
+<span class="nc" id="L69">    }</span>
+
+    public static OfflinePlayersStorage getStorage(MinecraftServer server) {
+<span class="fc" id="L72">        ServerLevel overworld = server.getLevel(ServerLevel.OVERWORLD);</span>
+<span class="pc bpc" id="L73" title="1 of 2 branches missed.">        if (overworld == null) {</span>
+<span class="nc" id="L74">            throw new IllegalStateException(&quot;Overworld is not loaded!&quot;);</span>
+        }
+<span class="fc" id="L76">        return overworld.getDataStorage().computeIfAbsent(TYPE);</span>
+    }
+
+    public List&lt;OfflinePlayerModel&gt; findAll() {
+<span class="fc" id="L80">        return new ArrayList&lt;&gt;(offlinePlayers);</span>
+    }
+
+    public void create(UUID offlinePlayerUUID, UUID playerUUID, List&lt;String&gt; actions, double x, double y, double z, String skinValue, String skinSignature) {
+<span class="fc" id="L84">        OfflinePlayerModel offlinePlayer = new OfflinePlayerModel(offlinePlayerUUID, playerUUID, actions, x, y, z, skinValue, skinSignature);</span>
+<span class="fc" id="L85">        offlinePlayers.add(offlinePlayer);</span>
+<span class="fc" id="L86">        this.setDirty();</span>
+<span class="fc" id="L87">    }</span>
+
+    public void remove(UUID uuid) {
+<span class="fc" id="L90">        offlinePlayers.removeIf(player -&gt; player.getId().equals(uuid));</span>
+<span class="fc" id="L91">        this.setDirty();</span>
+<span class="fc" id="L92">    }</span>
+
+    public OfflinePlayerModel findByPlayerUUID(UUID uuid) {
+<span class="fc" id="L95">        return offlinePlayers.stream()</span>
+<span class="fc" id="L96">                .filter(player -&gt; player.getPlayer().equals(uuid))</span>
+<span class="fc" id="L97">                .findFirst()</span>
+<span class="fc" id="L98">                .orElse(null);</span>
+    }
+
+    public void killByIdWithDeathMessage(UUID uuid, Vec3 position, String deathMessage) {
+<span class="fc" id="L102">        offlinePlayers.stream()</span>
+<span class="fc" id="L103">                .filter(player -&gt; player.getId().equals(uuid))</span>
+<span class="fc" id="L104">                .findFirst()</span>
+<span class="fc" id="L105">                .ifPresent(player -&gt; {</span>
+<span class="fc" id="L106">                    player.setDied(true);</span>
+<span class="fc" id="L107">                    player.setDeathMessage(deathMessage);</span>
+<span class="fc" id="L108">                    player.setX(position.x);</span>
+<span class="fc" id="L109">                    player.setY(position.y);</span>
+<span class="fc" id="L110">                    player.setZ(position.z);</span>
+<span class="fc" id="L111">                    this.setDirty();</span>
+<span class="fc" id="L112">                });</span>
+<span class="fc" id="L113">    }</span>
+
+    public void kick(UUID uuid) {
+<span class="fc" id="L116">        offlinePlayers.stream()</span>
+<span class="fc" id="L117">                .filter(player -&gt; player.getId().equals(uuid))</span>
+<span class="fc" id="L118">                .findFirst()</span>
+<span class="fc" id="L119">                .ifPresent(player -&gt; {</span>
+<span class="fc" id="L120">                    player.setKicked(true);</span>
+<span class="fc" id="L121">                    this.setDirty();</span>
+<span class="fc" id="L122">                });</span>
+<span class="fc" id="L123">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.14.202510111229</span></div></body></html>
